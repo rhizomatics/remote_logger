@@ -49,17 +49,17 @@ docs=[
 [tool.poetry]
 package-mode = false
 version = "0.6.6"
-packages = [{ include = "custom_components.autoarm" }]
+packages = [{ include = "custom_components.ha_remote_logs" }]
 
 [tool.setuptools.packages.find]
 where = [
     "custom_components",
 ] # list of folders that contain the packages (["."] by default)
 include = [
-    "autoarm*",
+    "ha_remote_logs*",
 ] # package names should match these glob patterns (["*"] by default)
 exclude = [
-    "autoarm.tests*",
+    "ha_remote_logs.tests*",
 ] # exclude packages matching these glob patterns (empty by default)
 namespaces = true # to disable scanning PEP 420 namespaces (true by default)
 
@@ -137,6 +137,6 @@ addopts = [
     "--cov-report=xml:cov.xml",
     "--cov-report=html",
     "--cov-report=term-missing",
-    "--cov=custom_components.autoarm",
+    "--cov=custom_components.ha_remote_logs",
     "--cov-fail-under=90"
 ]
