@@ -1,6 +1,6 @@
 """Constants for the ha_remote_logs integration."""
 
-DOMAIN = "remote_logs"
+DOMAIN = "remote_logger"
 
 # Backend selection
 CONF_BACKEND = "backend"
