@@ -1,0 +1,62 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose Log Export Backend",
+        "description": "Select how you want to export Home Assistant system logs.",
+        "menu_options": {
+          "otel": "OpenTelemetry (OTLP)",
+          "syslog": "Syslog (RFC 5424)"
+        }
+      },
+      "otel": {
+        "title": "Configure OTLP Endpoint",
+        "description": "Enter the connection details for your OpenTelemetry collector.",
+        "data": {
+          "host": "Collector host",
+          "port": "Collector port",
+          "use_tls": "Use TLS (HTTPS)",
+          "encoding": "Payload encoding",
+          "batch_max_size": "Batch max size",
+          "resource_attributes": "Custom resource attributes"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the OTLP collector.",
+          "port": "HTTP port of the OTLP collector (default 4318).",
+          "use_tls": "Enable HTTPS for the connection to the collector.",
+          "encoding": "Encoding format for the OTLP payload: json or protobuf.",
+          "batch_max_size": "Maximum number of log records to buffer before flushing (1-10000, default 100).",
+          "resource_attributes": "Optional comma-separated key=value pairs added to every log record (e.g. deployment.environment=production,service.namespace=home)."
+        }
+      },
+      "syslog": {
+        "title": "Configure Syslog Endpoint",
+        "description": "Enter the connection details for your RFC 5424 syslog server.",
+        "data": {
+          "host": "Syslog server host",
+          "port": "Syslog server port",
+          "protocol": "Transport protocol",
+          "use_tls": "Use TLS (TCP only)",
+          "app_name": "Application name",
+          "facility": "Syslog facility"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the syslog server.",
+          "port": "Port of the syslog server (default 514).",
+          "protocol": "Transport protocol: UDP (fire-and-forget) or TCP (reliable delivery).",
+          "use_tls": "Enable TLS encryption for TCP connections. Ignored for UDP.",
+          "app_name": "The APP-NAME field in RFC 5424 messages (default: homeassistant).",
+          "facility": "Syslog facility code used to calculate the PRI value (default: user)."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the endpoint. Verify the host, port, and TLS settings.",
+      "invalid_attributes": "Invalid format. Use comma-separated key=value pairs (e.g. env=prod,region=us).",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This backend is already configured."
+    }
+  }
+}

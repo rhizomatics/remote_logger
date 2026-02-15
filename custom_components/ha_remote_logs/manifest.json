@@ -1,0 +1,13 @@
+{
+  "domain": "remote_logs",
+  "name": "OpenTelemetry and Syslog Log Exporter",
+  "version": "1.0.0",
+  "documentation": "https://github.com/jey/hassotel",
+  "issue_tracker": "https://github.com/jey/hassotel/issues",
+  "codeowners": ["@jey"],
+  "config_flow": true,
+  "dependencies": [],
+  "requirements": [],
+  "iot_class": "local_push",
+  "integration_type": "service"
+}

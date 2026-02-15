@@ -1,0 +1,142 @@
+[project]
+name = "ha_remote_logs"
+readme = "README.md"
+description = "Log Home Assistant events to a Syslog or OTEL collector."
+dynamic = ["version"]
+requires-python = ">=3.13.2"
+
+dependencies = [
+    "homeassistant>=2026.1.1",
+]
+
+[dependency-groups]
+dev=[
+    "homeassistant-stubs == 2026.1.1",
+    "pytest==9.0.0",
+    "pytest-cov==7.0.0",
+    "pytest-homeassistant-custom-component>=0.13.306",
+    "pytest-unordered",
+    "pytest-mock",
+    "pytest-xdist",
+    "pytest-icdiff",
+    "pre-commit",
+    "ruff",
+    "mypy",
+    "genbadge[all]",
+]
+docs=[
+    "mkdocs-minify-plugin",
+    "pymdown-extensions",
+    "mkdocs-material>=9.7.1",
+    "pillow>=12.0", # mkdocs-material[imaging] has elderly pillow demand
+    "cairosvg~=2.6", # mkdocs-material[imaging]
+    "mkdocs-autorefs",
+    "mkdocs-coverage",
+    "mkdocs-pagetree-plugin",
+    "mkdocs",
+    "pngquant",
+    "mkdocstrings",
+    "mkdocstrings-python",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-meta-descriptions-plugin",
+    "mkdocs-minify-html-plugin",
+    "mkdocs-htmlproofer-plugin",
+    "mkdocs-minify-plugin",
+    "mkdocs-material-extensions"
+]
+
+
+[tool.poetry]
+package-mode = false
+version = "0.6.6"
+packages = [{ include = "custom_components.autoarm" }]
+
+[tool.setuptools.packages.find]
+where = [
+    "custom_components",
+] # list of folders that contain the packages (["."] by default)
+include = [
+    "autoarm*",
+] # package names should match these glob patterns (["*"] by default)
+exclude = [
+    "autoarm.tests*",
+] # exclude packages matching these glob patterns (empty by default)
+namespaces = true # to disable scanning PEP 420 namespaces (true by default)
+
+[tool.poetry.group.dev.dependencies]
+homeassistant-stubs = "2025.11.3"
+
+[tool.ruff]
+line-length = 128
+indent-width = 4
+target-version = "py312"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "htmlcov",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".github",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.lint]
+preview = false
+select = ["E", "C","R", "F", "B", "W", "I", "C90", "N", "D", "UP", "YTT","UP",
+"RUF","PGH","PT","T20","DTZ","TD","PTH","ARG","INT","TCH","TID","SIM","PERF","ASYNC","ANN","S","A","COM","C4"]
+ignore = [
+    "W191","E111","E114","E117","D206","D300","Q000","Q001","COM812","COM819","ISC001","ISC002", # std formatter conflicts
+    "D203","D213", # other formatter clashes
+    "TD002","TD003","TD005","SIM102","SIM117","ANN002", "ANN003","SIM108",
+    "D103","D100","D101","D102","D104","D107","D415","D400","D415","ANN401",
+    "S101","C901","FURB113","PGH003",
+    "S602","S607"] # subprocess usage
+unfixable = ["B"]
+
+
+[tool.ruff.format]
+preview = true
+
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = [
+    "tests",
+]
+norecursedirs = [
+    ".git",
+    "templates",
+]
+
+addopts = [
+    "--timeout=30",
+    "--cov-report=xml:cov.xml",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov=custom_components.autoarm",
+    "--cov-fail-under=90"
+]
