@@ -1,9 +1,9 @@
 {
-  "domain": "remote_logs",
+  "domain": "remote_logger",
   "name": "OpenTelemetry and Syslog Log Exporter",
   "version": "1.0.0",
-  "documentation": "https://github.com/rhizomatics/ha_remote_logs",
-  "issue_tracker": "https://github.com/rhizomatics/ha_remote_logs/issues",
+  "documentation": "https://github.com/rhizomatics/ha_remote_logger",
+  "issue_tracker": "https://github.com/rhizomatics/ha_remote_logger/issues",
   "codeowners": ["@jey"],
   "config_flow": true,
   "dependencies": [],
