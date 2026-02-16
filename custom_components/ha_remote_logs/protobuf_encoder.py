@@ -39,9 +39,9 @@ def _encode_string_field(field_number: int, value: str) -> bytes:
     """Encode a string field (tag + length + UTF-8 bytes)."""
     try:
         data = value.encode("utf-8")
-    except:
-        _LOGGER.exception("ha_remote_logs non string found at %s: %s",field_number,value)
-        data="TYPE ERROR".encode("utf-8")
+    except Exception:
+        _LOGGER.exception("ha_remote_logs non string found at %s: %s", field_number, value)
+        data = b"TYPE ERROR"
     return _tag(field_number, WIRE_LENGTH_DELIMITED) + _encode_varint(len(data)) + data
 
 

@@ -1,0 +1,198 @@
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import time
+from typing import TYPE_CHECKING, Any
+
+import aiohttp
+from homeassistant.const import __version__ as hass_version
+from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from .config_flow import parse_resource_attributes
+from .const import (
+    BATCH_FLUSH_INTERVAL_SECONDS,
+    CONF_BATCH_MAX_SIZE,
+    CONF_ENCODING,
+    CONF_HOST,
+    CONF_PORT,
+    CONF_RESOURCE_ATTRIBUTES,
+    CONF_USE_TLS,
+    DEFAULT_RESOURCE_ATTRIBUTES,
+    DEFAULT_SERVICE_NAME,
+    DEFAULT_SEVERITY,
+    ENCODING_PROTOBUF,
+    OTLP_LOGS_PATH,
+    SCOPE_NAME,
+    SCOPE_VERSION,
+    SEVERITY_MAP,
+)
+from .protobuf_encoder import encode_export_logs_request
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _kv(key: str, value: str) -> dict[str, Any]:
+    """Build an OTLP KeyValue attribute with a stringValue."""
+    return {"key": key, "value": {"stringValue": value}}
+
+
+class OtlpLogExporter:
+    """Buffers system_log_event records and flushes them as OTLP/HTTP JSON."""
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        self._hass = hass
+        self._buffer: list[dict[str, Any]] = []
+        self._lock = asyncio.Lock()
+
+        host = entry.data[CONF_HOST]
+        port = entry.data[CONF_PORT]
+        use_tls = entry.data[CONF_USE_TLS]
+        scheme = "https" if use_tls else "http"
+        self.endpoint_url = f"{scheme}://{host}:{port}{OTLP_LOGS_PATH}"
+        self._use_tls = use_tls
+        self._use_protobuf = entry.data.get(CONF_ENCODING) == ENCODING_PROTOBUF
+        self._batch_max_size = entry.data.get(CONF_BATCH_MAX_SIZE, 100)
+
+        self._resource = self._build_resource(entry)
+
+    def _build_resource(self, entry: ConfigEntry) -> dict[str, Any]:
+        """Build the OTLP Resource object with attributes."""
+        attrs: list[dict[str, Any]] = [
+            _kv("service.name", DEFAULT_SERVICE_NAME),
+            _kv("service.version", hass_version or "unknown"),
+        ]
+
+        raw = entry.data.get(CONF_RESOURCE_ATTRIBUTES, DEFAULT_RESOURCE_ATTRIBUTES)
+        if raw and raw.strip():
+            for key, value in parse_resource_attributes(raw):
+                attrs.append(_kv(key, value))
+
+        return {"attributes": attrs}
+
+    @callback
+    def handle_event(self, event: Event) -> None:
+        """Receive a system_log_event and buffer an OTLP logRecord."""
+        record = self._to_log_record(event.data)
+        self._buffer.append(record)
+
+        if len(self._buffer) >= self._batch_max_size:  # and len(self._buffer) < 10:
+            self._hass.async_create_task(self.flush())
+
+    def _to_log_record(self, data: Any) -> dict[str, Any]:
+        """Convert a system_log_event payload to an OTLP logRecord dict."""
+        timestamp_s: float = data.get("timestamp", time.time())
+        time_unix_nano = str(int(timestamp_s * 1_000_000_000))
+        observed_time_unix_nano = str(int(time.time() * 1_000_000_000))
+
+        level: str = data.get("level", "INFO").upper()
+        severity_number, severity_text = SEVERITY_MAP.get(level, DEFAULT_SEVERITY)
+
+        messages: list[str] = data.get("message", [])
+        message: str = "/n/r".join(messages)
+
+        attributes: list[dict[str, Any]] = []
+        source = data.get("source")
+        if source:
+            attributes.append(_kv("source", source))
+        logger_name = data.get("name")
+        if data.get("count"):
+            attributes.append(_kv("count", data["count"]))
+        if data.get("first_occurred"):
+            attributes.append(_kv("first_occurred", data["first_occurred"]))
+        if logger_name:
+            attributes.append(_kv("logger.name", logger_name))
+        exception = data.get("exception")
+        if exception:
+            attributes.append(_kv("exception.stacktrace", exception))
+
+        return {
+            "timeUnixNano": time_unix_nano,
+            "observedTimeUnixNano": observed_time_unix_nano,
+            "severityNumber": severity_number,
+            "severityText": severity_text,
+            "body": {"stringValue": message},
+            "attributes": attributes,
+        }
+
+    async def flush_loop(self) -> None:
+        """Periodically flush buffered log records."""
+        try:
+            while True:
+                await asyncio.sleep(BATCH_FLUSH_INTERVAL_SECONDS)
+                await self.flush()
+        except asyncio.CancelledError:
+            raise
+
+    async def flush(self) -> None:
+        """Flush all buffered log records to the OTLP endpoint."""
+        async with self._lock:
+            if not self._buffer:
+                return
+            records = self._buffer.copy()
+            self._buffer.clear()
+
+        request = self._build_export_request(records)
+
+        if self._use_protobuf:
+            data = encode_export_logs_request(request)
+            content_type = "application/x-protobuf"
+        else:
+            data = None
+            content_type = "application/json"
+
+        try:
+            session = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
+            kwargs: dict[str, Any] = {
+                "headers": {"Content-Type": content_type},
+                "timeout": aiohttp.ClientTimeout(total=10),
+            }
+            if self._use_protobuf:
+                kwargs["data"] = data
+            else:
+                kwargs["json"] = request
+            async with session.post(
+                self.endpoint_url,
+                **kwargs,
+            ) as resp:
+                if resp.status >= 400:
+                    body = await resp.text()
+                    _LOGGER.warning(
+                        "ha_remote_logs: OTLP endpoint returned HTTP %s: %s",
+                        resp.status,
+                        body[:200],
+                    )
+
+        except aiohttp.ClientError as err:
+            _LOGGER.warning("ha_remote_logs: failed to send logs: %s", err)
+        except Exception:
+            _LOGGER.exception("ha_remote_logs: unexpected error sending logs")
+
+    async def close(self) -> None:
+        """Clean up resources (no-op for HTTP-based exporter)."""
+
+    def _build_export_request(
+        self, records: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """Wrap logRecords in the ExportLogsServiceRequest envelope."""
+        return {
+            "resourceLogs": [
+                {
+                    "resource": self._resource,
+                    "scopeLogs": [
+                        {
+                            "scope": {
+                                "name": SCOPE_NAME,
+                                "version": SCOPE_VERSION,
+                            },
+                            "logRecords": records,
+                        }
+                    ],
+                }
+            ],
+        }
