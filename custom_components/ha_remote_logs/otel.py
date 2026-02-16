@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import time
 from typing import TYPE_CHECKING, Any
@@ -86,14 +87,20 @@ def _kv(key: str, value: str) -> dict[str, Any]:
     return {"key": key, "value": {"stringValue": value}}
 
 
-async def validate(session: aiohttp.ClientSession, url: str) -> dict[str, str]:
+async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> dict[str, str]:
  # Validate connectivity
     errors: dict[str, str] = {}
+    if encoding == ENCODING_PROTOBUF:
+        data: bytes = encode_export_logs_request({})
+        content_type = "application/x-protobuf"
+    else:
+        data = json.dumps({"resourceLogs": []}).encode("utf-8")
+        content_type = "application/json"
     try:
         async with session.post(
             url,
-            json={"resourceLogs": []},
-            headers={"Content-Type": "application/json"},
+            data=data,
+            headers={"Content-Type": content_type},
             timeout=aiohttp.ClientTimeout(total=10),
         ) as resp:
             if resp.status >= 400 and resp.status < 500:

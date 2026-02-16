@@ -11,6 +11,7 @@ from .const import (
     BACKEND_OTEL,
     BACKEND_SYSLOG,
     CONF_BACKEND,
+    CONF_ENCODING,
     CONF_HOST,
     CONF_PORT,
     CONF_PROTOCOL,
@@ -19,7 +20,7 @@ from .const import (
     DOMAIN,
     OTLP_LOGS_PATH,
 )
-from .otel import OTEL_DATA_SCHEMA
+from .otel import OTEL_DATA_SCHEMA, parse_resource_attributes
 from .otel import validate as otel_validate
 from .syslog import SYSLOG_DATA_SCHEMA
 from .syslog import validate as syslog_validate
@@ -31,7 +32,6 @@ def _build_endpoint_url(host: str, port: int, use_tls: bool) -> str:
     """Build the full OTLP endpoint URL."""
     scheme = "https" if use_tls else "http"
     return f"{scheme}://{host}:{port}{OTLP_LOGS_PATH}"
-
 
 
 class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -62,7 +62,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
 
             # Validate connectivity
             session = async_get_clientsession(self.hass, verify_ssl=use_tls)
-            errors = await otel_validate(session, url)
+            errors = await otel_validate(session, url, user_input[CONF_ENCODING])
             # Validate resource attributes format
             if not errors:
                 raw_attrs = user_input.get(CONF_RESOURCE_ATTRIBUTES, "")
