@@ -93,9 +93,11 @@ async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> d
     if encoding == ENCODING_PROTOBUF:
         data: bytes = encode_export_logs_request({"resourceLogs": []})
         content_type = "application/x-protobuf"
-    else:
+    elif encoding == ENCODING_JSON:
         data = json.dumps({"resourceLogs": []}).encode("utf-8")
         content_type = "application/json"
+    else:
+        raise ValueError(f"Unknown encoding {encoding}")
     try:
         async with session.post(
             url,
