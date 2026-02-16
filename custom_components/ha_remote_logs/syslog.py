@@ -4,11 +4,13 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import socket
 import ssl
 import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
+import voluptuous as vol
 from homeassistant.core import Event, HomeAssistant, callback
 
 from .const import (
@@ -21,7 +23,11 @@ from .const import (
     CONF_USE_TLS,
     DEFAULT_APP_NAME,
     DEFAULT_FACILITY,
+    DEFAULT_PROTOCOL,
+    DEFAULT_SYSLOG_PORT,
     DEFAULT_SYSLOG_SEVERITY,
+    DEFAULT_USE_TLS,
+    PROTOCOL_TCP,
     PROTOCOL_UDP,
     SYSLOG_FACILITY_MAP,
     SYSLOG_SEVERITY_MAP,
@@ -31,6 +37,21 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
+
+SYSLOG_DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): str,
+        vol.Optional(CONF_PORT, default=DEFAULT_SYSLOG_PORT): int,
+        vol.Optional(CONF_PROTOCOL, default=DEFAULT_PROTOCOL): vol.In(
+            [PROTOCOL_UDP, PROTOCOL_TCP]
+        ),
+        vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
+        vol.Optional(CONF_APP_NAME, default=DEFAULT_APP_NAME): str,
+        vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): vol.In(
+            list(SYSLOG_FACILITY_MAP.keys())
+        ),
+    }
+)
 
 
 class SyslogExporter:
@@ -200,3 +221,37 @@ class SyslogExporter:
 def _sd_escape(value: str) -> str:
     """Escape special characters for RFC 5424 structured data values."""
     return value.replace("\\", "\\\\").replace('"', '\\"').replace("]", "\\]")
+
+
+async def validate(
+    hass: Any, host: str, port: int, protocol: str, use_tls: bool
+) -> str | None:
+    """Test connectivity to a syslog endpoint. Returns error key or None."""
+    loop = hass.loop
+    try:
+        if protocol == PROTOCOL_UDP:
+            # Quick UDP test: just resolve and create a socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                sock.setblocking(False)
+                await loop.run_in_executor(
+                    None, lambda: socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_DGRAM)
+                )
+            finally:
+                sock.close()
+        else:
+            # TCP: actually connect
+            ssl_ctx = True if use_tls else None
+            _, writer = await asyncio.wait_for(
+                asyncio.open_connection(host, port, ssl=ssl_ctx),
+                timeout=10,
+            )
+            writer.close()
+            await writer.wait_closed()
+    except (OSError, TimeoutError, ConnectionRefusedError) as err:
+        _LOGGER.error("Syslog connect failed: %s", err)
+        return "cannot_connect"
+    except Exception as err:
+        _LOGGER.error("Syslog connect unknown error: %s", err)
+        return "unknown"
+    return None

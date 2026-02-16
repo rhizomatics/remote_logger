@@ -7,6 +7,7 @@ import time
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
+import voluptuous as vol
 from homeassistant.const import __version__ as hass_version
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -20,9 +21,14 @@ from .const import (
     CONF_PORT,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
+    DEFAULT_BATCH_MAX_SIZE,
+    DEFAULT_ENCODING,
+    DEFAULT_PORT,
     DEFAULT_RESOURCE_ATTRIBUTES,
     DEFAULT_SERVICE_NAME,
     DEFAULT_SEVERITY,
+    DEFAULT_USE_TLS,
+    ENCODING_JSON,
     ENCODING_PROTOBUF,
     OTLP_LOGS_PATH,
     SCOPE_NAME,
@@ -37,9 +43,52 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
+OTEL_DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): str,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
+        vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
+        vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In(
+            [ENCODING_JSON, ENCODING_PROTOBUF]
+        ),
+        vol.Optional(
+            CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE
+        ): vol.All(int, vol.Range(min=1, max=10000)),
+        vol.Optional(
+            CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES
+        ): str,
+    }
+)
+
+
 def _kv(key: str, value: str) -> dict[str, Any]:
     """Build an OTLP KeyValue attribute with a stringValue."""
     return {"key": key, "value": {"stringValue": value}}
+
+
+async def validate(session: aiohttp.ClientSession, url: str) -> dict[str, str]:
+ # Validate connectivity
+    errors: dict[str, str] = {}
+    try:
+        async with session.post(
+            url,
+            json={"resourceLogs": []},
+            headers={"Content-Type": "application/json"},
+            timeout=aiohttp.ClientTimeout(total=10),
+        ) as resp:
+            if resp.status >= 400 and resp.status < 500:
+                errors["base"] = "cannot_connect"
+                _LOGGER.error("OTEL-LOGS client connect failed: %s", resp.content)
+            if resp.status >= 500:
+                errors["base"] = "cannot_connect"
+                _LOGGER.error("OTEL-LOGS server connect failed: %s", resp.content)
+    except aiohttp.ClientError as e1:
+        errors["base"] = "cannot_connect"
+        _LOGGER.error("OTEL-LOGS connect client error: %s", e1)
+    except Exception as e2:
+        errors["base"] = "unknown"
+        _LOGGER.error("OTEL-LOGS connect unknown error: %s", e2)
+    return errors
 
 
 class OtlpLogExporter:

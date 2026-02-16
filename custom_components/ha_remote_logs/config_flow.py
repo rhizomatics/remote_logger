@@ -1,80 +1,31 @@
 """Config flow for the ha_remote_logs integration."""
 from __future__ import annotations
 
-import asyncio
 import logging
-import socket
 from typing import Any
 
-import aiohttp
-import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from custom_components.ha_remote_logs.otel import OTEL_DATA_SCHEMA
+from custom_components.ha_remote_logs.otel import validate as otel_validate
+from custom_components.ha_remote_logs.syslog import SYSLOG_DATA_SCHEMA
+from custom_components.ha_remote_logs.syslog import validate as syslog_validate
 
 from .const import (
     BACKEND_OTEL,
     BACKEND_SYSLOG,
-    CONF_APP_NAME,
     CONF_BACKEND,
-    CONF_BATCH_MAX_SIZE,
-    CONF_ENCODING,
-    CONF_FACILITY,
     CONF_HOST,
     CONF_PORT,
     CONF_PROTOCOL,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
-    DEFAULT_APP_NAME,
-    DEFAULT_BATCH_MAX_SIZE,
-    DEFAULT_ENCODING,
-    DEFAULT_FACILITY,
-    DEFAULT_PORT,
-    DEFAULT_PROTOCOL,
-    DEFAULT_RESOURCE_ATTRIBUTES,
-    DEFAULT_SYSLOG_PORT,
-    DEFAULT_USE_TLS,
     DOMAIN,
-    ENCODING_JSON,
-    ENCODING_PROTOBUF,
     OTLP_LOGS_PATH,
-    PROTOCOL_TCP,
-    PROTOCOL_UDP,
-    SYSLOG_FACILITY_MAP,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-STEP_OTEL_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HOST): str,
-        vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
-        vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
-        vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In(
-            [ENCODING_JSON, ENCODING_PROTOBUF]
-        ),
-        vol.Optional(
-            CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE
-        ): vol.All(int, vol.Range(min=1, max=10000)),
-        vol.Optional(
-            CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES
-        ): str,
-    }
-)
-
-STEP_SYSLOG_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HOST): str,
-        vol.Optional(CONF_PORT, default=DEFAULT_SYSLOG_PORT): int,
-        vol.Optional(CONF_PROTOCOL, default=DEFAULT_PROTOCOL): vol.In(
-            [PROTOCOL_UDP, PROTOCOL_TCP]
-        ),
-        vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
-        vol.Optional(CONF_APP_NAME, default=DEFAULT_APP_NAME): str,
-        vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): vol.In(
-            list(SYSLOG_FACILITY_MAP.keys())
-        ),
-    }
-)
 
 
 def _build_endpoint_url(host: str, port: int, use_tls: bool) -> str:
@@ -104,40 +55,6 @@ def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
     return result
 
 
-async def _test_syslog_connectivity(
-    hass: Any, host: str, port: int, protocol: str, use_tls: bool
-) -> str | None:
-    """Test connectivity to a syslog endpoint. Returns error key or None."""
-    loop = hass.loop
-    try:
-        if protocol == PROTOCOL_UDP:
-            # Quick UDP test: just resolve and create a socket
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            try:
-                sock.setblocking(False)
-                await loop.run_in_executor(
-                    None, lambda: socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_DGRAM)
-                )
-            finally:
-                sock.close()
-        else:
-            # TCP: actually connect
-            ssl_ctx = True if use_tls else None
-            _, writer = await asyncio.wait_for(
-                asyncio.open_connection(host, port, ssl=ssl_ctx),
-                timeout=10,
-            )
-            writer.close()
-            await writer.wait_closed()
-    except (OSError, TimeoutError, ConnectionRefusedError) as err:
-        _LOGGER.error("Syslog connect failed: %s", err)
-        return "cannot_connect"
-    except Exception as err:
-        _LOGGER.error("Syslog connect unknown error: %s", err)
-        return "unknown"
-    return None
-
-
 class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for OpenTelemetry Log Exporter."""
 
@@ -165,24 +82,8 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             url = _build_endpoint_url(host, port, use_tls)
 
             # Validate connectivity
-            try:
-                session = async_get_clientsession(self.hass, verify_ssl=use_tls)
-                async with session.post(
-                    url,
-                    json={"resourceLogs": []},
-                    headers={"Content-Type": "application/json"},
-                    timeout=aiohttp.ClientTimeout(total=10),
-                ) as resp:
-                    if resp.status >= 400:
-                        errors["base"] = "cannot_connect"
-                        _LOGGER.error("OTEL-LOGS connect failed: %s", resp)
-            except aiohttp.ClientError as e1:
-                errors["base"] = "cannot_connect"
-                _LOGGER.error("OTEL-LOGS connect client error: %s", e1)
-            except Exception as e2:
-                errors["base"] = "unknown"
-                _LOGGER.error("OTEL-LOGS connect unknown error: %s", e2)
-
+            session = async_get_clientsession(self.hass, verify_ssl=use_tls)
+            errors = await otel_validate(session, url)
             # Validate resource attributes format
             if not errors:
                 raw_attrs = user_input.get(CONF_RESOURCE_ATTRIBUTES, "")
@@ -202,7 +103,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="otel",
-            data_schema=STEP_OTEL_DATA_SCHEMA,
+            data_schema=OTEL_DATA_SCHEMA,
             errors=errors,
         )
 
@@ -219,7 +120,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             use_tls = user_input.get(CONF_USE_TLS, False)
 
             # Validate connectivity
-            error = await _test_syslog_connectivity(
+            error = await syslog_validate(
                 self.hass, host, port, protocol, use_tls
             )
             if error:
@@ -235,6 +136,6 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="syslog",
-            data_schema=STEP_SYSLOG_DATA_SCHEMA,
+            data_schema=SYSLOG_DATA_SCHEMA,
             errors=errors,
         )
