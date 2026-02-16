@@ -15,6 +15,10 @@ from .const import (
 from .otel import OtlpLogExporter
 from .syslog import SyslogExporter
 
+REF_CANCEL_LISTENER="cancel_listener"
+REF_FLUSH_TASK="flush_task"
+REF_EXPORTER="exporter"
+
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
@@ -37,13 +41,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:  #
         exporter = otel_exp
 
     cancel_listener = hass.bus.async_listen(EVENT_SYSTEM_LOG, exporter.handle_event)
-    flush_task = asyncio.create_task(exporter.flush_loop())
+    flush_task: asyncio.Task[None] = asyncio.create_task(exporter.flush_loop())
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
-        "cancel_listener": cancel_listener,
-        "flush_task": flush_task,
-        "exporter": exporter,
+        REF_CANCEL_LISTENER: cancel_listener,
+        REF_FLUSH_TASK: flush_task,
+        REF_EXPORTER: exporter,
     }
 
     _LOGGER.info(
@@ -59,14 +63,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if data is None:
         return True
 
-    data["cancel_listener"]()
+    if data.get(REF_CANCEL_LISTENER):
+        data[REF_CANCEL_LISTENER]()
+        del data[REF_CANCEL_LISTENER]
 
-    data["flush_task"].cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await data["flush_task"]
+    if data.get(REF_FLUSH_TASK):
+        data[REF_FLUSH_TASK].cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await data[REF_FLUSH_TASK]
+        del data[REF_FLUSH_TASK]
 
-    await data["exporter"].flush()
-    await data["exporter"].close()
+    if data.get(REF_EXPORTER):
+        await data[REF_EXPORTER].flush()
+        await data[REF_EXPORTER].close()
+        del data[REF_EXPORTER]
 
     _LOGGER.info("ha_remote_logs: unloaded, flushed remaining logs")
     return True

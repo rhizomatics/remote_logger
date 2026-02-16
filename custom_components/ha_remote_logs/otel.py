@@ -159,11 +159,21 @@ class OtlpLogExporter:
         record = self._to_log_record(event.data)
         self._buffer.append(record)
 
-        if len(self._buffer) >= self._batch_max_size:  # and len(self._buffer) < 10:
+        if len(self._buffer) >= self._batch_max_size:
             self._hass.async_create_task(self.flush())
 
     def _to_log_record(self, data: Any) -> dict[str, Any]:
         """Convert a system_log_event payload to an OTLP logRecord dict."""
+        '''
+            "name": str
+            "message": list(str)
+            "level": str
+            "source": (str,int)
+            "timestamp": float
+            "exception": str
+            "count": int
+            "first_occurred": float
+        '''
         timestamp_s: float = data.get("timestamp", time.time())
         time_unix_nano = str(int(timestamp_s * 1_000_000_000))
         observed_time_unix_nano = str(int(time.time() * 1_000_000_000))
@@ -172,12 +182,14 @@ class OtlpLogExporter:
         severity_number, severity_text = SEVERITY_MAP.get(level, DEFAULT_SEVERITY)
 
         messages: list[str] = data.get("message", [])
-        message: str = "/n/r".join(messages)
+        message: str = "\n".join(messages)
 
         attributes: list[dict[str, Any]] = []
         source = data.get("source")
-        if source:
-            attributes.append(_kv("source", source))
+        if source and isinstance(source,tuple):
+            source_path,source_lineno=source
+            attributes.append(_kv("code.file.path", source_path))
+            attributes.append(_kv("code.line.number", source_lineno))
         logger_name = data.get("name")
         if data.get("count"):
             attributes.append(_kv("count", data["count"]))
