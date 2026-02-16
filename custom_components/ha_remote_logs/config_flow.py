@@ -7,11 +7,6 @@ from typing import Any
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.ha_remote_logs.otel import OTEL_DATA_SCHEMA
-from custom_components.ha_remote_logs.otel import validate as otel_validate
-from custom_components.ha_remote_logs.syslog import SYSLOG_DATA_SCHEMA
-from custom_components.ha_remote_logs.syslog import validate as syslog_validate
-
 from .const import (
     BACKEND_OTEL,
     BACKEND_SYSLOG,
@@ -24,6 +19,10 @@ from .const import (
     DOMAIN,
     OTLP_LOGS_PATH,
 )
+from .otel import OTEL_DATA_SCHEMA
+from .otel import validate as otel_validate
+from .syslog import SYSLOG_DATA_SCHEMA
+from .syslog import validate as syslog_validate
 
 _LOGGER = logging.getLogger(__name__)
 
