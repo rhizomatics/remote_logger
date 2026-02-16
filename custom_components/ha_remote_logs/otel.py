@@ -91,7 +91,7 @@ async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> d
  # Validate connectivity
     errors: dict[str, str] = {}
     if encoding == ENCODING_PROTOBUF:
-        data: bytes = encode_export_logs_request({})
+        data: bytes = encode_export_logs_request({"resourceLogs": []})
         content_type = "application/x-protobuf"
     else:
         data = json.dumps({"resourceLogs": []}).encode("utf-8")
@@ -105,10 +105,10 @@ async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> d
         ) as resp:
             if resp.status >= 400 and resp.status < 500:
                 errors["base"] = "cannot_connect"
-                _LOGGER.error("OTEL-LOGS client connect failed: %s", await resp.text())
+                _LOGGER.error("OTEL-LOGS client connect failed (%s): %s", resp.status, await resp.text())
             if resp.status >= 500:
                 errors["base"] = "cannot_connect"
-                _LOGGER.error("OTEL-LOGS server connect failed: %s", await resp.text())
+                _LOGGER.error("OTEL-LOGS server connect failed (%s): %s", resp.status, await resp.text())
     except aiohttp.ClientError as e1:
         errors["base"] = "cannot_connect"
         _LOGGER.error("OTEL-LOGS connect client error: %s", e1)
