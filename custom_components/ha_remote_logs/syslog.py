@@ -86,10 +86,23 @@ class SyslogExporter:
     @callback
     def handle_event(self, event: Event) -> None:
         """Receive a system_log_event and buffer it."""
+        if event.data and event.data.get("source") and len(event.data["source"])==2 and "ha_remote_logs/syslog" in event.data["source"]:
+            # prevent log loops
+            return
         self._buffer.append(event.data)
 
     def _to_syslog_message(self, data: Any) -> bytes:
         """Convert a system_log_event payload to an RFC 5424 syslog message."""
+        '''
+            "name": str
+            "message": list(str)
+            "level": str
+            "source": (str,int)
+            "timestamp": float
+            "exception": str
+            "count": int
+            "first_occurred": float
+        '''
         level: str = data.get("level", "INFO").upper()
         severity = SYSLOG_SEVERITY_MAP.get(level, DEFAULT_SYSLOG_SEVERITY)
         pri = self._facility * 8 + severity

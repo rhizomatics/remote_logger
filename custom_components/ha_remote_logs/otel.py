@@ -156,6 +156,9 @@ class OtlpLogExporter:
     @callback
     def handle_event(self, event: Event) -> None:
         """Receive a system_log_event and buffer an OTLP logRecord."""
+        if event.data and event.data.get("source") and len(event.data["source"]) == 2 and "ha_remote_logs/otel" in event.data["source"]:
+            # prevent log loops
+            return
         record = self._to_log_record(event.data)
         self._buffer.append(record)
 
@@ -186,8 +189,8 @@ class OtlpLogExporter:
 
         attributes: list[dict[str, Any]] = []
         source = data.get("source")
-        if source and isinstance(source,tuple):
-            source_path,source_lineno=source
+        if source and isinstance(source, tuple):
+            source_path, source_lineno = source
             attributes.append(_kv("code.file.path", source_path))
             attributes.append(_kv("code.line.number", source_lineno))
         logger_name = data.get("name")
