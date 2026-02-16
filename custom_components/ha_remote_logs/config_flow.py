@@ -33,26 +33,6 @@ def _build_endpoint_url(host: str, port: int, use_tls: bool) -> str:
     return f"{scheme}://{host}:{port}{OTLP_LOGS_PATH}"
 
 
-def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
-    """Parse 'key1=val1,key2=val2' into a list of (key, value) tuples.
-
-    Raises ValueError if the format is invalid.
-    """
-    result = []
-    for pair in raw.split(","):
-        pair = pair.strip()
-        if not pair:
-            continue
-        if "=" not in pair:
-            raise ValueError(f"Invalid attribute pair: {pair!r}")
-        key, _, value = pair.partition("=")
-        key = key.strip()
-        value = value.strip()
-        if not key:
-            raise ValueError("Attribute key cannot be empty")
-        result.append((key, value))
-    return result
-
 
 class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for OpenTelemetry Log Exporter."""

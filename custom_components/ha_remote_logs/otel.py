@@ -12,7 +12,6 @@ from homeassistant.const import __version__ as hass_version
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .config_flow import parse_resource_attributes
 from .const import (
     BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_BATCH_MAX_SIZE,
@@ -59,6 +58,27 @@ OTEL_DATA_SCHEMA = vol.Schema(
         ): str,
     }
 )
+
+
+def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
+    """Parse 'key1=val1,key2=val2' into a list of (key, value) tuples.
+
+    Raises ValueError if the format is invalid.
+    """
+    result = []
+    for pair in raw.split(","):
+        pair = pair.strip()
+        if not pair:
+            continue
+        if "=" not in pair:
+            raise ValueError(f"Invalid attribute pair: {pair!r}")
+        key, _, value = pair.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            raise ValueError("Attribute key cannot be empty")
+        result.append((key, value))
+    return result
 
 
 def _kv(key: str, value: str) -> dict[str, Any]:
