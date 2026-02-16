@@ -98,10 +98,10 @@ async def validate(session: aiohttp.ClientSession, url: str) -> dict[str, str]:
         ) as resp:
             if resp.status >= 400 and resp.status < 500:
                 errors["base"] = "cannot_connect"
-                _LOGGER.error("OTEL-LOGS client connect failed: %s", resp.content)
+                _LOGGER.error("OTEL-LOGS client connect failed: %s", await resp.text())
             if resp.status >= 500:
                 errors["base"] = "cannot_connect"
-                _LOGGER.error("OTEL-LOGS server connect failed: %s", resp.content)
+                _LOGGER.error("OTEL-LOGS server connect failed: %s", await resp.text())
     except aiohttp.ClientError as e1:
         errors["base"] = "cannot_connect"
         _LOGGER.error("OTEL-LOGS connect client error: %s", e1)
