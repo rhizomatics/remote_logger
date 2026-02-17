@@ -9,7 +9,6 @@ import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-import voluptuous as vol
 from homeassistant.core import Event, HomeAssistant, callback
 
 from custom_components.remote_logger.const import (
@@ -20,16 +19,12 @@ from custom_components.remote_logger.const import (
     CONF_PORT,
     CONF_PROTOCOL,
     CONF_USE_TLS,
-    DEFAULT_USE_TLS,
 )
 
 from .const import (
     DEFAULT_APP_NAME,
     DEFAULT_FACILITY,
-    DEFAULT_PROTOCOL,
-    DEFAULT_SYSLOG_PORT,
     DEFAULT_SYSLOG_SEVERITY,
-    PROTOCOL_TCP,
     PROTOCOL_UDP,
     SYSLOG_FACILITY_MAP,
     SYSLOG_SEVERITY_MAP,
@@ -39,15 +34,6 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
-
-SYSLOG_DATA_SCHEMA = vol.Schema({
-    vol.Required(CONF_HOST): str,
-    vol.Optional(CONF_PORT, default=DEFAULT_SYSLOG_PORT): int,
-    vol.Optional(CONF_PROTOCOL, default=DEFAULT_PROTOCOL): vol.In([PROTOCOL_UDP, PROTOCOL_TCP]),
-    vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
-    vol.Optional(CONF_APP_NAME, default=DEFAULT_APP_NAME): str,
-    vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): vol.In(list(SYSLOG_FACILITY_MAP.keys())),
-})
 
 
 class SyslogExporter:

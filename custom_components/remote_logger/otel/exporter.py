@@ -153,11 +153,14 @@ class OtlpLogExporter:
         ):
             # prevent log loops
             return
-        record = self._to_log_record(event.data)
-        self._buffer.append(record)
+        try:
+            record = self._to_log_record(event.data)
+            self._buffer.append(record)
 
-        if len(self._buffer) >= self._batch_max_size:
-            self._hass.async_create_task(self.flush())
+            if len(self._buffer) >= self._batch_max_size:
+                self._hass.async_create_task(self.flush())
+        except Exception as e:
+            _LOGGER.error("remote_logger: otel handler failure %s on %s", e, event.data)
 
     def _to_log_record(self, data: Any) -> dict[str, Any]:
         """Convert a system_log_event payload to an OTLP logRecord dict."""
