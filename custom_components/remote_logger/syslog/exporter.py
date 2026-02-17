@@ -121,7 +121,7 @@ class SyslogExporter:
         sd = "-"
         sd_params: list[str] = []
         source = data.get("source")
-        if source and isinstance(tuple, source):
+        if source and isinstance(source,tuple):
             source_path, source_linenum = source
             sd_params.append(f'source_file="{_sd_escape(source_path)}"')
             sd_params.append(f'source_line="{_sd_escape(source_linenum)}"')

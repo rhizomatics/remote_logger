@@ -40,6 +40,7 @@ When editing existing code:
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it - don't delete it.
+- Don't write passing tests for bugs in code - create a test that fails but works if bug fixed
 
 When your changes create orphans:
 - Remove imports/variables/functions that YOUR changes made unused.
@@ -63,7 +64,6 @@ For multi-step tasks, state a brief plan:
 3. [Step] → verify: [check]
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 
 ## Project Context
@@ -71,8 +71,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 The project uses Ruff for formatting and linting, uv for dependency management,
 mypy for type checking, pytest for unit and integration testing, and codespell for spell checking. It is anticipated that type checking will move to [ty](https://github.com/astral-sh/ty) when it is production ready.
 
-Documentation uses mkdocs with the Material theme, and is published using Github Pages with a
-custom domain of autoarm.rhizomatics.org.
+Documentation uses mkdocs with the Material theme, and will be published using Github Pages.
 
 While this is a HACS component, it should be built wherever possible to adhere to the [Home Assistant Integration Quality Scale](https://developers.home-assistant.io/docs/core/integration-quality-scale/) at the highest level. This also means all dependencies must be consistent with the set of Home Assistant production dependencies, and test coverage maintained above 90%, with regression tests for bug fixes and new tests for all new features.
 

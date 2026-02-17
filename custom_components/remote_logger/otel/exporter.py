@@ -164,7 +164,7 @@ class OtlpLogExporter:
             event.data
             and event.data.get("source")
             and len(event.data["source"]) == 2
-            and "custom_components/remote_logger/otel" in event.data["source"]
+            and "custom_components/remote_logger/otel" in event.data["source"][0]
         ):
             # prevent log loops
             return
