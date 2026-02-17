@@ -33,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:  #
     exporter: OtlpLogExporter | SyslogExporter
     if backend == BACKEND_SYSLOG:
         exporter = SyslogExporter(hass, entry)
-        label = exporter.endpoint_desc
+        label: str = exporter.endpoint_desc
     else:
         exporter = OtlpLogExporter(hass, entry)
         label = exporter.endpoint_url
@@ -49,8 +49,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:  #
     }
 
     _LOGGER.info(
-        "remote_logger: listening for system_log_event, exporting to %s",
-        label,
+        "remote_logger: listening for system_log_event, exporting %s to %s",
+        backend, label
     )
     return True
 
