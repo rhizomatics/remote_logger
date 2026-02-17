@@ -205,4 +205,4 @@ class TestSyslogExporter:
         msg = exporter._to_syslog_message(sample_event_data).decode("utf-8")
         assert msg is not None
         assert msg.startswith('<131>')
-        assert len(msg)>300
+        assert len(msg) > 300
