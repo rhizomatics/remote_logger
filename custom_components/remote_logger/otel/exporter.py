@@ -21,6 +21,9 @@ from custom_components.remote_logger.const import (
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
     DEFAULT_BATCH_MAX_SIZE,
+)
+
+from .const import (
     DEFAULT_ENCODING,
     DEFAULT_PORT,
     DEFAULT_RESOURCE_ATTRIBUTES,
@@ -34,7 +37,6 @@ from custom_components.remote_logger.const import (
     SCOPE_VERSION,
     SEVERITY_MAP,
 )
-
 from .protobuf_encoder import encode_export_logs_request
 
 if TYPE_CHECKING:
@@ -74,9 +76,19 @@ def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
     return result
 
 
-def _kv(key: str, value: str) -> dict[str, Any]:
-    """Build an OTLP KeyValue attribute with a stringValue."""
-    return {"key": key, "value": {"stringValue": value}}
+def _kv(key: str, value: Any) -> dict[str, Any]:
+    """Build an OTLP KeyValue attribute"""
+    if isinstance(value, str):
+        return {"key": key, "value": {"string_value": value}}
+    if isinstance(value, int):
+        return {"key": key, "value": {"int_value": value}}
+    if isinstance(value, bool):
+        return {"key": key, "value": {"bool_value": value}}
+    if isinstance(value, float):
+        return {"key": key, "value": {"float_value": value}}
+    if isinstance(value, bytes):
+        return {"key": key, "value": {"byte_value": value}}
+    return {"key": key, "value": {"string_value": str(value)}}
 
 
 async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> dict[str, str]:
@@ -206,7 +218,7 @@ class OtlpLogExporter:
             "observedTimeUnixNano": observed_time_unix_nano,
             "severityNumber": severity_number,
             "severityText": severity_text,
-            "body": {"stringValue": message},
+            "body": {"string_value": message},
             "attributes": attributes,
         }
 

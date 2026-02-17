@@ -3,16 +3,21 @@
 Encodes the same dict structure used for JSON export into protobuf binary,
 without requiring the opentelemetry-proto compiled classes.
 """
+
 from __future__ import annotations
 
 import logging
 import struct
 from typing import Any
 
+# reference:
+#   https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/logs/v1/logs.proto
+#   https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/common/v1/common.proto
+
 # Protobuf wire types
-WIRE_VARINT = 0
-WIRE_64BIT = 1
-WIRE_LENGTH_DELIMITED = 2
+WIRE_VARINT = 0  # int32, int64, uint32, uint64, sint32, sint64, bool, enum
+WIRE_64BIT = 1  # fixed64, sfixed64, double
+WIRE_LENGTH_DELIMITED = 2  # string, bytes, embedded messages, packed repeated fields
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,8 +45,9 @@ def _encode_string_field(field_number: int, value: str) -> bytes:
     try:
         data = value.encode("utf-8")
     except Exception:
-        _LOGGER.exception("remote_logger non string found at %s: %s", field_number, value)
-        data = b"TYPE ERROR"
+        # don't log or there'll be infinite loop
+        # _LOGGER.exception("remote_logger non string found at %s: %s", field_number, value)
+        data = b"TYPE ERROR (%s)" % value
     return _tag(field_number, WIRE_LENGTH_DELIMITED) + _encode_varint(len(data)) + data
 
 
@@ -72,9 +78,17 @@ def _encode_uint32_field(field_number: int, value: int) -> bytes:
 
 
 def _encode_any_value(av: dict[str, Any]) -> bytes:
-    """Encode an AnyValue message. We only support stringValue (field 1)."""
-    if "stringValue" in av:
-        return _encode_string_field(1, av["stringValue"])
+    """Encode an AnyValue message."""
+    if "string_value" in av:
+        return _encode_string_field(1, av["string_value"])
+    if "int_value" in av:
+        return _encode_uint32_field(3, av["int_value"])
+    if "byte_value" in av:
+        return _encode_bytes_field(7, av["byte_value"])
+    if "bool_value" in av:
+        return _encode_uint32_field(2, 1 if av["bool_value"] else 0)
+    if "float_value" in av:
+        return _encode_fixed64(4, av["float_value"])
     return b""
 
 
@@ -151,9 +165,7 @@ def _encode_scope_logs(scope_logs: dict[str, Any]) -> bytes:
     """Encode a ScopeLogs: scope=1, log_records=2."""
     result = b""
     if "scope" in scope_logs:
-        result += _encode_submessage(
-            1, _encode_instrumentation_scope(scope_logs["scope"])
-        )
+        result += _encode_submessage(1, _encode_instrumentation_scope(scope_logs["scope"]))
     for record in scope_logs.get("logRecords", []):
         result += _encode_submessage(2, _encode_log_record(record))
     return result

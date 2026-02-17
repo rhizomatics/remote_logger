@@ -20,12 +20,15 @@ from custom_components.remote_logger.const import (
     CONF_PORT,
     CONF_PROTOCOL,
     CONF_USE_TLS,
+    DEFAULT_USE_TLS,
+)
+
+from .const import (
     DEFAULT_APP_NAME,
     DEFAULT_FACILITY,
     DEFAULT_PROTOCOL,
     DEFAULT_SYSLOG_PORT,
     DEFAULT_SYSLOG_SEVERITY,
-    DEFAULT_USE_TLS,
     PROTOCOL_TCP,
     PROTOCOL_UDP,
     SYSLOG_FACILITY_MAP,

@@ -18,8 +18,8 @@ from .const import (
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
     DOMAIN,
-    OTLP_LOGS_PATH,
 )
+from .otel.const import OTLP_LOGS_PATH
 from .otel.exporter import OTEL_DATA_SCHEMA, parse_resource_attributes
 from .otel.exporter import validate as otel_validate
 from .syslog.exporter import SYSLOG_DATA_SCHEMA
