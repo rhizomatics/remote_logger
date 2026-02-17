@@ -1,4 +1,4 @@
-"""The ha_remote_logs integration: ship HA system_log_event to an OTLP collector or syslog server."""
+"""The remote_logger integration: ship HA system_log_event to an OTLP collector or syslog server."""
 from __future__ import annotations
 
 import asyncio
@@ -12,12 +12,12 @@ from .const import (
     DOMAIN,
     EVENT_SYSTEM_LOG,
 )
-from .otel import OtlpLogExporter
-from .syslog import SyslogExporter
+from .otel.exporter import OtlpLogExporter
+from .syslog.exporter import SyslogExporter
 
-REF_CANCEL_LISTENER="cancel_listener"
-REF_FLUSH_TASK="flush_task"
-REF_EXPORTER="exporter"
+REF_CANCEL_LISTENER = "cancel_listener"
+REF_FLUSH_TASK = "flush_task"
+REF_EXPORTER = "exporter"
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -32,13 +32,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:  #
 
     exporter: OtlpLogExporter | SyslogExporter
     if backend == BACKEND_SYSLOG:
-        syslog_exp = SyslogExporter(hass, entry)
-        label = syslog_exp.endpoint_desc
-        exporter = syslog_exp
+        exporter = SyslogExporter(hass, entry)
+        label = exporter.endpoint_desc
     else:
-        otel_exp = OtlpLogExporter(hass, entry)
-        label = otel_exp.endpoint_url
-        exporter = otel_exp
+        exporter = OtlpLogExporter(hass, entry)
+        label = exporter.endpoint_url
 
     cancel_listener = hass.bus.async_listen(EVENT_SYSTEM_LOG, exporter.handle_event)
     flush_task: asyncio.Task[None] = asyncio.create_task(exporter.flush_loop())
@@ -51,14 +49,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:  #
     }
 
     _LOGGER.info(
-        "ha_remote_logs: listening for system_log_event, exporting to %s",
+        "remote_logger: listening for system_log_event, exporting to %s",
         label,
     )
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload ha_remote_logs config entry."""
+    """Unload remote_logger config entry."""
     data = hass.data[DOMAIN].pop(entry.entry_id, None)
     if data is None:
         return True
@@ -78,5 +76,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await data[REF_EXPORTER].close()
         del data[REF_EXPORTER]
 
-    _LOGGER.info("ha_remote_logs: unloaded, flushed remaining logs")
+    _LOGGER.info("remote_logger: unloaded, flushed remaining logs")
     return True

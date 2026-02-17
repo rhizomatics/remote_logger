@@ -1,4 +1,4 @@
-"""Config flow for the ha_remote_logs integration."""
+"""Config flow for the remote_logger integration."""
 from __future__ import annotations
 
 import logging
@@ -20,10 +20,10 @@ from .const import (
     DOMAIN,
     OTLP_LOGS_PATH,
 )
-from .otel import OTEL_DATA_SCHEMA, parse_resource_attributes
-from .otel import validate as otel_validate
-from .syslog import SYSLOG_DATA_SCHEMA
-from .syslog import validate as syslog_validate
+from .otel.exporter import OTEL_DATA_SCHEMA, parse_resource_attributes
+from .otel.exporter import validate as otel_validate
+from .syslog.exporter import SYSLOG_DATA_SCHEMA
+from .syslog.exporter import validate as syslog_validate
 
 _LOGGER = logging.getLogger(__name__)
 

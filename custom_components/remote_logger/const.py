@@ -1,4 +1,4 @@
-"""Constants for the ha_remote_logs integration."""
+"""Constants for the remote_logger integration."""
 
 DOMAIN = "remote_logger"
 

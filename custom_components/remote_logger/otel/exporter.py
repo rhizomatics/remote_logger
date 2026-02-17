@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import asyncio
@@ -13,7 +12,7 @@ from homeassistant.const import __version__ as hass_version
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import (
+from custom_components.remote_logger.const import (
     BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_BATCH_MAX_SIZE,
     CONF_ENCODING,
@@ -35,6 +34,7 @@ from .const import (
     SCOPE_VERSION,
     SEVERITY_MAP,
 )
+
 from .protobuf_encoder import encode_export_logs_request
 
 if TYPE_CHECKING:
@@ -43,22 +43,14 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-OTEL_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HOST): str,
-        vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
-        vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
-        vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In(
-            [ENCODING_JSON, ENCODING_PROTOBUF]
-        ),
-        vol.Optional(
-            CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE
-        ): vol.All(int, vol.Range(min=1, max=10000)),
-        vol.Optional(
-            CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES
-        ): str,
-    }
-)
+OTEL_DATA_SCHEMA = vol.Schema({
+    vol.Required(CONF_HOST): str,
+    vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
+    vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
+    vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In([ENCODING_JSON, ENCODING_PROTOBUF]),
+    vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
+    vol.Optional(CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES): str,
+})
 
 
 def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
@@ -88,7 +80,7 @@ def _kv(key: str, value: str) -> dict[str, Any]:
 
 
 async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> dict[str, str]:
- # Validate connectivity
+    # Validate connectivity
     errors: dict[str, str] = {}
     if encoding == ENCODING_PROTOBUF:
         data: bytes = encode_export_logs_request({"resourceLogs": []})
@@ -156,7 +148,12 @@ class OtlpLogExporter:
     @callback
     def handle_event(self, event: Event) -> None:
         """Receive a system_log_event and buffer an OTLP logRecord."""
-        if event.data and event.data.get("source") and len(event.data["source"]) == 2 and "ha_remote_logs/otel" in event.data["source"]:
+        if (
+            event.data
+            and event.data.get("source")
+            and len(event.data["source"]) == 2
+            and "custom_components/remote_logger/otel" in event.data["source"]
+        ):
             # prevent log loops
             return
         record = self._to_log_record(event.data)
@@ -167,7 +164,7 @@ class OtlpLogExporter:
 
     def _to_log_record(self, data: Any) -> dict[str, Any]:
         """Convert a system_log_event payload to an OTLP logRecord dict."""
-        '''
+        """
             "name": str
             "message": list(str)
             "level": str
@@ -176,7 +173,7 @@ class OtlpLogExporter:
             "exception": str
             "count": int
             "first_occurred": float
-        '''
+        """
         timestamp_s: float = data.get("timestamp", time.time())
         time_unix_nano = str(int(timestamp_s * 1_000_000_000))
         observed_time_unix_nano = str(int(time.time() * 1_000_000_000))
@@ -256,22 +253,20 @@ class OtlpLogExporter:
                 if resp.status >= 400:
                     body = await resp.text()
                     _LOGGER.warning(
-                        "ha_remote_logs: OTLP endpoint returned HTTP %s: %s",
+                        "remote_logger: OTLP endpoint returned HTTP %s: %s",
                         resp.status,
                         body[:200],
                     )
 
         except aiohttp.ClientError as err:
-            _LOGGER.warning("ha_remote_logs: failed to send logs: %s", err)
+            _LOGGER.warning("remote_logger: failed to send logs: %s", err)
         except Exception:
-            _LOGGER.exception("ha_remote_logs: unexpected error sending logs")
+            _LOGGER.exception("remote_logger: unexpected error sending logs")
 
     async def close(self) -> None:
         """Clean up resources (no-op for HTTP-based exporter)."""
 
-    def _build_export_request(
-        self, records: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _build_export_request(self, records: list[dict[str, Any]]) -> dict[str, Any]:
         """Wrap logRecords in the ExportLogsServiceRequest envelope."""
         return {
             "resourceLogs": [

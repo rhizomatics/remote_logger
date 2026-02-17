@@ -40,7 +40,7 @@ def _encode_string_field(field_number: int, value: str) -> bytes:
     try:
         data = value.encode("utf-8")
     except Exception:
-        _LOGGER.exception("ha_remote_logs non string found at %s: %s", field_number, value)
+        _LOGGER.exception("remote_logger non string found at %s: %s", field_number, value)
         data = b"TYPE ERROR"
     return _tag(field_number, WIRE_LENGTH_DELIMITED) + _encode_varint(len(data)) + data
 
@@ -180,5 +180,5 @@ def encode_export_logs_request(request: dict[str, Any]) -> bytes:
         try:
             result += _encode_submessage(1, _encode_resource_logs(rl))
         except Exception as e:
-            _LOGGER.error("ha_remote_logs: failed to build protobuf: %s", e)
+            _LOGGER.error("remote_logger: failed to build protobuf: %s", e)
     return result

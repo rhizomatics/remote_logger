@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import asyncio
@@ -13,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 import voluptuous as vol
 from homeassistant.core import Event, HomeAssistant, callback
 
-from .const import (
+from custom_components.remote_logger.const import (
     BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_APP_NAME,
     CONF_FACILITY,
@@ -38,20 +37,14 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-SYSLOG_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HOST): str,
-        vol.Optional(CONF_PORT, default=DEFAULT_SYSLOG_PORT): int,
-        vol.Optional(CONF_PROTOCOL, default=DEFAULT_PROTOCOL): vol.In(
-            [PROTOCOL_UDP, PROTOCOL_TCP]
-        ),
-        vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
-        vol.Optional(CONF_APP_NAME, default=DEFAULT_APP_NAME): str,
-        vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): vol.In(
-            list(SYSLOG_FACILITY_MAP.keys())
-        ),
-    }
-)
+SYSLOG_DATA_SCHEMA = vol.Schema({
+    vol.Required(CONF_HOST): str,
+    vol.Optional(CONF_PORT, default=DEFAULT_SYSLOG_PORT): int,
+    vol.Optional(CONF_PROTOCOL, default=DEFAULT_PROTOCOL): vol.In([PROTOCOL_UDP, PROTOCOL_TCP]),
+    vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
+    vol.Optional(CONF_APP_NAME, default=DEFAULT_APP_NAME): str,
+    vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): vol.In(list(SYSLOG_FACILITY_MAP.keys())),
+})
 
 
 class SyslogExporter:
@@ -86,14 +79,19 @@ class SyslogExporter:
     @callback
     def handle_event(self, event: Event) -> None:
         """Receive a system_log_event and buffer it."""
-        if event.data and event.data.get("source") and len(event.data["source"])==2 and "ha_remote_logs/syslog" in event.data["source"]:
+        if (
+            event.data
+            and event.data.get("source")
+            and len(event.data["source"]) == 2
+            and "custom_components/remote_logger/syslog" in event.data["source"][0]
+        ):
             # prevent log loops
             return
         self._buffer.append(event.data)
 
     def _to_syslog_message(self, data: Any) -> bytes:
         """Convert a system_log_event payload to an RFC 5424 syslog message."""
-        '''
+        """
             "name": str
             "message": list(str)
             "level": str
@@ -102,7 +100,7 @@ class SyslogExporter:
             "exception": str
             "count": int
             "first_occurred": float
-        '''
+        """
         level: str = data.get("level", "INFO").upper()
         severity = SYSLOG_SEVERITY_MAP.get(level, DEFAULT_SYSLOG_SEVERITY)
         pri = self._facility * 8 + severity
@@ -120,8 +118,8 @@ class SyslogExporter:
         sd = "-"
         sd_params: list[str] = []
         source = data.get("source")
-        if source and isinstance(tuple,source):
-            source_path,source_linenum=source
+        if source and isinstance(tuple, source):
+            source_path, source_linenum = source
             sd_params.append(f'source_file="{_sd_escape(source_path)}"')
             sd_params.append(f'source_line="{_sd_escape(source_linenum)}"')
         logger_name = data.get("name")
@@ -170,7 +168,7 @@ class SyslogExporter:
             else:
                 await self._send_tcp(messages)
         except Exception:
-            _LOGGER.exception("ha_remote_logs: unexpected error sending syslog messages")
+            _LOGGER.exception("remote_logger: unexpected error sending syslog messages")
 
     async def _send_udp(self, messages: list[bytes]) -> None:
         """Send syslog messages over UDP."""
@@ -184,7 +182,7 @@ class SyslogExporter:
             for msg in messages:
                 self._udp_transport.sendto(msg)
         except OSError as err:
-            _LOGGER.warning("ha_remote_logs: failed to send syslog via UDP: %s", err)
+            _LOGGER.warning("remote_logger: failed to send syslog via UDP: %s", err)
             self._udp_transport = None
 
     async def _send_tcp(self, messages: list[bytes]) -> None:
@@ -202,7 +200,7 @@ class SyslogExporter:
                 writer.write(frame)
             await writer.drain()
         except (OSError, ConnectionError) as err:
-            _LOGGER.warning("ha_remote_logs: failed to send syslog via TCP: %s", err)
+            _LOGGER.warning("remote_logger: failed to send syslog via TCP: %s", err)
             await self._close_tcp()
 
     async def _connect_tcp(self) -> None:
@@ -238,9 +236,7 @@ def _sd_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"').replace("]", "\\]")
 
 
-async def validate(
-    hass: Any, host: str, port: int, protocol: str, use_tls: bool
-) -> str | None:
+async def validate(hass: Any, host: str, port: int, protocol: str, use_tls: bool) -> str | None:
     """Test connectivity to a syslog endpoint. Returns error key or None."""
     loop = hass.loop
     try:
@@ -249,9 +245,7 @@ async def validate(
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             try:
                 sock.setblocking(False)
-                await loop.run_in_executor(
-                    None, lambda: socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_DGRAM)
-                )
+                await loop.run_in_executor(None, lambda: socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_DGRAM))
             finally:
                 sock.close()
         else:
