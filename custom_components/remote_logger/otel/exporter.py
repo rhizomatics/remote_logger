@@ -251,9 +251,8 @@ class OtlpLogExporter:
             records: list[dict[str, Any]] = self._buffer.copy()
             self._buffer.clear()
 
-        msg = self.generate_submission(records)
-
         try:
+            msg: dict[str, Any] = self.generate_submission(records)
             session = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
             async with session.post(
                 self.endpoint_url,
