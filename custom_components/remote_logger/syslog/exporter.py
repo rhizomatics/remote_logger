@@ -124,7 +124,7 @@ class SyslogExporter:
         if source and isinstance(source, tuple):
             source_path, source_linenum = source
             sd_params.append(f'source_file="{_sd_escape(source_path)}"')
-            sd_params.append(f'source_line="{_sd_escape(source_linenum)}"')
+            sd_params.append(f'source_line="{source_linenum}"')
         logger_name = data.get("name")
         if logger_name:
             sd_params.append(f'logger="{_sd_escape(logger_name)}"')

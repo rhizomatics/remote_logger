@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -200,3 +200,9 @@ class TestSyslogExporter:
     async def test_flush_empty_buffer_is_noop(self, exporter: SyslogExporter) -> None:
         await exporter.flush()
         assert len(exporter._buffer) == 0
+
+    def test_to_protobuf(self, exporter: SyslogExporter, sample_event_data: dict[str, Any]) -> None:
+        msg = exporter._to_syslog_message(sample_event_data).decode("utf-8")
+        assert msg is not None
+        assert msg.startswith('<131>')
+        assert len(msg)>300
