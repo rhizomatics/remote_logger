@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-import re
-from typing import Any
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
-from homeassistant.core import HomeAssistant
 
 from custom_components.remote_logger.syslog.exporter import (
     SyslogExporter,
     _sd_escape,
 )
 
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 # ---------------------------------------------------------------------------
 # _sd_escape

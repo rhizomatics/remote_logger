@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
+import json
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
-from homeassistant.core import HomeAssistant
 
 from custom_components.remote_logger.otel.exporter import (
     OtlpLogExporter,
@@ -14,6 +14,8 @@ from custom_components.remote_logger.otel.exporter import (
     parse_resource_attributes,
 )
 
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 # ---------------------------------------------------------------------------
 # parse_resource_attributes
@@ -162,6 +164,27 @@ class TestOtlpLogExporter:
     def test_to_log_record_multiple_messages(self, exporter: OtlpLogExporter) -> None:
         record = exporter._to_log_record({"message": ["line 1", "line 2", "line 3"]})
         assert record["body"]["string_value"] == "line 1\nline 2\nline 3"
+
+    def test_to_protobuf(self, exporter: OtlpLogExporter, sample_event_data: dict[str, Any]) -> None:
+        record = exporter._to_log_record(sample_event_data)
+        exporter._use_protobuf = True
+        result = exporter.generate_submission([record])
+        assert result["data"] is not None
+        assert isinstance(result["data"], bytes)
+        assert len(result["data"]) > 400
+
+    def test_to_json(self, exporter: OtlpLogExporter, sample_event_data: dict[str, Any]) -> None:
+        record = exporter._to_log_record(sample_event_data)
+        exporter._use_protobuf = False
+        result = exporter.generate_submission([record])
+        payload = json.dumps(result["json"])
+        assert (
+            payload[:324]
+            == '{"resourceLogs": [{"resource": {"attributes": [{"key": "service.name", "value": {"string_value": "core"}}, '
+            '{"key": "service.version", "value": {"string_value": "2026.1.1"}}]}, "scopeLogs": '
+            '[{"scope": {"name": "homeassistant", "version": "1.0.0"}, "logRecords": '
+            '[{"timeUnixNano": "1700000000000000000", "observedTimeUnixNano"'
+        )
 
     def test_handle_event_buffers(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
         assert len(exporter._buffer) == 0

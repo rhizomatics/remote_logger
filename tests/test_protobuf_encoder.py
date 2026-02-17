@@ -13,7 +13,6 @@ from custom_components.remote_logger.otel.protobuf_encoder import (
     encode_export_logs_request,
 )
 
-
 # ---------------------------------------------------------------------------
 # Low-level primitives
 # ---------------------------------------------------------------------------
@@ -127,6 +126,7 @@ class TestEncodeResource:
 
 
 class TestEncodeLogRecord:
+
     def test_full_record(self) -> None:
         record = {
             "timeUnixNano": "1700000000000000000",

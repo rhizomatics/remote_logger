@@ -231,36 +231,34 @@ class OtlpLogExporter:
         except asyncio.CancelledError:
             raise
 
+    def generate_submission(self, records: list[dict[str, Any]]) -> dict[str, Any]:
+        result: dict[str, str | bytes | dict[str, Any]] = {"headers": {}}
+        request = self._build_export_request(records)
+
+        if self._use_protobuf:
+            result["data"] = encode_export_logs_request(request)
+            result["headers"]["Content-Type"] = "application/x-protobuf"  # pyright: ignore[reportIndexIssue]
+        else:
+            result["json"] = request
+            result["headers"]["Content-Type"] = "application/json"  # pyright: ignore[reportIndexIssue]
+        return result
+
     async def flush(self) -> None:
         """Flush all buffered log records to the OTLP endpoint."""
         async with self._lock:
             if not self._buffer:
                 return
-            records = self._buffer.copy()
+            records: list[dict[str, Any]] = self._buffer.copy()
             self._buffer.clear()
 
-        request = self._build_export_request(records)
-
-        if self._use_protobuf:
-            data = encode_export_logs_request(request)
-            content_type = "application/x-protobuf"
-        else:
-            data = None
-            content_type = "application/json"
+        msg = self.generate_submission(records)
 
         try:
             session = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
-            kwargs: dict[str, Any] = {
-                "headers": {"Content-Type": content_type},
-                "timeout": aiohttp.ClientTimeout(total=10),
-            }
-            if self._use_protobuf:
-                kwargs["data"] = data
-            else:
-                kwargs["json"] = request
             async with session.post(
                 self.endpoint_url,
-                **kwargs,
+                timeout=aiohttp.ClientTimeout(total=10),
+                **msg,
             ) as resp:
                 if resp.status >= 400:
                     body = await resp.text()
