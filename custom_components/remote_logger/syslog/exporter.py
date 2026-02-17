@@ -14,6 +14,7 @@ from homeassistant.core import Event, HomeAssistant, callback
 from custom_components.remote_logger.const import (
     BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_APP_NAME,
+    CONF_BATCH_MAX_SIZE,
     CONF_FACILITY,
     CONF_HOST,
     CONF_PORT,
@@ -51,6 +52,7 @@ class SyslogExporter:
         self._app_name = entry.data.get(CONF_APP_NAME, DEFAULT_APP_NAME)
         facility_name = entry.data.get(CONF_FACILITY, DEFAULT_FACILITY)
         self._facility = SYSLOG_FACILITY_MAP.get(facility_name, 1)
+        self._batch_max_size = entry.data.get(CONF_BATCH_MAX_SIZE, 10)
         self._hostname = "-"
 
         # TCP connection state (lazily created)
@@ -77,6 +79,8 @@ class SyslogExporter:
             # prevent log loops
             return
         self._buffer.append(event.data)
+        if len(self._buffer) >= self._batch_max_size:
+            self._hass.async_create_task(self.flush())
 
     def _to_syslog_message(self, data: Any) -> bytes:
         """Convert a system_log_event payload to an RFC 5424 syslog message."""
@@ -149,9 +153,9 @@ class SyslogExporter:
             records = self._buffer.copy()
             self._buffer.clear()
 
-        messages = [self._to_syslog_message(r) for r in records]
-
         try:
+            messages = [self._to_syslog_message(r) for r in records]
+
             if self._protocol == PROTOCOL_UDP:
                 await self._send_udp(messages)
             else:

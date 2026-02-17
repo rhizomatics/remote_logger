@@ -114,8 +114,11 @@ class OtlpLogExporter:
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self._hass = hass
+
         self._buffer: list[dict[str, Any]] = []
         self._lock = asyncio.Lock()
+        self.server_address=hass.config.api.local_ip
+        self.server_port=hass.config.api.port
 
         host = entry.data[CONF_HOST]
         port = entry.data[CONF_PORT]
@@ -133,6 +136,8 @@ class OtlpLogExporter:
         attrs: list[dict[str, Any]] = [
             _kv("service.name", DEFAULT_SERVICE_NAME),
             _kv("service.version", hass_version or "unknown"),
+            _kv("service.address",self.server_address),
+            _kv("service.port",self.server_port)
         ]
 
         raw = entry.data.get(CONF_RESOURCE_ATTRIBUTES, DEFAULT_RESOURCE_ATTRIBUTES)
