@@ -113,7 +113,7 @@ class SyslogExporter:
             sd_params.append(f'source_line="{source_linenum}"')
         logger_name = data.get("name")
         if logger_name:
-            sd_params.append(f'logger="{_sd_escape(logger_name)}"')
+            sd_params.append(f'component="{_sd_escape(logger_name)}"')
         if data.get("count"):
             sd_params.append(f'count="{data["count"]}"')
         if data.get("first_occurred"):

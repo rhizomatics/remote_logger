@@ -192,11 +192,11 @@ class OtlpLogExporter:
             attributes.append(_kv("code.line.number", source_lineno))
         logger_name = data.get("name")
         if data.get("count"):
-            attributes.append(_kv("count", data["count"]))
+            attributes.append(_kv("exception.count", data["count"]))
         if data.get("first_occurred"):
-            attributes.append(_kv("first_occurred", data["first_occurred"]))
+            attributes.append(_kv("exception.first_occurred", data["first_occurred"]))
         if logger_name:
-            attributes.append(_kv("logger.name", logger_name))
+            attributes.append(_kv("code.function.name", logger_name))
         exception = data.get("exception")
         if exception:
             attributes.append(_kv("exception.stacktrace", exception))
