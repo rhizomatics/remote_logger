@@ -1,0 +1,82 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Github Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+
+    steps:
+    - uses: actions/checkout@v6.0.2
+    - name: HACS Action
+      uses: "hacs/action@dcb30e72781db3f207d5236b861172774ab0b485"
+      with:
+        category: "integration"
+    - name: HACS Hassfest
+      uses: "home-assistant/actions/hassfest@55b4a5d23e09d627c2773c2ef82afa98904d65b4"
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    - name: Install uv
+      uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41
+    - name: Install dependencies
+      run: |
+        sudo apt-get install pngquant
+        uv sync
+    - name: Ruff
+      uses:  astral-sh/ruff-action@4919ec5cf1f49eff0871dbcea0da843445b837e6
+    - name: Test with pytest
+      run: |
+        uv run pytest . --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov=custom_components.remote_logger --cov-report=xml --cov-report=html
+    - name: Generate badges
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        uv run genbadge coverage -i coverage.xml -o badges/coverage.svg
+        uv run genbadge tests -i junit/test-results-${{ matrix.python-version }}.xml -o badges/tests.svg
+
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        TEMP_DIR=$(mktemp -d)
+        cd $TEMP_DIR
+        git clone --single-branch --branch badges https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git . 2>/dev/null
+        cp -r ${{ github.workspace }}/badges .
+        git add badges
+        if git commit -m "Update badges [skip ci]"; then
+          git push origin badges --force
+          echo "Badges updated successfully"
+        else
+          echo "No changes to badges"
+        fi
+
+    - name: Upload pytest test results
+      uses: actions/upload-artifact@v5
+      with:
+        name: pytest-results-${{ matrix.python-version }}
+        path: junit/test-results-${{ matrix.python-version }}.xml
+        # Use always() to always run this step to publish test results when there are test failures
+      if: ${{ always() }}
+    - name: Deploy docs
+      # run in the build workflow since schemagen has homeassistant dependency
+      run: |
+        uv sync --group docs
+        uv run mkdocs gh-deploy --force --config-file mkdocs.yml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
