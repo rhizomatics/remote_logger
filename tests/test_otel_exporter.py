@@ -141,10 +141,10 @@ class TestOtlpLogExporter:
         attr_keys = [a["key"] for a in record["attributes"]]
         assert "code.file.path" in attr_keys
         assert "code.line.number" in attr_keys
-        assert "logger.name" in attr_keys
+        assert "code.function.name" in attr_keys
         assert "exception.stacktrace" in attr_keys
-        assert "count" in attr_keys
-        assert "first_occurred" in attr_keys
+        assert "exception.count" in attr_keys
+        assert "exception.first_occurred" in attr_keys
 
     def test_to_log_record_minimal(self, exporter: OtlpLogExporter, minimal_event_data: dict[str, Any]) -> None:
         record = exporter._to_log_record(minimal_event_data)

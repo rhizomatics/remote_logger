@@ -117,8 +117,12 @@ class OtlpLogExporter:
 
         self._buffer: list[dict[str, Any]] = []
         self._lock = asyncio.Lock()
-        self.server_address=hass.config.api.local_ip
-        self.server_port=hass.config.api.port
+        if hass and hass.config and hass.config.api:
+            self.server_address = hass.config.api.local_ip
+            self.server_port = hass.config.api.port
+        else:
+            self.server_address = None
+            self.server_port = None
 
         host = entry.data[CONF_HOST]
         port = entry.data[CONF_PORT]
@@ -135,10 +139,12 @@ class OtlpLogExporter:
         """Build the OTLP Resource object with attributes."""
         attrs: list[dict[str, Any]] = [
             _kv("service.name", DEFAULT_SERVICE_NAME),
-            _kv("service.version", hass_version or "unknown"),
-            _kv("service.address",self.server_address),
-            _kv("service.port",self.server_port)
+            _kv("service.version", hass_version or "unknown")
         ]
+        if self.server_address:
+            attrs.append(_kv("service.address", self.server_address))
+        if self.server_port:
+            attrs.append(_kv("service.port", self.server_port))
 
         raw = entry.data.get(CONF_RESOURCE_ATTRIBUTES, DEFAULT_RESOURCE_ATTRIBUTES)
         if raw and raw.strip():

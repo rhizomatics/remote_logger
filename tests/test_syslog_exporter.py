@@ -131,7 +131,7 @@ class TestSyslogExporter:
             "first_occurred": 1699999000.0,
         }
         msg = exporter._to_syslog_message(data).decode("utf-8")
-        assert '[meta logger="my.logger"' in msg
+        assert '[meta component="my.logger"' in msg
         assert 'count="5"' in msg
         assert 'firstOccurred="1699999000.0"' in msg
 
