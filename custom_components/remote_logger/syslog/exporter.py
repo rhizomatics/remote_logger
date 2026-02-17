@@ -66,6 +66,7 @@ class SyslogExporter:
             f"syslog://{self._host}:{self._port} ({self._protocol.upper()}"
             f"{'+TLS' if self._use_tls and self._protocol != PROTOCOL_UDP else ''})"
         )
+        _LOGGER.info(f"remote_logger: syslog configured for {self.endpoint_desc}")
 
     @callback
     def handle_event(self, event: Event) -> None:

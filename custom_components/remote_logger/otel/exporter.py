@@ -135,6 +135,8 @@ class OtlpLogExporter:
 
         self._resource = self._build_resource(entry)
 
+        _LOGGER.info(f"remote_logger: otel configured for {self.endpoint_url}, protobuf={self._use_protobuf}")
+
     def _build_resource(self, entry: ConfigEntry) -> dict[str, Any]:
         """Build the OTLP Resource object with attributes."""
         attrs: list[dict[str, Any]] = [
