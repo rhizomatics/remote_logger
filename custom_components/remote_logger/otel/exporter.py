@@ -7,7 +7,6 @@ import time
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
-import voluptuous as vol
 from homeassistant.const import __version__ as hass_version
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -20,16 +19,12 @@ from custom_components.remote_logger.const import (
     CONF_PORT,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
-    DEFAULT_BATCH_MAX_SIZE,
 )
 
 from .const import (
-    DEFAULT_ENCODING,
-    DEFAULT_PORT,
     DEFAULT_RESOURCE_ATTRIBUTES,
     DEFAULT_SERVICE_NAME,
     DEFAULT_SEVERITY,
-    DEFAULT_USE_TLS,
     ENCODING_JSON,
     ENCODING_PROTOBUF,
     OTLP_LOGS_PATH,
@@ -43,16 +38,6 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
-
-
-OTEL_DATA_SCHEMA = vol.Schema({
-    vol.Required(CONF_HOST): str,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
-    vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
-    vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In([ENCODING_JSON, ENCODING_PROTOBUF]),
-    vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
-    vol.Optional(CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES): str,
-})
 
 
 def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
