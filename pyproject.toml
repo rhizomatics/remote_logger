@@ -12,7 +12,7 @@ dependencies = [
 [dependency-groups]
 dev=[
     "homeassistant-stubs == 2026.1.1",
-    "pytest==9.0.0",
+    "pytest==9.0.2",
     "pytest-cov==7.0.0",
     "pytest-homeassistant-custom-component>=0.13.306",
     "pytest-unordered",
@@ -64,7 +64,7 @@ exclude = [
 namespaces = true # to disable scanning PEP 420 namespaces (true by default)
 
 [tool.poetry.group.dev.dependencies]
-homeassistant-stubs = "2025.11.3"
+homeassistant-stubs = "2026.2.1"
 
 [tool.ruff]
 line-length = 128
