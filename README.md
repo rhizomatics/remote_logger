@@ -14,6 +14,8 @@ at [Getting Started with HACS](https://www.hacs.xyz/docs/use/).
 
 The integration installs using the Home Assistant integrations page, and has no YAML configuration.
 
+![Choose Integration](./assets/images/config_choose.png)
+
 However, a YAML change is required to the Home Assistant [System Log](https://www.home-assistant.io/integrations/system_log/) integration, to enable event forwarding.
 
 ```yaml title="Home Assistant Configuration"
@@ -25,6 +27,8 @@ system_log:
 
 Logs are sent using Open Telemetry Logs specification over a [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/)(OTLP) connection, either as Protobuf or JSON, and currently only as HTTP (gRPC may be added in future).
 
+![Configure OTLP](./assets/images/config_otel.png)
+
 For more information, see [OpenTelemetry Logging](https://opentelemetry.io/docs/specs/otel/logs/).
 
 ## Syslog
@@ -32,6 +36,8 @@ For more information, see [OpenTelemetry Logging](https://opentelemetry.io/docs/
 Messages are sent using the more recent [RFC5424](https://datatracker.ietf.org/doc/html/rfc5424) format, with additional structured data using OTEL taxonomy (see [Additional Attributes](#additional-attributes)).
 
 Syslog can be sent as TCP or UDP.
+
+![Configure Syslog](./assets/images/config_syslog.png)
 
 ## Additional Attributes
 
