@@ -1,3 +1,22 @@
+![Remote Logger](assets/images/remote-logger-dark-256x256.png){ align=left }
+
+
+# Alarm Auto Arming
+
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![hacs][hacsbadge]][hacs]
+
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/rhizomatics/ha_remote_logger/main.svg)](https://results.pre-commit.ci/latest/github/rhizomatics/ha_remote_logger/main)
+![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
+![Tests](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/tests.svg)
+[![Github Deploy](https://github.com/rhizomatics/ha_remote_logger/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/rhizomatics/ha_remote_logger/actions/workflows/deploy.yml)
+[![CodeQL](https://github.com/rhizomatics/ha_remote_logger/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/rhizomatics/ha_remote_logger/actions/workflows/github-code-scanning/codeql)
+[![Dependabot Updates](https://github.com/rhizomatics/ha_remote_logger/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/rhizomatics/ha_remote_logger/actions/workflows/dependabot/dependabot-updates)
+
+<br/>
+<br/>
+<br/>
+
 # Home Assistant Remote Logger
 
 Listen to Home Assistant system log events and send log telemetry remotely
@@ -14,7 +33,7 @@ at [Getting Started with HACS](https://www.hacs.xyz/docs/use/).
 
 The integration installs using the Home Assistant integrations page, and has no YAML configuration.
 
-![Choose Integration](./assets/images/config_choose.png)
+![Choose Integration](./assets/images/config_choose.png){width=400}
 
 However, a YAML change is required to the Home Assistant [System Log](https://www.home-assistant.io/integrations/system_log/) integration, to enable event forwarding.
 
@@ -27,9 +46,11 @@ system_log:
 
 Logs are sent using Open Telemetry Logs specification over a [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/)(OTLP) connection, either as Protobuf or JSON, and currently only as HTTP (gRPC may be added in future).
 
-![Configure OTLP](./assets/images/config_otel.png)
+![Configure OTLP](./assets/images/config_otel.png){width=500}
 
 For more information, see [OpenTelemetry Logging](https://opentelemetry.io/docs/specs/otel/logs/).
+
+Log records are collected and sent in a bundle
 
 ## Syslog
 
@@ -37,7 +58,7 @@ Messages are sent using the more recent [RFC5424](https://datatracker.ietf.org/d
 
 Syslog can be sent as TCP or UDP.
 
-![Configure Syslog](./assets/images/config_syslog.png)
+![Configure Syslog](./assets/images/config_syslog.png){width=400}
 
 ## Additional Attributes
 

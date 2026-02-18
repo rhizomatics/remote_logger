@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from custom_components.remote_logger.syslog.exporter import (
+    Message,
     SyslogExporter,
     _sd_escape,
 )
@@ -83,7 +84,7 @@ class TestSyslogExporter:
             "first_occurred": 1699999000.0,
         }
         msg = exporter._to_syslog_message(data)
-        text = msg.decode("utf-8")
+        text = msg.payload.decode("utf-8")
 
         # Check RFC 5424 structure: <PRI>1 TIMESTAMP HOSTNAME APP-NAME - - SD MSG
         # PRI = facility(16) * 8 + severity(3 for ERROR) = 131
@@ -94,30 +95,30 @@ class TestSyslogExporter:
     def test_to_syslog_message_pri_calculation(self, exporter: SyslogExporter) -> None:
         # facility=16 (local0), severity=7 (DEBUG) -> PRI = 16*8 + 7 = 135
         data = {"level": "DEBUG", "message": ["debug msg"], "timestamp": 1700000000.0}
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         assert msg.startswith("<135>1 ")
 
     def test_to_syslog_message_warning_severity(self, exporter: SyslogExporter) -> None:
         # facility=16, severity=4 (WARNING) -> PRI = 132
         data = {"level": "WARNING", "message": ["warn"], "timestamp": 1700000000.0}
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         assert msg.startswith("<132>1 ")
 
     def test_to_syslog_message_critical_severity(self, exporter: SyslogExporter) -> None:
         # facility=16, severity=2 (CRITICAL) -> PRI = 130
         data = {"level": "CRITICAL", "message": ["crit"], "timestamp": 1700000000.0}
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         assert msg.startswith("<130>1 ")
 
     def test_to_syslog_message_default_severity(self, exporter: SyslogExporter) -> None:
         # Unknown level falls back to 6 (INFO) -> PRI = 134
         data = {"level": "TRACE", "message": ["trace"], "timestamp": 1700000000.0}
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         assert msg.startswith("<134>1 ")
 
     def test_to_syslog_message_includes_timestamp(self, exporter: SyslogExporter) -> None:
         data = {"message": ["test"], "timestamp": 1700000000.0}
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         # Should contain ISO 8601 timestamp
         assert "2023-11-14T" in msg
 
@@ -130,14 +131,14 @@ class TestSyslogExporter:
             "count": 5,
             "first_occurred": 1699999000.0,
         }
-        msg = exporter._to_syslog_message(data).decode("utf-8")
-        assert '[meta code.function.name="my.logger"' in msg
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
+        assert '[opentelemetry code.function.name="my.logger"' in msg
         assert 'exception.count="5"' in msg
         assert 'exception.first_occurred="1699999000.0"' in msg
 
     def test_to_syslog_message_no_message(self, exporter: SyslogExporter) -> None:
         data = {"level": "INFO", "timestamp": 1700000000.0}
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         # Empty message list -> "-"
         # The msg field should be just "-" before any exception
         assert "- -" in msg  # PROCID=- MSGID=-
@@ -149,13 +150,13 @@ class TestSyslogExporter:
             "timestamp": 1700000000.0,
             "exception": "ValueError: bad",
         }
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         assert "error happened" in msg
         assert "ValueError: bad" in msg
 
     def test_to_syslog_message_empty_messages(self, exporter: SyslogExporter) -> None:
         data = {"message": [], "level": "INFO", "timestamp": 1700000000.0}
-        msg = exporter._to_syslog_message(data).decode("utf-8")
+        msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         # empty message list -> "-"
         assert " - -" in msg or msg.endswith(" -")
 
@@ -202,7 +203,7 @@ class TestSyslogExporter:
         assert len(exporter._buffer) == 0
 
     def test_to_protobuf(self, exporter: SyslogExporter, sample_event_data: dict[str, Any]) -> None:
-        msg = exporter._to_syslog_message(sample_event_data).decode("utf-8")
+        msg = exporter._to_syslog_message(sample_event_data).payload.decode("utf-8")
         assert msg is not None
         assert msg.startswith("<131>")
         assert len(msg) > 300
@@ -275,7 +276,7 @@ class TestSyslogExporter:
         mock_loop.create_datagram_endpoint = AsyncMock(return_value=(mock_transport, None))
 
         with patch("asyncio.get_running_loop", return_value=mock_loop):
-            await exporter._send_udp([b"hello", b"world"])
+            await exporter._send_udp([Message(b"hello"), Message(b"world")])
 
         assert exporter._udp_transport is mock_transport
         assert mock_transport.sendto.call_count == 2
@@ -285,7 +286,7 @@ class TestSyslogExporter:
         mock_transport.is_closing.return_value = False
         exporter._udp_transport = mock_transport
 
-        await exporter._send_udp([b"msg"])
+        await exporter._send_udp([Message(b"msg")])
 
         mock_transport.sendto.assert_called_once_with(b"msg")
 
@@ -296,7 +297,7 @@ class TestSyslogExporter:
         mock_loop.create_datagram_endpoint = AsyncMock(side_effect=OSError("refused"))
 
         with patch("asyncio.get_running_loop", return_value=mock_loop):
-            await exporter._send_udp([b"msg"])
+            await exporter._send_udp([Message(b"msg")])
 
         assert exporter._udp_transport is None
 
@@ -309,7 +310,7 @@ class TestSyslogExporter:
         mock_writer.drain = AsyncMock()
         exporter._tcp_writer = mock_writer
 
-        await exporter._send_tcp([b"test"])
+        await exporter._send_tcp([Message(b"test")])
 
         mock_writer.write.assert_called_once()
         mock_writer.drain.assert_awaited_once()
@@ -322,7 +323,7 @@ class TestSyslogExporter:
         mock_writer.drain = AsyncMock(side_effect=OSError("broken pipe"))
         exporter._tcp_writer = mock_writer
 
-        await exporter._send_tcp([b"test"])
+        await exporter._send_tcp([Message(b"test")])
         # Should have called _close_tcp
         assert exporter._tcp_writer is None
 

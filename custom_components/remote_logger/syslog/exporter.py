@@ -6,6 +6,7 @@ import logging
 import socket
 import ssl
 import time
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -32,9 +33,17 @@ from .const import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class Message:
+    payload: bytes
+    sent: bool = False
 
 
 class SyslogExporter:
@@ -42,7 +51,8 @@ class SyslogExporter:
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self._hass = hass
-        self._buffer: list[Any] = []
+        self._buffer: list[Mapping[str, Any]] = []
+        self._in_progress: list[Message] = []
         self._lock = asyncio.Lock()
 
         self._host = entry.data[CONF_HOST]
@@ -83,7 +93,7 @@ class SyslogExporter:
         if len(self._buffer) >= self._batch_max_size:
             self._hass.async_create_task(self.flush())
 
-    def _to_syslog_message(self, data: Any) -> bytes:
+    def _to_syslog_message(self, data: Mapping[str, Any]) -> Message:
         """Convert a system_log_event payload to an RFC 5424 syslog message."""
         """
             "name": str
@@ -129,13 +139,13 @@ class SyslogExporter:
             sd_params.append(f'exception.stacktrace="{data["exception"]}"')
 
         if sd_params:
-            sd = f"[meta {' '.join(sd_params)}]"
+            sd = f"[opentelemetry {' '.join(sd_params)}]"
 
         # RFC 5424: <PRI>VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID SP SD [SP MSG]
         # VERSION = 1, PROCID = -, MSGID = -
         syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - - {sd} {msg}"
 
-        return syslog_line.encode("utf-8", errors="replace")
+        return Message(syslog_line.encode("utf-8", errors="replace"))
 
     async def flush_loop(self) -> None:
         """Periodically flush buffered log records."""
@@ -148,23 +158,30 @@ class SyslogExporter:
 
     async def flush(self) -> None:
         """Flush all buffered log records to the syslog endpoint."""
+        records: list[Mapping[str, Any]] | None = None
         async with self._lock:
-            if not self._buffer:
-                return
-            records = self._buffer.copy()
-            self._buffer.clear()
+            if not self._in_progress:
+                if not self._buffer:
+                    return
+                records = self._buffer.copy()
+                self._buffer.clear()
 
         try:
-            messages = [self._to_syslog_message(r) for r in records]
+            if records:
+                self._in_progress = [self._to_syslog_message(r) for r in records]
+            else:
+                self._in_progress = [m for m in self._in_progress if not m.sent]
 
             if self._protocol == PROTOCOL_UDP:
-                await self._send_udp(messages)
+                await self._send_udp(self._in_progress)
             else:
-                await self._send_tcp(messages)
+                await self._send_tcp(self._in_progress)
+
+            self._in_progress = [m for m in self._in_progress if not m.sent]
         except Exception:
             _LOGGER.exception("remote_logger: unexpected error sending syslog messages")
 
-    async def _send_udp(self, messages: list[bytes]) -> None:
+    async def _send_udp(self, messages: list[Message]) -> None:
         """Send syslog messages over UDP."""
         try:
             if self._udp_transport is None or self._udp_transport.is_closing():
@@ -174,25 +191,29 @@ class SyslogExporter:
                     remote_addr=(self._host, self._port),
                 )
             for msg in messages:
-                self._udp_transport.sendto(msg)
+                self._udp_transport.sendto(msg.payload)
+                msg.sent = True
         except OSError as err:
             _LOGGER.warning("remote_logger: failed to send syslog via UDP: %s", err)
             self._udp_transport = None
 
-    async def _send_tcp(self, messages: list[bytes]) -> None:
+    async def _send_tcp(self, messages: list[Message]) -> None:
         """Send syslog messages over TCP with octet-counting framing (RFC 6587)."""
         try:
             if self._tcp_writer is None or self._tcp_writer.is_closing():
                 await self._connect_tcp()
 
-            writer = self._tcp_writer
-            assert writer is not None  # Set by _connect_tcp above
+            writer: asyncio.StreamWriter | None = self._tcp_writer
+            if writer is None:
+                raise OSError("Unable to create TCP writer")  # Set by _connect_tcp above
 
             for msg in messages:
                 # Octet-counting: "LEN SP MSG"
-                frame = f"{len(msg)} ".encode("ascii") + msg
+                frame = f"{len(msg.payload)} ".encode("ascii") + msg.payload
                 writer.write(frame)
             await writer.drain()
+            for msg in messages:
+                msg.sent = True
         except (OSError, ConnectionError) as err:
             _LOGGER.warning("remote_logger: failed to send syslog via TCP: %s", err)
             await self._close_tcp()

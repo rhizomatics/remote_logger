@@ -116,6 +116,7 @@ class OtlpLogExporter:
         self._hass = hass
 
         self._buffer: list[dict[str, Any]] = []
+        self._in_progress: dict[str, Any] | None = None
         self._lock = asyncio.Lock()
         if hass and hass.config and hass.config.api:
             self.server_address = hass.config.api.local_ip
@@ -246,20 +247,23 @@ class OtlpLogExporter:
 
     async def flush(self) -> None:
         """Flush all buffered log records to the OTLP endpoint."""
+        records: list[dict[str, Any]] | None = None
         async with self._lock:
-            if not self._buffer:
-                return
-            records: list[dict[str, Any]] = self._buffer.copy()
-            self._buffer.clear()
+            if not self._in_progress:
+                if not self._buffer:
+                    return
+                records = self._buffer.copy()
+                self._buffer.clear()
 
         try:
-            msg: dict[str, Any] = self.generate_submission(records)
-            session = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
-            async with session.post(
-                self.endpoint_url,
-                timeout=aiohttp.ClientTimeout(total=10),
-                **msg,
-            ) as resp:
+            if records and not self._in_progress:
+                msg: dict[str, Any] = self.generate_submission(records)
+            elif self._in_progress:
+                msg = self._in_progress
+            else:
+                return
+            session: aiohttp.ClientSession = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
+            async with session.post(self.endpoint_url, timeout=aiohttp.ClientTimeout(total=10), **msg) as resp:
                 if resp.status >= 400:
                     body = await resp.text()
                     _LOGGER.warning(
@@ -267,11 +271,15 @@ class OtlpLogExporter:
                         resp.status,
                         body[:200],
                     )
+                if resp.ok or (resp.status >= 400 and resp.status < 500):
+                    # records were sent, or there was a client-side error
+                    self._in_progress = None
 
         except aiohttp.ClientError as err:
             _LOGGER.warning("remote_logger: failed to send logs: %s", err)
         except Exception:
-            _LOGGER.exception("remote_logger: unexpected error sending logs")
+            _LOGGER.exception("remote_logger: unexpected error sending logs, skipping records")
+            self._in_progress = None
 
     async def close(self) -> None:
         """Clean up resources (no-op for HTTP-based exporter)."""
