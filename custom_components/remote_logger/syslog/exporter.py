@@ -114,22 +114,22 @@ class SyslogExporter:
         source = data.get("source")
         if source and isinstance(source, tuple):
             source_path, source_linenum = source
-            sd_params.append(f'source_file="{_sd_escape(source_path)}"')
-            sd_params.append(f'source_line="{source_linenum}"')
+            sd_params.append(f'code.file.path="{_sd_escape(source_path)}"')
+            sd_params.append(f'code.line.number="{source_linenum}"')
         logger_name = data.get("name")
         if logger_name:
-            sd_params.append(f'component="{_sd_escape(logger_name)}"')
+            sd_params.append(f'code.function.name="{_sd_escape(logger_name)}"')
         if data.get("count"):
-            sd_params.append(f'count="{data["count"]}"')
+            sd_params.append(f'exception.count="{data["count"]}"')
         if data.get("first_occurred"):
-            sd_params.append(f'firstOccurred="{data["first_occurred"]}"')
+            sd_params.append(f'exception.first_occurred="{data["first_occurred"]}"')
         if sd_params:
             sd = f"[meta {' '.join(sd_params)}]"
 
         # Include exception as part of message if present
         exception = data.get("exception")
         if exception:
-            msg = f"{msg}\n{exception}"
+            sd_params.append(f'exception.stacktrace="{data["exception"]}"')
 
         # RFC 5424: <PRI>VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID SP SD [SP MSG]
         # VERSION = 1, PROCID = -, MSGID = -
