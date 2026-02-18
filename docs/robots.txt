@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://rhizomatics.github.io/ha_remote_logger/sitemap.xml
+Sitemap: https://remote_logger.rhizomatics.org.uk

@@ -1,5 +1,5 @@
 site_name: Home Assistant Remote Logger
-site_url: https://github.com/rhizomatics/ha_remote_logger
+site_url: https://remote_logger.rhizomatics.org.uk
 site_description: Remote Logging for Home Assistant using Syslog or OTEL
 
 repo_name: rhizomatics/ha_remote_logger

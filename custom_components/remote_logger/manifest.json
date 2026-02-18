@@ -4,7 +4,7 @@
   "codeowners": ["@jey"],
   "config_flow": true,
   "dependencies": ["system_log"],
-  "documentation": "https://github.com/rhizomatics/ha_remote_logger",
+  "documentation": "https://remote_logger.rhizomatics.org.uk",
   "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/rhizomatics/ha_remote_logger/issues",
