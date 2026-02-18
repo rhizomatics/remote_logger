@@ -123,13 +123,13 @@ class SyslogExporter:
             sd_params.append(f'exception.count="{data["count"]}"')
         if data.get("first_occurred"):
             sd_params.append(f'exception.first_occurred="{data["first_occurred"]}"')
-        if sd_params:
-            sd = f"[meta {' '.join(sd_params)}]"
 
-        # Include exception as part of message if present
         exception = data.get("exception")
         if exception:
             sd_params.append(f'exception.stacktrace="{data["exception"]}"')
+
+        if sd_params:
+            sd = f"[meta {' '.join(sd_params)}]"
 
         # RFC 5424: <PRI>VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID SP SD [SP MSG]
         # VERSION = 1, PROCID = -, MSGID = -

@@ -131,9 +131,9 @@ class TestSyslogExporter:
             "first_occurred": 1699999000.0,
         }
         msg = exporter._to_syslog_message(data).decode("utf-8")
-        assert '[meta component="my.logger"' in msg
-        assert 'count="5"' in msg
-        assert 'firstOccurred="1699999000.0"' in msg
+        assert '[meta code.function.name="my.logger"' in msg
+        assert 'exception.count="5"' in msg
+        assert 'exception.first_occurred="1699999000.0"' in msg
 
     def test_to_syslog_message_no_message(self, exporter: SyslogExporter) -> None:
         data = {"level": "INFO", "timestamp": 1700000000.0}
