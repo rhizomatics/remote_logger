@@ -47,7 +47,7 @@ jobs:
       run: |
         uv run pytest . --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov=custom_components.remote_logger --cov-report=xml --cov-report=html
     - name: Create Orphan Branch
-      uses: action-badges/create-orphan-branch@0.1.1
+      uses: action-badges/create-orphan-branch@ad8308a8dded1b6a359b067044b6d2b9bc81d810
       with:
         branch-name: badges
     - name: Generate badges

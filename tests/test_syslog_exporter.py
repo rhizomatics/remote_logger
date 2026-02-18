@@ -57,7 +57,7 @@ class TestSyslogExporter:
         assert exporter._hostname == "-"
 
     def test_endpoint_desc(self, exporter: SyslogExporter) -> None:
-        assert "syslog://syslog.example.com:514" in exporter.endpoint_desc
+        assert exporter.endpoint_desc.startswith("syslog://syslog.example.com:514")
         assert "UDP" in exporter.endpoint_desc
 
     def test_endpoint_desc_tcp_tls(self, hass: HomeAssistant) -> None:
