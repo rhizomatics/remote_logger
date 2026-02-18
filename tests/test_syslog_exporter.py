@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
+from urllib.parse import urlparse
 
 import pytest
 
@@ -57,8 +58,12 @@ class TestSyslogExporter:
         assert exporter._hostname == "-"
 
     def test_endpoint_desc(self, exporter: SyslogExporter) -> None:
-        assert exporter.endpoint_desc.startswith("syslog://syslog.example.com:514")
-        assert "UDP" in exporter.endpoint_desc
+        url, protocol = exporter.endpoint_desc.split(" ")
+        assert protocol == "(UDP)"
+        parsed = urlparse(url)
+        assert parsed.scheme == "syslog"
+        assert parsed.hostname == "syslog.example.com"
+        assert parsed.port == 514
 
     def test_endpoint_desc_tcp_tls(self, hass: HomeAssistant) -> None:
         entry = MagicMock()
