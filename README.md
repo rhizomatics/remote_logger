@@ -1,7 +1,7 @@
 ![Remote Logger](assets/images/remote-logger-dark-256x256.png){ align=left }
 
 
-# Alarm Auto Arming
+# Home Assistant Remote Logger
 
 [![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![hacs][hacsbadge]][hacs]
 
@@ -17,10 +17,9 @@
 <br/>
 <br/>
 
-# Home Assistant Remote Logger
 
-Listen to Home Assistant system log events and send log telemetry remotely
-using Syslog or OTEL.
+Listens to Home Assistant system log events and sends log events to a remotely
+Syslog or OpenTelemetry collector.
 
 Logs structure is preserved from the Home Assistant internal event, so multi-line logs and stacktraces are preserved as single log entries, unlike console scrapers which will create a log event per line, and will capture script names, line numbers and versions properly.
 
