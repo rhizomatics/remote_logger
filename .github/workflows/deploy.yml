@@ -46,6 +46,10 @@ jobs:
     - name: Test with pytest
       run: |
         uv run pytest . --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov=custom_components.remote_logger --cov-report=xml --cov-report=html
+    - name: Create Orphan Branch
+      uses: action-badges/create-orphan-branch@0.1.1
+      with:
+        branch-name: badges
     - name: Generate badges
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
