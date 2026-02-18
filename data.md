@@ -11,4 +11,3 @@ Resource	Describes the source of the log.
 InstrumentationScope	Describes the scope that emitted the log.
 Attributes	Additional information about the event.
 EventName	Name that identifies the class / type of event.
-

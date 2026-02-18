@@ -126,7 +126,6 @@ class TestEncodeResource:
 
 
 class TestEncodeLogRecord:
-
     def test_full_record(self) -> None:
         record = {
             "timeUnixNano": "1700000000000000000",
@@ -149,6 +148,17 @@ class TestEncodeLogRecord:
         result = _encode_log_record(record)
         assert len(result) > 0
         assert b"hi" in result
+
+    def test_record_with_trace_and_span_id(self) -> None:
+        record = {
+            "severityNumber": 9,
+            "body": {"string_value": "traced"},
+            "traceId": "0102030405060708090a0b0c0d0e0f10",
+            "spanId": "0102030405060708",
+        }
+        result = _encode_log_record(record)
+        assert len(result) > 0
+        assert b"\x01\x02\x03\x04\x05\x06\x07\x08" in result
 
 
 # ---------------------------------------------------------------------------

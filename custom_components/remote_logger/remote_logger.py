@@ -1,4 +1,5 @@
 """The remote_logger integration: ship HA system_log_event to an OTLP collector or syslog server."""
+
 from __future__ import annotations
 
 import asyncio
@@ -48,10 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         REF_EXPORTER: exporter,
     }
 
-    _LOGGER.info(
-        "remote_logger: listening for system_log_event, exporting %s to %s",
-        backend, label
-    )
+    _LOGGER.info("remote_logger: listening for system_log_event, exporting %s to %s", backend, label)
     return True
 
 

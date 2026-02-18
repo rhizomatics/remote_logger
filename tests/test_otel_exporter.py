@@ -73,8 +73,7 @@ class TestKv:
         assert _kv("key", 42) == {"key": "key", "value": {"int_value": 42}}
 
     def test_bool_value(self) -> None:
-        # Note: bool is subclass of int, so isinstance(True, int) matches first in _kv
-        assert _kv("key", True) == {"key": "key", "value": {"int_value": True}}
+        assert _kv("key", True) == {"key": "key", "value": {"bool_value": True}}
 
     def test_float_value(self) -> None:
         assert _kv("key", 3.14) == {"key": "key", "value": {"float_value": 3.14}}
@@ -229,3 +228,211 @@ class TestOtlpLogExporter:
         # Should not raise and not attempt any HTTP calls
         await exporter.flush()
         assert len(exporter._buffer) == 0
+
+    def test_init_with_api_config(self, mock_entry_otel: MagicMock) -> None:
+        mock_hass = MagicMock()
+        mock_hass.config.api.local_ip = "192.168.1.100"
+        mock_hass.config.api.port = 8123
+
+        exporter = OtlpLogExporter(mock_hass, mock_entry_otel)
+
+        assert exporter.server_address == "192.168.1.100"
+        assert exporter.server_port == 8123
+        attr_keys = [a["key"] for a in exporter._resource["attributes"]]
+        assert "service.address" in attr_keys
+        assert "service.port" in attr_keys
+
+    def test_handle_event_triggers_flush_at_batch_size(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import patch
+
+        exporter._batch_max_size = 1
+        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+            exporter.handle_event(mock_event)
+        mock_create_task.assert_called_once()
+
+    def test_handle_event_exception_is_logged(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import patch
+
+        with patch.object(exporter, "_to_log_record", side_effect=RuntimeError("bad")):
+            exporter.handle_event(mock_event)
+        assert len(exporter._buffer) == 0
+
+    async def test_flush_loop_cancelled(self, exporter: OtlpLogExporter) -> None:
+        import asyncio
+        from unittest.mock import patch
+
+        with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+            with pytest.raises(asyncio.CancelledError):
+                await exporter.flush_loop()
+
+    async def test_flush_sends_data_json(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        exporter.handle_event(mock_event)
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        with patch(
+            "custom_components.remote_logger.otel.exporter.async_get_clientsession",
+            return_value=mock_session,
+        ):
+            await exporter.flush()
+
+        assert len(exporter._buffer) == 0
+        mock_session.post.assert_called_once()
+
+    async def test_flush_logs_on_http_error(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        exporter.handle_event(mock_event)
+
+        mock_resp = MagicMock()
+        mock_resp.status = 500
+        mock_resp.text = AsyncMock(return_value="server error")
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        with patch(
+            "custom_components.remote_logger.otel.exporter.async_get_clientsession",
+            return_value=mock_session,
+        ):
+            await exporter.flush()
+        # Should not raise
+
+    async def test_flush_handles_client_error(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import patch
+
+        import aiohttp
+
+        exporter.handle_event(mock_event)
+
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(side_effect=aiohttp.ClientError("conn failed"))
+
+        with patch(
+            "custom_components.remote_logger.otel.exporter.async_get_clientsession",
+            return_value=mock_session,
+        ):
+            await exporter.flush()
+        # Should not raise
+
+    async def test_flush_protobuf(self, exporter_with_attrs: OtlpLogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        exporter_with_attrs.handle_event(mock_event)
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        with patch(
+            "custom_components.remote_logger.otel.exporter.async_get_clientsession",
+            return_value=mock_session,
+        ):
+            await exporter_with_attrs.flush()
+
+        assert len(exporter_with_attrs._buffer) == 0
+
+    async def test_close_is_noop(self, exporter: OtlpLogExporter) -> None:
+        await exporter.close()  # Should not raise
+
+
+class TestOtelValidate:
+    async def test_json_success(self) -> None:
+        from unittest.mock import AsyncMock
+
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
+        assert result == {}
+
+    async def test_protobuf_success(self) -> None:
+        from unittest.mock import AsyncMock
+
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        result = await validate(mock_session, "http://localhost:4318/v1/logs", "protobuf")
+        assert result == {}
+
+    async def test_4xx_returns_cannot_connect(self) -> None:
+        from unittest.mock import AsyncMock
+
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_resp = MagicMock()
+        mock_resp.status = 401
+        mock_resp.text = AsyncMock(return_value="unauthorized")
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
+        assert result == {"base": "cannot_connect"}
+
+    async def test_5xx_returns_cannot_connect(self) -> None:
+        from unittest.mock import AsyncMock
+
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_resp = MagicMock()
+        mock_resp.status = 503
+        mock_resp.text = AsyncMock(return_value="service unavailable")
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
+        assert result == {"base": "cannot_connect"}
+
+    async def test_client_error(self) -> None:
+        import aiohttp
+
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(side_effect=aiohttp.ClientError("refused"))
+
+        result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
+        assert result == {"base": "cannot_connect"}
+
+    async def test_unknown_error(self) -> None:
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(side_effect=RuntimeError("unexpected"))
+
+        result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
+        assert result == {"base": "unknown"}
+
+    async def test_unknown_encoding_raises(self) -> None:
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_session = MagicMock()
+        with pytest.raises(ValueError, match="Unknown encoding"):
+            await validate(mock_session, "http://localhost/v1/logs", "xml")

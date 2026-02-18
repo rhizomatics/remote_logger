@@ -137,6 +137,6 @@ addopts = [
     "--cov-report=xml:cov.xml",
     "--cov-report=html",
     "--cov-report=term-missing",
-    "--cov=custom_components.ha_remote_logs",
+    "--cov=custom_components/remote_logger",
     "--cov-fail-under=90"
 ]

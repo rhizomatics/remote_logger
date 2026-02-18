@@ -1,4 +1,5 @@
 """Config flow for the remote_logger integration."""
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,8 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 2
 
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None  # noqa: ARG002
+        self,
+        user_input: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> ConfigFlowResult:
         """Show menu to choose backend type."""
         return self.async_show_menu(
@@ -48,9 +50,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             menu_options=["otel", "syslog"],
         )
 
-    async def async_step_otel(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_otel(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle OpenTelemetry OTLP configuration."""
         errors: dict[str, str] = {}
 
@@ -86,9 +86,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_syslog(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_syslog(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle Syslog RFC 5424 configuration."""
         errors: dict[str, str] = {}
 
@@ -99,9 +97,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             use_tls = user_input.get(CONF_USE_TLS, False)
 
             # Validate connectivity
-            error = await syslog_validate(
-                self.hass, host, port, protocol, use_tls
-            )
+            error = await syslog_validate(self.hass, host, port, protocol, use_tls)
             if error:
                 errors["base"] = error
 

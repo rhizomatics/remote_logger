@@ -65,10 +65,10 @@ def _kv(key: str, value: Any) -> dict[str, Any]:
     """Build an OTLP KeyValue attribute"""
     if isinstance(value, str):
         return {"key": key, "value": {"string_value": value}}
-    if isinstance(value, int):
-        return {"key": key, "value": {"int_value": value}}
     if isinstance(value, bool):
         return {"key": key, "value": {"bool_value": value}}
+    if isinstance(value, int):
+        return {"key": key, "value": {"int_value": value}}
     if isinstance(value, float):
         return {"key": key, "value": {"float_value": value}}
     if isinstance(value, bytes):
@@ -141,7 +141,7 @@ class OtlpLogExporter:
         """Build the OTLP Resource object with attributes."""
         attrs: list[dict[str, Any]] = [
             _kv("service.name", DEFAULT_SERVICE_NAME),
-            _kv("service.version", hass_version or "unknown")
+            _kv("service.version", hass_version or "unknown"),
         ]
         if self.server_address:
             attrs.append(_kv("service.address", self.server_address))
@@ -238,10 +238,10 @@ class OtlpLogExporter:
 
         if self._use_protobuf:
             result["data"] = encode_export_logs_request(request)
-            result["headers"]["Content-Type"] = "application/x-protobuf"  # pyright: ignore[reportIndexIssue]
+            result["headers"]["Content-Type"] = "application/x-protobuf"  # type: ignore
         else:
             result["json"] = request
-            result["headers"]["Content-Type"] = "application/json"  # pyright: ignore[reportIndexIssue]
+            result["headers"]["Content-Type"] = "application/json"  # type: ignore
         return result
 
     async def flush(self) -> None:

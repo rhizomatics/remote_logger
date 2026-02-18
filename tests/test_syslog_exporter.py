@@ -204,5 +204,242 @@ class TestSyslogExporter:
     def test_to_protobuf(self, exporter: SyslogExporter, sample_event_data: dict[str, Any]) -> None:
         msg = exporter._to_syslog_message(sample_event_data).decode("utf-8")
         assert msg is not None
-        assert msg.startswith('<131>')
+        assert msg.startswith("<131>")
         assert len(msg) > 300
+
+    def test_handle_event_triggers_flush_at_batch_size(self, exporter: SyslogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import patch
+
+        exporter._batch_max_size = 1
+        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+            exporter.handle_event(mock_event)
+        mock_create_task.assert_called_once()
+
+    async def test_flush_loop_cancelled(self, exporter: SyslogExporter) -> None:
+        import asyncio
+        from unittest.mock import patch
+
+        with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+            with pytest.raises(asyncio.CancelledError):
+                await exporter.flush_loop()
+
+    async def test_flush_sends_via_udp(self, exporter: SyslogExporter, mock_event: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        exporter.handle_event(mock_event)
+
+        mock_transport = MagicMock()
+        mock_transport.is_closing.return_value = False
+        mock_loop = MagicMock()
+        mock_loop.create_datagram_endpoint = AsyncMock(return_value=(mock_transport, None))
+
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            await exporter.flush()
+
+        assert len(exporter._buffer) == 0
+        mock_transport.sendto.assert_called_once()
+
+    async def test_flush_sends_via_tcp(self, hass: HomeAssistant, mock_event: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        entry = MagicMock()
+        entry.data = {
+            "host": "syslog.example.com",
+            "port": 514,
+            "protocol": "tcp",
+            "use_tls": False,
+            "app_name": "homeassistant",
+            "facility": "local0",
+        }
+        exporter = SyslogExporter(hass, entry)
+        exporter.handle_event(mock_event)
+
+        mock_writer = AsyncMock()
+        mock_writer.is_closing.return_value = False
+
+        async def fake_connect() -> None:
+            exporter._tcp_writer = mock_writer
+
+        with patch.object(exporter, "_connect_tcp", side_effect=fake_connect):
+            await exporter.flush()
+
+        assert len(exporter._buffer) == 0
+        mock_writer.drain.assert_awaited_once()
+
+    async def test_send_udp_creates_transport(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        mock_transport = MagicMock()
+        mock_transport.is_closing.return_value = False
+        mock_loop = MagicMock()
+        mock_loop.create_datagram_endpoint = AsyncMock(return_value=(mock_transport, None))
+
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            await exporter._send_udp([b"hello", b"world"])
+
+        assert exporter._udp_transport is mock_transport
+        assert mock_transport.sendto.call_count == 2
+
+    async def test_send_udp_reuses_existing_transport(self, exporter: SyslogExporter) -> None:
+        mock_transport = MagicMock()
+        mock_transport.is_closing.return_value = False
+        exporter._udp_transport = mock_transport
+
+        await exporter._send_udp([b"msg"])
+
+        mock_transport.sendto.assert_called_once_with(b"msg")
+
+    async def test_send_udp_os_error_clears_transport(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        mock_loop = MagicMock()
+        mock_loop.create_datagram_endpoint = AsyncMock(side_effect=OSError("refused"))
+
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            await exporter._send_udp([b"msg"])
+
+        assert exporter._udp_transport is None
+
+    async def test_send_tcp_with_existing_writer(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock
+
+        # Use MagicMock for is_closing (sync) and AsyncMock only for drain (async)
+        mock_writer = MagicMock()
+        mock_writer.is_closing.return_value = False
+        mock_writer.drain = AsyncMock()
+        exporter._tcp_writer = mock_writer
+
+        await exporter._send_tcp([b"test"])
+
+        mock_writer.write.assert_called_once()
+        mock_writer.drain.assert_awaited_once()
+
+    async def test_send_tcp_os_error_closes(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock
+
+        mock_writer = MagicMock()
+        mock_writer.is_closing.return_value = False
+        mock_writer.drain = AsyncMock(side_effect=OSError("broken pipe"))
+        exporter._tcp_writer = mock_writer
+
+        await exporter._send_tcp([b"test"])
+        # Should have called _close_tcp
+        assert exporter._tcp_writer is None
+
+    async def test_connect_tcp_no_tls(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        mock_reader = MagicMock()
+        mock_writer = MagicMock()
+
+        with patch("asyncio.wait_for", new=AsyncMock(return_value=(mock_reader, mock_writer))):
+            await exporter._connect_tcp()
+
+        assert exporter._tcp_reader is mock_reader
+        assert exporter._tcp_writer is mock_writer
+
+    async def test_connect_tcp_with_tls(self, hass: HomeAssistant) -> None:
+        import ssl
+        from unittest.mock import AsyncMock, patch
+
+        entry = MagicMock()
+        entry.data = {
+            "host": "secure.host",
+            "port": 6514,
+            "protocol": "tcp",
+            "use_tls": True,
+            "app_name": "ha",
+            "facility": "local0",
+        }
+        exporter = SyslogExporter(hass, entry)
+
+        mock_reader = MagicMock()
+        mock_writer = MagicMock()
+
+        with patch("asyncio.wait_for", new=AsyncMock(return_value=(mock_reader, mock_writer))):
+            with patch("ssl.create_default_context", return_value=MagicMock(spec=ssl.SSLContext)):
+                await exporter._connect_tcp()
+
+        assert exporter._tcp_writer is mock_writer
+
+    async def test_close_tcp_with_writer(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock
+
+        mock_writer = AsyncMock()
+        exporter._tcp_writer = mock_writer
+        exporter._tcp_reader = MagicMock()
+
+        await exporter._close_tcp()
+
+        mock_writer.close.assert_called_once()
+        assert exporter._tcp_writer is None
+        assert exporter._tcp_reader is None
+
+    async def test_close_all_resources(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock
+
+        mock_udp = MagicMock()
+        mock_writer = AsyncMock()
+        exporter._udp_transport = mock_udp
+        exporter._tcp_writer = mock_writer
+
+        await exporter.close()
+
+        mock_udp.close.assert_called_once()
+        assert exporter._udp_transport is None
+        assert exporter._tcp_writer is None
+
+
+class TestSyslogValidate:
+    async def test_udp_success(self, hass: HomeAssistant) -> None:
+        from unittest.mock import patch
+
+        from custom_components.remote_logger.syslog.exporter import validate
+
+        with patch("socket.socket"):
+            with patch("socket.getaddrinfo", return_value=[("AF_INET", "SOCK_DGRAM", 0, "", ("127.0.0.1", 514))]):
+                result = await validate(hass, "localhost", 514, "udp", False)
+
+        assert result is None
+
+    async def test_tcp_success(self, hass: HomeAssistant) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        from custom_components.remote_logger.syslog.exporter import validate
+
+        mock_writer = AsyncMock()
+        with patch("asyncio.wait_for", new=AsyncMock(return_value=(MagicMock(), mock_writer))):
+            result = await validate(hass, "localhost", 514, "tcp", False)
+
+        assert result is None
+        mock_writer.close.assert_called_once()
+
+    async def test_tcp_connection_refused(self, hass: HomeAssistant) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        from custom_components.remote_logger.syslog.exporter import validate
+
+        with patch("asyncio.wait_for", new=AsyncMock(side_effect=ConnectionRefusedError)):
+            result = await validate(hass, "localhost", 514, "tcp", False)
+
+        assert result == "cannot_connect"
+
+    async def test_udp_os_error(self, hass: HomeAssistant) -> None:
+        from unittest.mock import patch
+
+        from custom_components.remote_logger.syslog.exporter import validate
+
+        with patch("socket.socket", side_effect=OSError("network unreachable")):
+            result = await validate(hass, "localhost", 514, "udp", False)
+
+        assert result == "cannot_connect"
+
+    async def test_unknown_error(self, hass: HomeAssistant) -> None:
+        from unittest.mock import patch
+
+        from custom_components.remote_logger.syslog.exporter import validate
+
+        with patch("socket.socket", side_effect=RuntimeError("unexpected")):
+            result = await validate(hass, "localhost", 514, "udp", False)
+
+        assert result == "unknown"
