@@ -1,0 +1,45 @@
+services:
+  vector:
+    image: timberio/vector:latest-debian
+    container_name: vector
+    user: "994:994"
+    group_add:
+      - "119" # docker group, for access to daemon socket
+      - "101" # systemd-journal group
+    command: --config /etc/vector/vector.yaml
+    volumes:
+      - ./conf:/etc/vector
+      - ./logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./vector_data:/var/vector
+    ports:
+      - 8686:8686
+      - 514:514/udp
+      - 5514:5514/tcp
+      - 4317:4317/tcp # otel gRPC
+      - 4318:4318/tcp # otel http
+    #environment:
+        #- VECTOR_LOG=debug,hyper=debug,h2=debug
+    cap_add:
+      - CAP_NET_BIND_SERVICE
+    restart: always
+  greptime:
+    image: greptime/greptimedb:latest
+    container_name: greptime
+    restart: always
+    volumes:
+      - ./greptimedb_data:/greptimedb_data
+      - ./conf/greptime.toml:/etc/greptime/config.toml
+    ports:
+      - 4000:4000
+      - 4001:4001
+      - 4002:4002
+      - 4003:4003
+    command:
+      - standalone
+      - start
+      - --http-addr=0.0.0.0:4000
+      - --rpc-bind-addr=0.0.0.0:4001
+      - --mysql-addr=127.0.0.1:4002
+      - --postgres-addr=127.0.0.1:4003
+      - --config-file=/etc/greptime/config.toml

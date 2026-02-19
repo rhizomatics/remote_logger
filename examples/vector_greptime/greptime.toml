@@ -1,0 +1,118 @@
+## The default timezone of the server.
+default_timezone = "Europe/London"
+
+## The default column prefix for auto-created time index and value columns.
+default_column_prefix = "greptime"
+
+## Initialize all regions in the background during the startup.
+## By default, it provides services after all regions have been initialized.
+init_regions_in_background = false
+
+## Parallelism of initializing regions.
+init_regions_parallelism = 16
+
+## The maximum current queries allowed to be executed. Zero means unlimited.
+## NOTE: This setting affects scan_memory_limit's privileged tier allocation.
+## When set, 70% of queries get privileged memory access (full scan_memory_limit).
+## The remaining 30% get standard tier access (70% of scan_memory_limit).
+max_concurrent_queries = 3
+
+## Enable telemetry to collect anonymous usage data. Enabled by default.
+enable_telemetry = false
+
+[http]
+addr = "0.0.0.0:4000"
+## HTTP request timeout. Set to 0 to disable timeout.
+timeout = "0s"
+## HTTP request body limit.
+## The following units are supported: `B`, `KB`, `KiB`, `MB`, `MiB`, `GB`, `GiB`, `TB`, `TiB`, `PB`, `PiB`.
+## Set to 0 to disable limit.
+body_limit = "64MB"
+enable_cors = true
+prom_validation_mode = "lossy"
+
+[mysql]
+enable = true
+addr = "127.0.0.1:4002"
+## The number of server worker threads.
+runtime_size = 2
+## Server-side keep-alive time.
+## Set to 0 (default) to disable.
+keep_alive = "0s"
+## Maximum entries in the MySQL prepared statement cache; default is 10,000.
+prepared_stmt_cache_size= 10000
+# MySQL server TLS options.
+
+[postgres]
+enable = true
+addr = "127.0.0.1:4003"
+## The number of server worker threads.
+runtime_size = 2
+## Server-side keep-alive time.
+## Set to 0 (default) to disable.
+keep_alive = "0s"
+
+[opentsdb]
+enable = true
+
+[influxdb]
+enable = true
+
+[jaeger]
+enable = false
+
+[prom_store]
+enable = true
+## Whether to store the data from Prometheus remote write in metric engine.
+with_metric_engine = true
+
+[wal]
+provider = "raft_engine"
+dir = "./greptimedb_data/wal"
+file_size = "128MB"
+purge_threshold = "1GB"
+purge_interval = "1m"
+read_batch_size = 128
+sync_write = false
+enable_log_recycle = true
+prefill_log_files = false
+sync_period = "10s"
+recovery_parallelism = 2
+overwrite_entry_start_id = false
+
+[metadata_store]
+file_size = "64MB"
+purge_threshold = "256MB"
+purge_interval = "1m"
+
+[procedure]
+max_retry_times = 3
+retry_delay = "500ms"
+max_running_procedures = 128
+
+[flow]
+[query]
+parallelism = 0
+
+## Memory pool size for query execution operators (aggregation, sorting, join).
+## Supports absolute size (e.g., "2GB", "4GB") or percentage of system memory (e.g., "20%").
+## Setting it to 0 disables the limit (unbounded, default behavior).
+## When this limit is reached, queries will fail with ResourceExhausted error.
+## NOTE: This does NOT limit memory used by table scans.
+memory_pool_size = "25%"
+
+[storage]
+data_home = "./greptimedb_data"
+type = "File"
+cache_capacity = "5GiB"
+
+[logging]
+dir = "/logs"
+level = "info"
+enable_otlp_tracing = false
+append_stdout = true
+log_format = "json"
+max_log_files = 720
+
+[slow_query]
+enable = true

@@ -1,0 +1,136 @@
+data_dir: /var/vector
+schema:
+  log_namespace: false
+
+api:
+    enabled: true
+    address: 0.0.0.0:8686
+
+sources:
+
+  vector_logs:
+    type: "internal_logs"
+
+  otlp:
+    type: opentelemetry
+    grpc:
+      address: 0.0.0.0:4317
+    http:
+      address: 0.0.0.0:4318
+      headers: []
+      keepalive:
+        max_connection_age_jitter_factor: 0.1
+        max_connection_age_secs: 300
+    use_otlp_decoding: false
+
+  dockernuc_journald:
+    type: journald
+
+  dockernuc_docker:
+    type: docker_logs
+    exclude_containers:
+      - vector
+      - greptime
+
+  syslog_daemon:
+    type: syslog
+    address: 0.0.0.0:514
+    mode: udp
+
+  syslog_daemon_tcp:
+     type: syslog
+     address: 0.0.0.0:5514
+     mode: tcp
+
+transforms:
+  vector_errors:
+    type: "filter"
+    inputs:
+      - "vector_logs"
+    condition: '.metadata.level != "INFO"'
+
+  remap_docker:
+    inputs:
+      - "dockernuc_docker"
+    type: "remap"
+    source: |
+      # Map container_name to appname
+      if exists(.container_name) {
+        .appname = .container_name
+        del(.container_name)
+      }
+      . = filter(object(.)) -> |key, _value| {
+        !starts_with(key, "label")
+      }
+
+  remap_syslog:
+    inputs:
+       - "syslog_daemon"
+       - "syslog_daemon_tcp"
+    type:   "remap"
+    drop_on_error: false
+    drop_on_abort: true
+    source: |
+      # Ensure message is a string and strip ANSI color codes
+      .message = strip_ansi_escape_codes(string!(.message))
+
+      # Try to parse syslog format
+      parsed, err = parse_syslog(.message)
+
+      # remove Home Assistant from HAOS LogSpout since richer events received from Remote Logger
+      if .appname == "homeassistant" {
+        abort
+      }
+
+      if err == null {
+        . = merge(., parsed)
+        # Normalize msg -> message
+        if exists(.msg) {
+          .message = .msg
+          del(.msg)
+        }
+      }
+
+      # Ensure consistent types matching schema
+      .procid = if exists(.procid) {
+        if is_string(.procid) {
+          to_int(.procid) ?? 0
+        } else if is_integer(.procid) {
+        .procid
+        } else {
+        0
+      }
+      } else {
+        0
+      }
+      # remove redundant timestamp in message
+      ts_match = parse_regex(.message, r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+Z?\s*(?P<msg>.*)') ?? {}
+      if exists(ts_match.msg) {
+        .message = string!(ts_match.msg)
+      }
+      .severity = if exists(.severity) { string!(.severity) } else { "info" }
+
+      # CRITICAL: Remove timestamp string - conflicts with greptime_timestamp
+      del(.timestamp)
+      del(.version)  # Also remove version if not needed
+
+sinks:
+  file_vector:
+    type: "file"
+    inputs:
+      - "vector_errors"
+    compression: "none"
+    path: "/logs/internal_vector.log"
+    encoding:
+      codec: "json"
+  greptime:
+    inputs:
+      - "remap_syslog"
+      - "remap_docker"
+      - "otlp.logs"
+      - "dockernuc_journald"
+    type: "greptimedb_logs"
+    endpoint: http://greptime:4000
+    dbname: public
+    compression: gzip
+    table: logs
