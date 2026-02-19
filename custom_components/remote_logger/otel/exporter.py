@@ -20,6 +20,7 @@ from custom_components.remote_logger.const import (
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
 )
+from custom_components.remote_logger.helpers import isotimestamp
 
 from .const import (
     DEFAULT_RESOURCE_ATTRIBUTES,
@@ -178,7 +179,7 @@ class OtlpLogExporter:
 
     def _to_log_record(self, data: Any) -> dict[str, Any]:
         """Convert a system_log_event payload to an OTLP logRecord dict."""
-        """
+        """ HA System Log Event
             "name": str
             "message": list(str)
             "level": str
@@ -190,7 +191,7 @@ class OtlpLogExporter:
         """
         timestamp_s: float = data.get("timestamp", time.time())
         time_unix_nano = str(int(timestamp_s * 1_000_000_000))
-        observed_time_unix_nano = str(int(time.time() * 1_000_000_000))
+        observed_time_unix_nano = str(time.time_ns())
 
         level: str = data.get("level", "INFO").upper()
         severity_number, severity_text = SEVERITY_MAP.get(level, DEFAULT_SEVERITY)
@@ -208,13 +209,14 @@ class OtlpLogExporter:
         if data.get("count"):
             attributes.append(_kv("exception.count", data["count"]))
         if data.get("first_occurred"):
-            attributes.append(_kv("exception.first_occurred", data["first_occurred"]))
+            attributes.append(_kv("exception.first_occurred", isotimestamp(data["first_occurred"])))
         if logger_name:
             attributes.append(_kv("code.function.name", logger_name))
         exception = data.get("exception")
         if exception:
             attributes.append(_kv("exception.stacktrace", exception))
 
+        # https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/logs/v1/logs.proto
         return {
             "timeUnixNano": time_unix_nano,
             "observedTimeUnixNano": observed_time_unix_nano,

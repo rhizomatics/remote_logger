@@ -7,7 +7,6 @@ import socket
 import ssl
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import Event, HomeAssistant, callback
@@ -22,6 +21,7 @@ from custom_components.remote_logger.const import (
     CONF_PROTOCOL,
     CONF_USE_TLS,
 )
+from custom_components.remote_logger.helpers import isotimestamp
 
 from .const import (
     DEFAULT_APP_NAME,
@@ -109,10 +109,9 @@ class SyslogExporter:
         severity = SYSLOG_SEVERITY_MAP.get(level, DEFAULT_SYSLOG_SEVERITY)
         pri = self._facility * 8 + severity
 
-        # RFC 5424 timestamp
+        # RFC 3339 timestamp
         timestamp_s: float = data.get("timestamp", time.time())
-        dt = datetime.fromtimestamp(timestamp_s, tz=UTC)
-        timestamp = dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        timestamp = isotimestamp(timestamp_s)
 
         # Message body
         messages: list[str] = data.get("message", [])
@@ -132,7 +131,7 @@ class SyslogExporter:
         if data.get("count"):
             sd_params.append(f'exception.count="{data["count"]}"')
         if data.get("first_occurred"):
-            sd_params.append(f'exception.first_occurred="{data["first_occurred"]}"')
+            sd_params.append(f'exception.first_occurred="{isotimestamp(data["first_occurred"])}"')
 
         exception = data.get("exception")
         if exception:
