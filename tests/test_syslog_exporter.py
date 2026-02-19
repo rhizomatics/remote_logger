@@ -139,7 +139,7 @@ class TestSyslogExporter:
         msg = exporter._to_syslog_message(data).payload.decode("utf-8")
         assert '[opentelemetry code.function.name="my.logger"' in msg
         assert 'exception.count="5"' in msg
-        assert 'exception.first_occurred="1699999000.0"' in msg
+        assert 'exception.first_occurred="2023-11-14T13:56:40-08:00"' in msg
 
     def test_to_syslog_message_no_message(self, exporter: SyslogExporter) -> None:
         data = {"level": "INFO", "timestamp": 1700000000.0}

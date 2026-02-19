@@ -63,7 +63,7 @@ def _encode_submessage(field_number: int, data: bytes) -> bytes:
 
 def _encode_fixed64(field_number: int, value: int) -> bytes:
     """Encode a fixed64 field (tag + 8 bytes little-endian)."""
-    return _tag(field_number, WIRE_64BIT) + struct.pack("<l", value)
+    return _tag(field_number, WIRE_64BIT) + struct.pack("<q", value)
 
 
 def _encode_uint32_field(field_number: int, value: int) -> bytes:
