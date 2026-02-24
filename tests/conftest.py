@@ -21,6 +21,8 @@ def mock_entry_otel() -> ConfigEntry:
     """Create a mock ConfigEntry for OTEL backend."""
     entry = MagicMock(spec=ConfigEntry)
     entry.entry_id = "test_otel_entry"
+    entry.domain = "remote_logger"
+    entry.title = "OTel Remote Logger"
     entry.data = {
         "host": "localhost",
         "port": 4318,
@@ -38,6 +40,8 @@ def mock_entry_otel_protobuf() -> ConfigEntry:
     """Create a mock ConfigEntry for OTEL backend with protobuf encoding."""
     entry = MagicMock(spec=ConfigEntry)
     entry.entry_id = "test_otel_proto_entry"
+    entry.domain = "remote_logger"
+    entry.title = "OTel Remote Logger"
     entry.data = {
         "host": "localhost",
         "port": 4318,
@@ -55,6 +59,8 @@ def mock_entry_syslog() -> ConfigEntry:
     """Create a mock ConfigEntry for syslog backend."""
     entry = MagicMock(spec=ConfigEntry)
     entry.entry_id = "test_syslog_entry"
+    entry.domain = "remote_logger"
+    entry.title = "Syslog Remote Logger"
     entry.data = {
         "host": "syslog.example.com",
         "port": 514,

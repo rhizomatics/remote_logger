@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from custom_components.remote_logger import async_setup_entry, async_unload_entry
 from custom_components.remote_logger.const import DOMAIN
@@ -13,14 +13,12 @@ from custom_components.remote_logger.const import DOMAIN
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 
 class TestAsyncSetupEntry:
-    async def test_otel_backend(
-        self, hass: HomeAssistant, mock_entry_otel: ConfigEntry, mock_entities_callback: AddConfigEntryEntitiesCallback
-    ) -> None:
-        result = await async_setup_entry(hass, mock_entry_otel, mock_entities_callback)
+    async def test_otel_backend(self, hass: HomeAssistant, mock_entry_otel: ConfigEntry) -> None:
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            result = await async_setup_entry(hass, mock_entry_otel)
 
         assert result is True
         assert mock_entry_otel.entry_id in hass.data[DOMAIN]
@@ -33,10 +31,9 @@ class TestAsyncSetupEntry:
         with contextlib.suppress(asyncio.CancelledError):
             await entry_data["flush_task"]
 
-    async def test_syslog_backend(
-        self, hass: HomeAssistant, mock_entry_syslog: ConfigEntry, mock_entities_callback: AddConfigEntryEntitiesCallback
-    ) -> None:
-        result = await async_setup_entry(hass, mock_entry_syslog, mock_entities_callback)
+    async def test_syslog_backend(self, hass: HomeAssistant, mock_entry_syslog: ConfigEntry) -> None:
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            result = await async_setup_entry(hass, mock_entry_syslog)
 
         assert result is True
         assert mock_entry_syslog.entry_id in hass.data[DOMAIN]
@@ -68,7 +65,8 @@ class TestAsyncUnloadEntry:
     async def test_unload_cancels_task_and_flushes(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
         cancel_listener, flush_task, mock_exporter = await self._setup_entry_data(hass, mock_entry_otel.entry_id)
 
-        result = await async_unload_entry(hass, mock_entry_otel)
+        with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
+            result = await async_unload_entry(hass, mock_entry_otel)
 
         assert result is True
         assert flush_task.cancelled()
@@ -79,5 +77,6 @@ class TestAsyncUnloadEntry:
 
     async def test_unload_missing_entry_returns_true(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
         hass.data[DOMAIN] = {}
-        result = await async_unload_entry(hass, mock_entry_otel)
+        with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
+            result = await async_unload_entry(hass, mock_entry_otel)
         assert result is True

@@ -23,7 +23,7 @@ class LoggerEntity(BinarySensorEntity):
         self.event_count: int = 0
         self.sent_count: int = 0
         self.last_exception_message: str | None = None
-        self.last_exception_time: dt.datetime | None = None
+        self.last_exception: dt.datetime | None = None
 
     @property
     def is_on(self) -> bool:  # pyright: ignore[reportIncompatibleVariableOverride]
@@ -34,7 +34,7 @@ class LoggerEntity(BinarySensorEntity):
         """Return the state attributes."""
         return {
             "last_exception_message": self.last_exception_message,
-            "last_exception_time": self.last_exception.isoformat() if self.last_exception else None,
+            "last_exception": self.last_exception.isoformat() if self.last_exception else None,
             "exception_count": self.exception_count,
             "event_count": self.event_count,
             "last_event": self.last_event.isoformat() if self.last_event else None,
