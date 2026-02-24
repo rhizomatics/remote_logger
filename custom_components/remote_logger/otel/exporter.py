@@ -11,6 +11,7 @@ from homeassistant.const import __version__ as hass_version
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from custom_components.remote_logger.base import LoggerEntity
 from custom_components.remote_logger.const import (
     BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_BATCH_MAX_SIZE,
@@ -110,10 +111,11 @@ async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> d
     return errors
 
 
-class OtlpLogExporter:
+class OtlpLogExporter(LoggerEntity):
     """Buffers system_log_event records and flushes them as OTLP/HTTP JSON."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        super().__init__()
         self._hass = hass
 
         self._buffer: list[dict[str, Any]] = []
@@ -160,6 +162,7 @@ class OtlpLogExporter:
     @callback
     def handle_event(self, event: Event) -> None:
         """Receive a system_log_event and buffer an OTLP logRecord."""
+        self.on_event()
         if (
             event.data
             and event.data.get("source")
@@ -176,6 +179,7 @@ class OtlpLogExporter:
                 self._hass.async_create_task(self.flush())
         except Exception as e:
             _LOGGER.error("remote_logger: otel handler failure %s on %s", e, event.data)
+            self.on_error(str(e))
 
     def _to_log_record(self, data: Any) -> dict[str, Any]:
         """Convert a system_log_event payload to an OTLP logRecord dict."""
@@ -273,14 +277,18 @@ class OtlpLogExporter:
                         resp.status,
                         body[:200],
                     )
+                    self.on_error(body)
                 if resp.ok or (resp.status >= 400 and resp.status < 500):
                     # records were sent, or there was a client-side error
                     self._in_progress = None
+                    self.on_success()
 
         except aiohttp.ClientError as err:
             _LOGGER.warning("remote_logger: failed to send logs: %s", err)
-        except Exception:
+            self.on_error(str(err))
+        except Exception as e:
             _LOGGER.exception("remote_logger: unexpected error sending logs, skipping records")
+            self.on_error(str(e))
             self._in_progress = None
 
     async def close(self) -> None:

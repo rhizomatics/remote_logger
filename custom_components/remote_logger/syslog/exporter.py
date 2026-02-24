@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import Event, HomeAssistant, callback
 
+from custom_components.remote_logger.base import LoggerEntity
 from custom_components.remote_logger.const import (
     BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_APP_NAME,
@@ -46,12 +47,13 @@ class Message:
     sent: bool = False
 
 
-class SyslogExporter:
+class SyslogExporter(LoggerEntity):
     """Buffers system_log_event records and flushes them as RFC 5424 syslog messages."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        super().__init__()
         self._hass = hass
-        self._buffer: list[Mapping[str, Any]] = []
+        self._buffer: list[Message] = []
         self._in_progress: list[Message] = []
         self._lock = asyncio.Lock()
 
@@ -81,6 +83,7 @@ class SyslogExporter:
     @callback
     def handle_event(self, event: Event) -> None:
         """Receive a system_log_event and buffer it."""
+        self.on_event()
         if (
             event.data
             and event.data.get("source")
@@ -89,7 +92,7 @@ class SyslogExporter:
         ):
             # prevent log loops
             return
-        self._buffer.append(event.data)
+        self._buffer.append(self._to_syslog_message(event.data))
         if len(self._buffer) >= self._batch_max_size:
             self._hass.async_create_task(self.flush())
 
@@ -157,7 +160,7 @@ class SyslogExporter:
 
     async def flush(self) -> None:
         """Flush all buffered log records to the syslog endpoint."""
-        records: list[Mapping[str, Any]] | None = None
+        records: list[Message] | None = None
         async with self._lock:
             if not self._in_progress:
                 if not self._buffer:
@@ -167,7 +170,7 @@ class SyslogExporter:
 
         try:
             if records:
-                self._in_progress = [self._to_syslog_message(r) for r in records]
+                self._in_progress = records
             else:
                 self._in_progress = [m for m in self._in_progress if not m.sent]
 
@@ -175,7 +178,7 @@ class SyslogExporter:
                 await self._send_udp(self._in_progress)
             else:
                 await self._send_tcp(self._in_progress)
-
+            self.on_success()
             self._in_progress = [m for m in self._in_progress if not m.sent]
         except Exception:
             _LOGGER.exception("remote_logger: unexpected error sending syslog messages")

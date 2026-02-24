@@ -11,12 +11,16 @@ from custom_components.remote_logger import async_setup_entry, async_unload_entr
 from custom_components.remote_logger.const import DOMAIN
 
 if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 
 class TestAsyncSetupEntry:
-    async def test_otel_backend(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        result = await async_setup_entry(hass, mock_entry_otel)
+    async def test_otel_backend(
+        self, hass: HomeAssistant, mock_entry_otel: ConfigEntry, mock_entities_callback: AddConfigEntryEntitiesCallback
+    ) -> None:
+        result = await async_setup_entry(hass, mock_entry_otel, mock_entities_callback)
 
         assert result is True
         assert mock_entry_otel.entry_id in hass.data[DOMAIN]
@@ -29,8 +33,10 @@ class TestAsyncSetupEntry:
         with contextlib.suppress(asyncio.CancelledError):
             await entry_data["flush_task"]
 
-    async def test_syslog_backend(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
-        result = await async_setup_entry(hass, mock_entry_syslog)
+    async def test_syslog_backend(
+        self, hass: HomeAssistant, mock_entry_syslog: ConfigEntry, mock_entities_callback: AddConfigEntryEntitiesCallback
+    ) -> None:
+        result = await async_setup_entry(hass, mock_entry_syslog, mock_entities_callback)
 
         assert result is True
         assert mock_entry_syslog.entry_id in hass.data[DOMAIN]

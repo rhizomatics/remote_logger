@@ -6,12 +6,20 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import Event
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 
 @pytest.fixture
-def mock_entry_otel() -> MagicMock:
+def mock_entities_callback() -> AddConfigEntryEntitiesCallback:
+    return MagicMock(spec=AddConfigEntryEntitiesCallback)
+
+
+@pytest.fixture
+def mock_entry_otel() -> ConfigEntry:
     """Create a mock ConfigEntry for OTEL backend."""
-    entry = MagicMock()
+    entry = MagicMock(spec=ConfigEntry)
     entry.entry_id = "test_otel_entry"
     entry.data = {
         "host": "localhost",
@@ -26,9 +34,9 @@ def mock_entry_otel() -> MagicMock:
 
 
 @pytest.fixture
-def mock_entry_otel_protobuf() -> MagicMock:
+def mock_entry_otel_protobuf() -> ConfigEntry:
     """Create a mock ConfigEntry for OTEL backend with protobuf encoding."""
-    entry = MagicMock()
+    entry = MagicMock(spec=ConfigEntry)
     entry.entry_id = "test_otel_proto_entry"
     entry.data = {
         "host": "localhost",
@@ -43,9 +51,9 @@ def mock_entry_otel_protobuf() -> MagicMock:
 
 
 @pytest.fixture
-def mock_entry_syslog() -> MagicMock:
+def mock_entry_syslog() -> ConfigEntry:
     """Create a mock ConfigEntry for syslog backend."""
-    entry = MagicMock()
+    entry = MagicMock(spec=ConfigEntry)
     entry.entry_id = "test_syslog_entry"
     entry.data = {
         "host": "syslog.example.com",
@@ -85,16 +93,16 @@ def minimal_event_data() -> dict[str, Any]:
 
 
 @pytest.fixture
-def mock_event(sample_event_data: dict[str, Any]) -> MagicMock:
+def mock_event(sample_event_data: dict[str, Any]) -> Event:
     """Create a mock HA Event with sample data."""
-    event = MagicMock()
+    event = MagicMock(spec=Event)
     event.data = sample_event_data
     return event
 
 
 @pytest.fixture
-def mock_event_minimal(minimal_event_data: dict[str, Any]) -> MagicMock:
+def mock_event_minimal(minimal_event_data: dict[str, Any]) -> Event:
     """Create a mock HA Event with minimal data."""
-    event = MagicMock()
+    event = MagicMock(spec=Event)
     event.data = minimal_event_data
     return event
