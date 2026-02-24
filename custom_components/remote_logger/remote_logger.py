@@ -23,29 +23,21 @@ REF_EXPORTER = "exporter"
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-
-    from custom_components.remote_logger.base import LoggerEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
-) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up remote logs from a config entry."""
     backend = entry.data.get(CONF_BACKEND)
 
     exporter: OtlpLogExporter | SyslogExporter
-    entities: list[LoggerEntity] = []
     if backend == BACKEND_SYSLOG:
         exporter = SyslogExporter(hass, entry)
         label: str = exporter.endpoint_desc
-        entities.append(exporter)
     else:
         exporter = OtlpLogExporter(hass, entry)
         label = exporter.endpoint_url
-        entities.append(exporter)
 
     cancel_listener = hass.bus.async_listen(EVENT_SYSTEM_LOG, exporter.handle_event)
     flush_task: asyncio.Task[None] = asyncio.create_task(exporter.flush_loop())
@@ -56,7 +48,7 @@ async def async_setup_entry(
         REF_FLUSH_TASK: flush_task,
         REF_EXPORTER: exporter,
     }
-    async_add_entities(entities)
+    await hass.config_entries.async_forward_entry_setups(entry, ["binary_sensor"])
 
     _LOGGER.info("remote_logger: listening for system_log_event, exporting %s to %s", backend, label)
     return True
@@ -64,6 +56,7 @@ async def async_setup_entry(
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload remote_logger config entry."""
+    await hass.config_entries.async_unload_platforms(entry, ["binary_sensor"])
     data = hass.data[DOMAIN].pop(entry.entry_id, None)
     if data is None:
         return True
