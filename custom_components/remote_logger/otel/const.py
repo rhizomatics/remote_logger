@@ -1,10 +1,9 @@
 import voluptuous as vol
+from homeassistant.const import CONF_HOST, CONF_PORT
 
 from custom_components.remote_logger.const import (
     CONF_BATCH_MAX_SIZE,
     CONF_ENCODING,
-    CONF_HOST,
-    CONF_PORT,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
     DEFAULT_BATCH_MAX_SIZE,

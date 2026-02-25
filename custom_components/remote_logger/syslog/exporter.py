@@ -9,15 +9,13 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, cast
 
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_PROTOCOL
 from homeassistant.core import Event, HomeAssistant, callback
 
 from custom_components.remote_logger.const import (
     CONF_APP_NAME,
     CONF_BATCH_MAX_SIZE,
     CONF_FACILITY,
-    CONF_HOST,
-    CONF_PORT,
-    CONF_PROTOCOL,
     CONF_USE_TLS,
 )
 from custom_components.remote_logger.exporter import LogExporter, LogMessage

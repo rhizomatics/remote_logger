@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_PROTOCOL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
@@ -13,9 +14,6 @@ from .const import (
     BACKEND_SYSLOG,
     CONF_BACKEND,
     CONF_ENCODING,
-    CONF_HOST,
-    CONF_PORT,
-    CONF_PROTOCOL,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
     DOMAIN,

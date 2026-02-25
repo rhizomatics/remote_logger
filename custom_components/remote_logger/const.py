@@ -8,8 +8,6 @@ BACKEND_OTEL = "otel"
 BACKEND_SYSLOG = "syslog"
 
 # Common config entry data keys
-CONF_HOST = "host"
-CONF_PORT = "port"
 CONF_USE_TLS = "use_tls"
 
 # OTel-specific config keys
@@ -18,7 +16,6 @@ CONF_ENCODING = "encoding"
 CONF_BATCH_MAX_SIZE = "batch_max_size"
 
 # Syslog-specific config keys
-CONF_PROTOCOL = "protocol"
 CONF_APP_NAME = "app_name"
 CONF_FACILITY = "facility"
 

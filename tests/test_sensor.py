@@ -26,7 +26,7 @@ class TestLoggerEntity:
     def test_unique_id_uses_exporter_name(self, mock_exporter: MagicMock) -> None:
         description = SENSORS[0]  # format_errors
         entity = LoggerEntity(mock_exporter, description)
-        assert entity._attr_unique_id == "OTLP @ localhost:4318_format_errors"
+        assert entity._attr_unique_id == "otlp_localhost_4318_format_errors"
 
     def test_unique_ids_differ_for_same_type_different_name(self, mock_exporter: MagicMock) -> None:
         exporter2 = MagicMock()

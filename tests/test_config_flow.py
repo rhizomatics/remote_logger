@@ -7,13 +7,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant import config_entries
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_PROTOCOL
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.remote_logger.config_flow import _build_endpoint_url
 from custom_components.remote_logger.const import (
-    CONF_HOST,
-    CONF_PORT,
-    CONF_PROTOCOL,
     CONF_USE_TLS,
     DOMAIN,
 )

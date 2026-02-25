@@ -8,14 +8,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, cast
 
 import aiohttp
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.const import __version__ as hass_version
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from custom_components.remote_logger.const import (
     CONF_BATCH_MAX_SIZE,
     CONF_ENCODING,
-    CONF_HOST,
-    CONF_PORT,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
 )

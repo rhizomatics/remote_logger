@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription, SensorStateClass
+from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .remote_logger import REF_EXPORTER
@@ -93,7 +94,7 @@ class LoggerEntity(SensorEntity):
         super().__init__()
         self._exporter = exporter
         self.entity_description = description  # pyright: ignore[reportIncompatibleVariableOverride]
-        self._attr_unique_id = f"{exporter.name}_{description.key}"
+        self._attr_unique_id = f"{slugify(exporter.name)}_{description.key}"
         self.name = f"{exporter.name} {description.name}"
 
     @property
