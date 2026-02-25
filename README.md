@@ -18,8 +18,10 @@
 <br/>
 
 
-Listens to Home Assistant system log events and sends log events to a remotely
-Syslog or OpenTelemetry collector.
+Listens to Home Assistant system log events and sends structured log events to a remote
+Syslog or OpenTelemetry (OTLP) collector.
+
+![Example OTEL Stack Trace](./assets/images/otel_stack_trace.png){width=600}
 
 Logs structure is preserved from the Home Assistant internal event, so multi-line logs and stacktraces are preserved as single log entries, unlike console scrapers which will create a log event per line, and will capture script names, line numbers and versions properly.
 
@@ -82,3 +84,10 @@ One combination that works well is using [Vector](https://vector.dev) and [Grept
 
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Default-blue.svg
+
+## Diagnostic Entities
+
+Home Assistant sensors are created and updated to monitor log activity, plus any errors either generating
+log messages or posting them to remote servers.
+
+![Diagnostic Entities](./assets/images/diagnostic_entities.png)
