@@ -101,6 +101,9 @@ class TestOtlpLogExporter:
     def exporter_with_attrs(self, hass: HomeAssistant, mock_entry_otel_protobuf: MagicMock) -> OtlpLogExporter:
         return OtlpLogExporter(hass, mock_entry_otel_protobuf)
 
+    def test_name_from_entry_title(self, exporter: OtlpLogExporter) -> None:
+        assert exporter.name == "OTel Remote Logger"
+
     def test_endpoint_url_http(self, exporter: OtlpLogExporter) -> None:
         assert exporter.endpoint_url == "http://localhost:4318/v1/logs"
 

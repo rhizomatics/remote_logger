@@ -30,15 +30,19 @@ class LogExporter:
 
     def __init__(self, hass: HomeAssistant) -> None:
         self._hass: HomeAssistant = hass
+        self.name: str = self.logger_type
         self._batch_max_size: int
-        self.format_error_count: int = 0
-        self.posting_error_count: int = 0
         self.event_count: int = 0
-        self.sent_count: int = 0
+        self.last_event: dt.datetime | None = None
+        self.posting_count: int = 0
+        self.last_posting: dt.datetime | None = None
+        self.format_error_count: int = 0
         self.last_format_error_message: str | None = None
         self.last_format_error: dt.datetime | None = None
+        self.posting_error_count: int = 0
         self.last_posting_error_message: str | None = None
         self.last_posting_error: dt.datetime | None = None
+
         self._buffer: list[LogMessage] = []
         self.self_source: str = f"custom_components/remote_logger/{self.logger_type}"
 
@@ -96,8 +100,8 @@ class LogExporter:
         self.last_posting_error = dt_util.now()
 
     def on_success(self) -> None:
-        self.sent_count += 1
-        self.last_sent = dt_util.now()
+        self.posting_count += 1
+        self.last_posting = dt_util.now()
 
     def on_event(self) -> None:
         self.event_count += 1

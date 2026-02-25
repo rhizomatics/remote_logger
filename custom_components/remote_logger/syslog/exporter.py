@@ -52,6 +52,7 @@ class SyslogExporter(LogExporter):
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         super().__init__(hass)
+        self.name = entry.title
         self._in_progress: list[SyslogMessage] = []
         self._lock = asyncio.Lock()
 

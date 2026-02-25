@@ -35,6 +35,7 @@ class RemoteLoggerDiagnosticEntityDescription(SensorEntityDescription):
 SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
         key="format_errors",
+        name="Format Errors",
         translation_key="format_errors",
         native_unit_of_measurement="error",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -48,6 +49,7 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
         key="post_errors",
         translation_key="post_errors",
+        name="Posting Errors",
         native_unit_of_measurement="error",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
@@ -60,20 +62,22 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
         key="events",
         translation_key="events",
+        name="Log Events",
         native_unit_of_measurement="event",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda logger: logger.event_count,
+        value_fn=lambda exporter: exporter.event_count,
         attr_fn=lambda exporter: {"last_event_time": exporter.last_event},
     ),
     RemoteLoggerDiagnosticEntityDescription(
         key="postings",
+        name="Postings",
         translation_key="postings",
         native_unit_of_measurement="posting",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda exporter: exporter.sent_count,
-        attr_fn=lambda exporter: {"last_posting_time": exporter.last_sent},
+        value_fn=lambda exporter: exporter.posting_count,
+        attr_fn=lambda exporter: {"last_posting_time": exporter.last_posting},
     ),
 )
 
@@ -83,18 +87,14 @@ class LoggerEntity(SensorEntity):
 
     _attr_entity_category: EntityCategory = EntityCategory.DIAGNOSTIC  # pyright: ignore[reportIncompatibleVariableOverride]
     _attr_should_poll = True
-    _attr_has_entity_name = False
     entity_description: RemoteLoggerDiagnosticEntityDescription
 
     def __init__(self, exporter: LogExporter, description: RemoteLoggerDiagnosticEntityDescription) -> None:
         super().__init__()
         self._exporter = exporter
         self.entity_description = description  # pyright: ignore[reportIncompatibleVariableOverride]
-        self.name = f"{exporter.logger_type.capitalize()} Logger {description.key.capitalize()}"
-        self._attr_unique_id = "_".join([
-            exporter.logger_type,
-            description.key,
-        ])
+        self._attr_unique_id = f"{exporter.name}_{description.key}"
+        self.name = f"{exporter.name} {description.name}"
 
     @property
     def native_value(self) -> str | int | float | None:  # pyright: ignore[reportIncompatibleVariableOverride]

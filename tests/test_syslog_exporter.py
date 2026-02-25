@@ -57,6 +57,9 @@ class TestSyslogExporter:
         assert exporter._facility == 16  # local0
         assert exporter._hostname == "-"
 
+    def test_name_from_entry_title(self, exporter: SyslogExporter) -> None:
+        assert exporter.name == "Syslog Remote Logger"
+
     def test_endpoint_desc(self, exporter: SyslogExporter) -> None:
         url, protocol = exporter.endpoint_desc.split(" ")
         assert protocol == "(UDP)"

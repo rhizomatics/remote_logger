@@ -1,4 +1,5 @@
-
+# 0.3.0
+- Unique names for exporters
 # 0.2.0
 - Add entities to track incoming events, outgoing postings, errors
 - Refactor to common exporter class
