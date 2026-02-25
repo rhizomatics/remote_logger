@@ -4,16 +4,14 @@ import asyncio
 import json
 import logging
 import time
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, cast
 
 import aiohttp
 from homeassistant.const import __version__ as hass_version
-from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.remote_logger.base import LoggerEntity
 from custom_components.remote_logger.const import (
-    BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_BATCH_MAX_SIZE,
     CONF_ENCODING,
     CONF_HOST,
@@ -21,6 +19,7 @@ from custom_components.remote_logger.const import (
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
 )
+from custom_components.remote_logger.exporter import LogExporter, LogMessage
 from custom_components.remote_logger.helpers import isotimestamp
 
 from .const import (
@@ -38,6 +37,7 @@ from .protobuf_encoder import encode_export_logs_request
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -111,15 +111,20 @@ async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> d
     return errors
 
 
-class OtlpLogExporter(LoggerEntity):
+@dataclass
+class OtlpMessage(LogMessage):
+    payload: dict[str, Any]
+
+
+class OtlpLogExporter(LogExporter):
     """Buffers system_log_event records and flushes them as OTLP/HTTP JSON."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        super().__init__()
-        self._hass = hass
+    logger_type = "otel"
 
-        self._buffer: list[dict[str, Any]] = []
-        self._in_progress: dict[str, Any] | None = None
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        super().__init__(hass)
+
+        self._in_progress: dict[str, Any] | None = None  # wrapped collection of OtlpMessages
         self._lock = asyncio.Lock()
         if hass and hass.config and hass.config.api:
             self.server_address = hass.config.api.local_ip
@@ -159,29 +164,7 @@ class OtlpLogExporter(LoggerEntity):
 
         return {"attributes": attrs}
 
-    @callback
-    def handle_event(self, event: Event) -> None:
-        """Receive a system_log_event and buffer an OTLP logRecord."""
-        self.on_event()
-        if (
-            event.data
-            and event.data.get("source")
-            and len(event.data["source"]) == 2
-            and "custom_components/remote_logger/otel" in event.data["source"][0]
-        ):
-            # prevent log loops
-            return
-        try:
-            record = self._to_log_record(event.data)
-            self._buffer.append(record)
-
-            if len(self._buffer) >= self._batch_max_size:
-                self._hass.async_create_task(self.flush())
-        except Exception as e:
-            _LOGGER.error("remote_logger: otel handler failure %s on %s", e, event.data)
-            self.on_error(str(e))
-
-    def _to_log_record(self, data: Any) -> dict[str, Any]:
+    def _to_log_record(self, data: Any) -> OtlpMessage:
         """Convert a system_log_event payload to an OTLP logRecord dict."""
         """ HA System Log Event
             "name": str
@@ -221,25 +204,18 @@ class OtlpLogExporter(LoggerEntity):
             attributes.append(_kv("exception.stacktrace", exception))
 
         # https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/logs/v1/logs.proto
-        return {
-            "timeUnixNano": time_unix_nano,
-            "observedTimeUnixNano": observed_time_unix_nano,
-            "severityNumber": severity_number,
-            "severityText": severity_text,
-            "body": {"string_value": message},
-            "attributes": attributes,
-        }
+        return OtlpMessage(
+            payload={
+                "timeUnixNano": time_unix_nano,
+                "observedTimeUnixNano": observed_time_unix_nano,
+                "severityNumber": severity_number,
+                "severityText": severity_text,
+                "body": {"string_value": message},
+                "attributes": attributes,
+            }
+        )
 
-    async def flush_loop(self) -> None:
-        """Periodically flush buffered log records."""
-        try:
-            while True:
-                await asyncio.sleep(BATCH_FLUSH_INTERVAL_SECONDS)
-                await self.flush()
-        except asyncio.CancelledError:
-            raise
-
-    def generate_submission(self, records: list[dict[str, Any]]) -> dict[str, Any]:
+    def generate_submission(self, records: list[OtlpMessage]) -> dict[str, Any]:
         result: dict[str, str | bytes | dict[str, Any]] = {"headers": {}}
         request = self._build_export_request(records)
 
@@ -253,12 +229,12 @@ class OtlpLogExporter(LoggerEntity):
 
     async def flush(self) -> None:
         """Flush all buffered log records to the OTLP endpoint."""
-        records: list[dict[str, Any]] | None = None
+        records: list[OtlpMessage] | None = None
         async with self._lock:
             if not self._in_progress:
                 if not self._buffer:
                     return
-                records = self._buffer.copy()
+                records = cast("list[OtlpMessage]", self._buffer.copy())
                 self._buffer.clear()
 
         try:
@@ -291,10 +267,7 @@ class OtlpLogExporter(LoggerEntity):
             self.on_error(str(e))
             self._in_progress = None
 
-    async def close(self) -> None:
-        """Clean up resources (no-op for HTTP-based exporter)."""
-
-    def _build_export_request(self, records: list[dict[str, Any]]) -> dict[str, Any]:
+    def _build_export_request(self, records: list[OtlpMessage]) -> dict[str, Any]:
         """Wrap logRecords in the ExportLogsServiceRequest envelope."""
         return {
             "resourceLogs": [
@@ -306,7 +279,7 @@ class OtlpLogExporter(LoggerEntity):
                                 "name": SCOPE_NAME,
                                 "version": SCOPE_VERSION,
                             },
-                            "logRecords": records,
+                            "logRecords": [r.payload for r in records],
                         }
                     ],
                 }

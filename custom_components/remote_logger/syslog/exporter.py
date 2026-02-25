@@ -7,13 +7,11 @@ import socket
 import ssl
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from homeassistant.core import Event, HomeAssistant, callback
 
-from custom_components.remote_logger.base import LoggerEntity
 from custom_components.remote_logger.const import (
-    BATCH_FLUSH_INTERVAL_SECONDS,
     CONF_APP_NAME,
     CONF_BATCH_MAX_SIZE,
     CONF_FACILITY,
@@ -22,6 +20,7 @@ from custom_components.remote_logger.const import (
     CONF_PROTOCOL,
     CONF_USE_TLS,
 )
+from custom_components.remote_logger.exporter import LogExporter, LogMessage
 from custom_components.remote_logger.helpers import isotimestamp
 
 from .const import (
@@ -42,19 +41,18 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class Message:
+class SyslogMessage(LogMessage):
     payload: bytes
-    sent: bool = False
 
 
-class SyslogExporter(LoggerEntity):
+class SyslogExporter(LogExporter):
     """Buffers system_log_event records and flushes them as RFC 5424 syslog messages."""
 
+    logger_type = "syslog"
+
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        super().__init__()
-        self._hass = hass
-        self._buffer: list[Message] = []
-        self._in_progress: list[Message] = []
+        super().__init__(hass)
+        self._in_progress: list[SyslogMessage] = []
         self._lock = asyncio.Lock()
 
         self._host = entry.data[CONF_HOST]
@@ -92,11 +90,11 @@ class SyslogExporter(LoggerEntity):
         ):
             # prevent log loops
             return
-        self._buffer.append(self._to_syslog_message(event.data))
+        self._buffer.append(self._to_log_record(event.data))
         if len(self._buffer) >= self._batch_max_size:
             self._hass.async_create_task(self.flush())
 
-    def _to_syslog_message(self, data: Mapping[str, Any]) -> Message:
+    def _to_log_record(self, data: Mapping[str, Any]) -> SyslogMessage:
         """Convert a system_log_event payload to an RFC 5424 syslog message."""
         """
             "name": str
@@ -147,25 +145,16 @@ class SyslogExporter(LoggerEntity):
         # VERSION = 1, PROCID = -, MSGID = -
         syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - - {sd} {msg}"
 
-        return Message(syslog_line.encode("utf-8", errors="replace"))
-
-    async def flush_loop(self) -> None:
-        """Periodically flush buffered log records."""
-        try:
-            while True:
-                await asyncio.sleep(BATCH_FLUSH_INTERVAL_SECONDS)
-                await self.flush()
-        except asyncio.CancelledError:
-            raise
+        return SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
 
     async def flush(self) -> None:
         """Flush all buffered log records to the syslog endpoint."""
-        records: list[Message] | None = None
+        records: list[SyslogMessage] | None = None
         async with self._lock:
             if not self._in_progress:
                 if not self._buffer:
                     return
-                records = self._buffer.copy()
+                records = cast("list[SyslogMessage]", self._buffer.copy())
                 self._buffer.clear()
 
         try:
@@ -183,7 +172,7 @@ class SyslogExporter(LoggerEntity):
         except Exception:
             _LOGGER.exception("remote_logger: unexpected error sending syslog messages")
 
-    async def _send_udp(self, messages: list[Message]) -> None:
+    async def _send_udp(self, messages: list[SyslogMessage]) -> None:
         """Send syslog messages over UDP."""
         try:
             if self._udp_transport is None or self._udp_transport.is_closing():
@@ -199,7 +188,7 @@ class SyslogExporter(LoggerEntity):
             _LOGGER.warning("remote_logger: failed to send syslog via UDP: %s", err)
             self._udp_transport = None
 
-    async def _send_tcp(self, messages: list[Message]) -> None:
+    async def _send_tcp(self, messages: list[SyslogMessage]) -> None:
         """Send syslog messages over TCP with octet-counting framing (RFC 6587)."""
         try:
             if self._tcp_writer is None or self._tcp_writer.is_closing():

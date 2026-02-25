@@ -10,6 +10,7 @@ import pytest
 
 from custom_components.remote_logger.otel.exporter import (
     OtlpLogExporter,
+    OtlpMessage,
     _kv,
     parse_resource_attributes,
 )
@@ -129,15 +130,15 @@ class TestOtlpLogExporter:
         assert "region" in keys
 
     def test_to_log_record_full(self, exporter: OtlpLogExporter, sample_event_data: dict[str, Any]) -> None:
-        record = exporter._to_log_record(sample_event_data)
+        record: OtlpMessage = exporter._to_log_record(sample_event_data)
 
-        assert record["severityNumber"] == 17
-        assert record["severityText"] == "ERROR"
-        assert record["body"] == {"string_value": "Something went wrong"}
-        assert "timeUnixNano" in record
-        assert "observedTimeUnixNano" in record
+        assert record.payload["severityNumber"] == 17
+        assert record.payload["severityText"] == "ERROR"
+        assert record.payload["body"] == {"string_value": "Something went wrong"}
+        assert "timeUnixNano" in record.payload
+        assert "observedTimeUnixNano" in record.payload
 
-        attr_keys = [a["key"] for a in record["attributes"]]
+        attr_keys = [a["key"] for a in record.payload["attributes"]]
         assert "code.file.path" in attr_keys
         assert "code.line.number" in attr_keys
         assert "code.function.name" in attr_keys
@@ -148,21 +149,21 @@ class TestOtlpLogExporter:
     def test_to_log_record_minimal(self, exporter: OtlpLogExporter, minimal_event_data: dict[str, Any]) -> None:
         record = exporter._to_log_record(minimal_event_data)
 
-        assert record["severityNumber"] == 9
-        assert record["severityText"] == "INFO"
-        assert record["body"] == {"string_value": "Simple info message"}
+        assert record.payload["severityNumber"] == 9
+        assert record.payload["severityText"] == "INFO"
+        assert record.payload["body"] == {"string_value": "Simple info message"}
         # No source, name, exception attributes
-        assert record["attributes"] == []
+        assert record.payload["attributes"] == []
 
     def test_to_log_record_unknown_level(self, exporter: OtlpLogExporter) -> None:
         record = exporter._to_log_record({"level": "TRACE", "message": ["test"]})
         # Falls back to default severity (INFO)
-        assert record["severityNumber"] == 9
-        assert record["severityText"] == "INFO"
+        assert record.payload["severityNumber"] == 9
+        assert record.payload["severityText"] == "INFO"
 
     def test_to_log_record_multiple_messages(self, exporter: OtlpLogExporter) -> None:
         record = exporter._to_log_record({"message": ["line 1", "line 2", "line 3"]})
-        assert record["body"]["string_value"] == "line 1\nline 2\nline 3"
+        assert record.payload["body"]["string_value"] == "line 1\nline 2\nline 3"
 
     def test_to_protobuf(self, exporter: OtlpLogExporter, sample_event_data: dict[str, Any]) -> None:
         record = exporter._to_log_record(sample_event_data)
@@ -212,7 +213,7 @@ class TestOtlpLogExporter:
         assert len(exporter._buffer) == 1
 
     def test_build_export_request_structure(self, exporter: OtlpLogExporter) -> None:
-        records = [{"body": {"string_value": "test"}, "severityNumber": 9}]
+        records = [OtlpMessage({"body": {"string_value": "test"}, "severityNumber": 9})]
         request = exporter._build_export_request(records)
 
         assert "resourceLogs" in request
@@ -222,7 +223,7 @@ class TestOtlpLogExporter:
         sl = rl["scopeLogs"][0]
         assert sl["scope"]["name"] == "homeassistant"
         assert sl["scope"]["version"] == "1.0.0"
-        assert sl["logRecords"] == records
+        assert sl["logRecords"] == [r.payload for r in records]
 
     async def test_flush_empty_buffer_is_noop(self, exporter: OtlpLogExporter) -> None:
         # Should not raise and not attempt any HTTP calls
