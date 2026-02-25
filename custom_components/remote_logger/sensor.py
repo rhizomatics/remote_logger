@@ -34,15 +34,27 @@ class RemoteLoggerDiagnosticEntityDescription(SensorEntityDescription):
 
 SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
-        key="errors",
-        translation_key="errors",
+        key="format_errors",
+        translation_key="format_errors",
         native_unit_of_measurement="error",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda logger: logger.exception_count,
+        value_fn=lambda logger: logger.format_error_count,
         attr_fn=lambda exporter: {
-            "last_error_time": exporter.last_exception,
-            "last_error_message": exporter.last_exception_message,
+            "last_error_time": exporter.last_format_error,
+            "last_error_message": exporter.last_format_error_message,
+        },
+    ),
+    RemoteLoggerDiagnosticEntityDescription(
+        key="post_errors",
+        translation_key="post_errors",
+        native_unit_of_measurement="error",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda logger: logger.posting_error_count,
+        attr_fn=lambda exporter: {
+            "last_error_time": exporter.last_posting_error,
+            "last_error_message": exporter.last_posting_error_message,
         },
     ),
     RemoteLoggerDiagnosticEntityDescription(
@@ -71,13 +83,18 @@ class LoggerEntity(SensorEntity):
 
     _attr_entity_category: EntityCategory = EntityCategory.DIAGNOSTIC  # pyright: ignore[reportIncompatibleVariableOverride]
     _attr_should_poll = True
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
     entity_description: RemoteLoggerDiagnosticEntityDescription
 
     def __init__(self, exporter: LogExporter, description: RemoteLoggerDiagnosticEntityDescription) -> None:
         super().__init__()
         self._exporter = exporter
         self.entity_description = description  # pyright: ignore[reportIncompatibleVariableOverride]
+        self.name = f"{exporter.logger_type.capitalize()} Logger {description.key.capitalize()}"
+        self._attr_unique_id = "_".join([
+            exporter.logger_type,
+            description.key,
+        ])
 
     @property
     def native_value(self) -> str | int | float | None:  # pyright: ignore[reportIncompatibleVariableOverride]

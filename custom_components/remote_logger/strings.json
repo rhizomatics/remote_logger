@@ -58,5 +58,21 @@
     "abort": {
       "already_configured": "This backend is already configured."
     }
+  },
+  "entity": {
+    "sensor": {
+      "format_errors": {
+        "name": "Errors formatting logs"
+      },
+      "posting_errors": {
+        "name": "Errors posting logs"
+      },
+      "events": {
+        "name": "Home Assistant log events received"
+      },
+      "postings": {
+        "name": "Calls to remote logging service made"
+      }
+    }
   }
 }

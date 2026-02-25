@@ -253,7 +253,7 @@ class OtlpLogExporter(LogExporter):
                         resp.status,
                         body[:200],
                     )
-                    self.on_error(body)
+                    self.on_posting_error(body)
                 if resp.ok or (resp.status >= 400 and resp.status < 500):
                     # records were sent, or there was a client-side error
                     self._in_progress = None
@@ -261,10 +261,10 @@ class OtlpLogExporter(LogExporter):
 
         except aiohttp.ClientError as err:
             _LOGGER.warning("remote_logger: failed to send logs: %s", err)
-            self.on_error(str(err))
+            self.on_posting_error(str(err))
         except Exception as e:
             _LOGGER.exception("remote_logger: unexpected error sending logs, skipping records")
-            self.on_error(str(e))
+            self.on_posting_error(str(e))
             self._in_progress = None
 
     def _build_export_request(self, records: list[OtlpMessage]) -> dict[str, Any]:

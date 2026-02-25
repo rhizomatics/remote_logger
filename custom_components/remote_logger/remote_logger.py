@@ -48,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         REF_FLUSH_TASK: flush_task,
         REF_EXPORTER: exporter,
     }
-    await hass.config_entries.async_forward_entry_setups(entry, ["binary_sensor"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
 
     _LOGGER.info("remote_logger: listening for system_log_event, exporting %s to %s", backend, label)
     return True
@@ -56,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload remote_logger config entry."""
-    await hass.config_entries.async_unload_platforms(entry, ["binary_sensor"])
+    await hass.config_entries.async_unload_platforms(entry, ["sensor"])
     data = hass.data[DOMAIN].pop(entry.entry_id, None)
     if data is None:
         return True

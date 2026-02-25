@@ -169,8 +169,9 @@ class SyslogExporter(LogExporter):
                 await self._send_tcp(self._in_progress)
             self.on_success()
             self._in_progress = [m for m in self._in_progress if not m.sent]
-        except Exception:
+        except Exception as e:
             _LOGGER.exception("remote_logger: unexpected error sending syslog messages")
+            self.on_posting_error(str(e))
 
     async def _send_udp(self, messages: list[SyslogMessage]) -> None:
         """Send syslog messages over UDP."""
