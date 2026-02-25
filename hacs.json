@@ -1,5 +1,5 @@
 {
-  "name": "Home Assistant Remote Logs",
+  "name": "Home Assistant Remote Logger",
   "render_readme": true,
   "homeassistant": "2026.1.0"
 }
