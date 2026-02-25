@@ -12,6 +12,7 @@ from .const import (
     CONF_BACKEND,
     DOMAIN,
     EVENT_SYSTEM_LOG,
+    PLATFORMS,
 )
 from .otel.exporter import OtlpLogExporter
 from .syslog.exporter import SyslogExporter
@@ -48,7 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         REF_FLUSH_TASK: flush_task,
         REF_EXPORTER: exporter,
     }
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     _LOGGER.info("remote_logger: listening for system_log_event, exporting %s to %s", backend, label)
     return True

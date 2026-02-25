@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription, SensorStateClass
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.util import slugify
+
+from custom_components.remote_logger.exporter import LogExporter
 
 from .const import DOMAIN
 from .remote_logger import REF_EXPORTER
@@ -36,7 +39,6 @@ class RemoteLoggerDiagnosticEntityDescription(SensorEntityDescription):
 SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
         key="format_errors",
-        name="Format Errors",
         translation_key="format_errors",
         native_unit_of_measurement="error",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -48,9 +50,8 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
         },
     ),
     RemoteLoggerDiagnosticEntityDescription(
-        key="post_errors",
-        translation_key="post_errors",
-        name="Posting Errors",
+        key="posting_errors",
+        translation_key="posting_errors",
         native_unit_of_measurement="error",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
@@ -63,7 +64,6 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
         key="events",
         translation_key="events",
-        name="Log Events",
         native_unit_of_measurement="event",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
@@ -72,7 +72,6 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     ),
     RemoteLoggerDiagnosticEntityDescription(
         key="postings",
-        name="Postings",
         translation_key="postings",
         native_unit_of_measurement="posting",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -84,18 +83,21 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
 
 
 class LoggerEntity(SensorEntity):
-    """Represent a diagnostic tracking loggwe."""
+    """Represent a diagnostic tracking logger."""
 
     _attr_entity_category: EntityCategory = EntityCategory.DIAGNOSTIC  # pyright: ignore[reportIncompatibleVariableOverride]
     _attr_should_poll = True
-    entity_description: RemoteLoggerDiagnosticEntityDescription
+    _attr_has_entity_name = True
 
-    def __init__(self, exporter: LogExporter, description: RemoteLoggerDiagnosticEntityDescription) -> None:
+    def __init__(
+        self, exporter: LogExporter, description: RemoteLoggerDiagnosticEntityDescription, device_info: DeviceInfo
+    ) -> None:
         super().__init__()
-        self._exporter = exporter
-        self.entity_description = description  # pyright: ignore[reportIncompatibleVariableOverride]
-        self._attr_unique_id = f"{slugify(exporter.name)}_{description.key}"
-        self.name = f"{exporter.name} {description.name}"
+        self._exporter: LogExporter = exporter
+        self.entity_description: RemoteLoggerDiagnosticEntityDescription = description  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._attr_unique_id = slugify(f"{exporter.name}_{description.key}")
+        self._attr_device_info = device_info
+        self._attr_translation_key = description.translation_key
 
     @property
     def native_value(self) -> str | int | float | None:  # pyright: ignore[reportIncompatibleVariableOverride]
@@ -114,5 +116,11 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up remote_logger binary sensor from a config entry."""
-    exporter = hass.data[DOMAIN][entry.entry_id][REF_EXPORTER]
-    async_add_entities(LoggerEntity(exporter, description) for description in SENSORS)
+    exporter: LogExporter = hass.data[DOMAIN][entry.entry_id][REF_EXPORTER]
+    device_info = DeviceInfo(
+        entry_type=DeviceEntryType.SERVICE,
+        identifiers={(DOMAIN, slugify("_".join([exporter.logger_type, *exporter.destination])))},
+        manufacturer="Rhizomatics",
+        name=f"{exporter.name} Remote Logger",
+    )
+    async_add_entities(LoggerEntity(exporter, description, device_info) for description in SENSORS)

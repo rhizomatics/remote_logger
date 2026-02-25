@@ -31,6 +31,8 @@ class LogExporter:
     def __init__(self, hass: HomeAssistant) -> None:
         self._hass: HomeAssistant = hass
         self.name: str = self.logger_type
+        self.destination: tuple[str, ...]
+
         self._batch_max_size: int
         self.event_count: int = 0
         self.last_event: dt.datetime | None = None

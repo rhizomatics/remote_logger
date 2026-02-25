@@ -62,16 +62,16 @@
   "entity": {
     "sensor": {
       "format_errors": {
-        "name": "Errors formatting logs"
+        "name": "Formatting Errors"
       },
       "posting_errors": {
-        "name": "Errors posting logs"
+        "name": "Posting Errors"
       },
       "events": {
-        "name": "Home Assistant log events received"
+        "name": "Log Events"
       },
       "postings": {
-        "name": "Calls to remote logging service made"
+        "name": "Postings"
       }
     }
   }

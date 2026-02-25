@@ -1,3 +1,5 @@
+# 0.4.0
+- Add Device to bundle entities
 # 0.3.0
 - Unique names for exporters
 # 0.2.0

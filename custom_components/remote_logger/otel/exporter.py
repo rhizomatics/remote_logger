@@ -135,11 +135,13 @@ class OtlpLogExporter(LogExporter):
 
         host = entry.data[CONF_HOST]
         port = entry.data[CONF_PORT]
+        encoding = entry.data[CONF_ENCODING]
         use_tls = entry.data[CONF_USE_TLS]
         scheme = "https" if use_tls else "http"
         self.endpoint_url = f"{scheme}://{host}:{port}{OTLP_LOGS_PATH}"
+        self.destination = (host, str(port), encoding)
         self._use_tls = use_tls
-        self._use_protobuf = entry.data.get(CONF_ENCODING) == ENCODING_PROTOBUF
+        self._use_protobuf = encoding == ENCODING_PROTOBUF
         self._batch_max_size = entry.data.get(CONF_BATCH_MAX_SIZE, 100)
 
         self._resource = self._build_resource(entry)

@@ -58,5 +58,21 @@
     "abort": {
       "already_configured": "This backend is already configured."
     }
+  },
+   "entity": {
+    "sensor": {
+      "format_errors": {
+        "name": "Formatting Errors"
+      },
+      "posting_errors": {
+        "name": "Posting Errors"
+      },
+      "events": {
+        "name": "Log Events"
+      },
+      "postings": {
+        "name": "Postings"
+      }
+    }
   }
 }

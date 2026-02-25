@@ -57,6 +57,7 @@ class SyslogExporter(LogExporter):
         self._host = entry.data[CONF_HOST]
         self._port = entry.data[CONF_PORT]
         self._protocol = entry.data.get(CONF_PROTOCOL, PROTOCOL_UDP)
+        self.destination = (self._host, str(self._port), self._protocol)
         self._use_tls = entry.data.get(CONF_USE_TLS, False)
         self._app_name = entry.data.get(CONF_APP_NAME, DEFAULT_APP_NAME)
         facility_name = entry.data.get(CONF_FACILITY, DEFAULT_FACILITY)
