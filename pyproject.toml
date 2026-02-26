@@ -45,6 +45,23 @@ docs=[
     "mkdocs-material-extensions"
 ]
 
+[tool.poetry]
+package-mode = false
+packages = [{ include = "custom_components.remote_logger" }]
+
+[tool.setuptools.packages.find]
+where = [
+    "custom_components",
+] # list of folders that contain the packages (["."] by default)
+include = [
+    "remote_logger*",
+] # package names should match these glob patterns (["*"] by default)
+exclude = [
+    "remote_logger.tests*",
+] # exclude packages matching these glob patterns (empty by default)
+namespaces = true # to disable scanning PEP 420 namespaces (true by default)
+
+
 [tool.poetry.group.dev.dependencies]
 homeassistant-stubs = "2026.2.1"
 
