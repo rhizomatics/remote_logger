@@ -1,5 +1,5 @@
 [project]
-name = "ha_remote_logs"
+name = "remote_logger"
 readme = "README.md"
 description = "Log Home Assistant events to a Syslog or OTEL collector."
 dynamic = ["version"]
@@ -44,24 +44,6 @@ docs=[
     "mkdocs-minify-plugin",
     "mkdocs-material-extensions"
 ]
-
-
-[tool.poetry]
-package-mode = false
-version = "0.6.6"
-packages = [{ include = "custom_components.ha_remote_logs" }]
-
-[tool.setuptools.packages.find]
-where = [
-    "custom_components",
-] # list of folders that contain the packages (["."] by default)
-include = [
-    "ha_remote_logs*",
-] # package names should match these glob patterns (["*"] by default)
-exclude = [
-    "ha_remote_logs.tests*",
-] # exclude packages matching these glob patterns (empty by default)
-namespaces = true # to disable scanning PEP 420 namespaces (true by default)
 
 [tool.poetry.group.dev.dependencies]
 homeassistant-stubs = "2026.2.1"

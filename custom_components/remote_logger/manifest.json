@@ -7,7 +7,7 @@
   "documentation": "https://remote_logger.rhizomatics.org.uk",
   "integration_type": "hub",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/rhizomatics/ha_remote_logger/issues",
+  "issue_tracker": "https://github.com/rhizomatics/remote_logger/issues",
   "requirements": [],
-  "version": "0.4.0"
+  "version": "1.0.0"
 }

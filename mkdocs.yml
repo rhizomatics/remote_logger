@@ -2,8 +2,8 @@ site_name: Home Assistant Remote Logger
 site_url: https://remote_logger.rhizomatics.org.uk
 site_description: Remote Logging for Home Assistant using Syslog or OTEL
 
-repo_name: rhizomatics/ha_remote_logger
-repo_url: https://github.com/rhizomatics/ha_remote_logger
+repo_name: rhizomatics/remote_logger
+repo_url: https://github.com/rhizomatics/remote_logger
 edit_uri: edit/main/docs/
 docs_dir: docs
 
@@ -67,9 +67,6 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - pymdownx.blocks.caption
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -80,8 +77,3 @@ markdown_extensions:
   - sane_lists
   - pymdownx.snippets:
       check_paths: true
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format

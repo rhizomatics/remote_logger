@@ -2,11 +2,11 @@
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
-custom_components/ha_remote_logs.egg-info
+**/*.egg-info
 tests/__pycache__
 *.py[cod]
 *$py.class
-tests/ha_remote_logs/__pycache__/
+**/__pycache__/
 cov.xml
 node_modules/
 package-lock.json
