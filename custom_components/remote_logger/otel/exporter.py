@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, cast
 
 import aiohttp
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HEADERS, CONF_HOST, CONF_PATH, CONF_PORT, CONF_TOKEN
 from homeassistant.const import __version__ as hass_version
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -62,6 +62,26 @@ def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
     return result
 
 
+def parse_headers(raw: str) -> dict[str, str]:
+    """Parse 'Name: value' lines (newline-separated) into a dict.
+
+    Raises ValueError if a line is malformed.
+    """
+    result: dict[str, str] = {}
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if ":" not in line:
+            raise ValueError(f"Invalid header line: {line!r}")
+        name, _, value = line.partition(":")
+        name = name.strip()
+        if not name:
+            raise ValueError("Header name cannot be empty")
+        result[name] = value.strip()
+    return result
+
+
 def _kv(key: str, value: Any) -> dict[str, Any]:
     """Build an OTLP KeyValue attribute"""
     if isinstance(value, str):
@@ -77,7 +97,12 @@ def _kv(key: str, value: Any) -> dict[str, Any]:
     return {"key": key, "value": {"string_value": str(value)}}
 
 
-async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> dict[str, str]:
+async def validate(
+    session: aiohttp.ClientSession,
+    url: str,
+    encoding: str,
+    extra_headers: dict[str, str] | None = None,
+) -> dict[str, str]:
     # Validate connectivity
     errors: dict[str, str] = {}
     if encoding == ENCODING_PROTOBUF:
@@ -88,11 +113,12 @@ async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> d
         content_type = "application/json"
     else:
         raise ValueError(f"Unknown encoding {encoding}")
+    headers = {"Content-Type": content_type, **(extra_headers or {})}
     try:
         async with session.post(
             url,
             data=data,
-            headers={"Content-Type": content_type},
+            headers=headers,
             timeout=aiohttp.ClientTimeout(total=10),
         ) as resp:
             if resp.status >= 400 and resp.status < 500:
@@ -101,12 +127,15 @@ async def validate(session: aiohttp.ClientSession, url: str, encoding: str) -> d
             if resp.status >= 500:
                 errors["base"] = "cannot_connect"
                 _LOGGER.error("OTEL-LOGS server connect failed (%s): %s", resp.status, await resp.text())
-    except aiohttp.ClientError as e1:
+    except aiohttp.ClientResponseError as e1:
         errors["base"] = "cannot_connect"
-        _LOGGER.error("OTEL-LOGS connect client error: %s", e1)
-    except Exception as e2:
+        _LOGGER.error("OTEL-LOGS connect client response error: %s", e1)
+    except aiohttp.ClientError as e2:
+        errors["base"] = "cannot_connect"
+        _LOGGER.error("OTEL-LOGS connect client error: %s", e2)
+    except Exception as e3:
         errors["base"] = "unknown"
-        _LOGGER.error("OTEL-LOGS connect unknown error: %s", e2)
+        _LOGGER.error("OTEL-LOGS connect unknown error: %s", e3)
     return errors
 
 
@@ -138,15 +167,28 @@ class OtlpLogExporter(LogExporter):
         encoding = entry.data[CONF_ENCODING]
         use_tls = entry.data[CONF_USE_TLS]
         scheme = "https" if use_tls else "http"
-        self.endpoint_url = f"{scheme}://{host}:{port}{OTLP_LOGS_PATH}"
+        path = entry.data.get(CONF_PATH, OTLP_LOGS_PATH)
+        self.endpoint_url = f"{scheme}://{host}:{port}{path}"
         self.destination = (host, str(port), encoding)
         self._use_tls = use_tls
         self._use_protobuf = encoding == ENCODING_PROTOBUF
+        self._entry = entry
         self._batch_max_size = entry.data.get(CONF_BATCH_MAX_SIZE, 100)
+        self._extra_headers = self._build_extra_headers(entry)
 
         self._resource = self._build_resource(entry)
 
         _LOGGER.info(f"remote_logger: otel configured for {self.endpoint_url}, protobuf={self._use_protobuf}")
+
+    def _build_extra_headers(self, entry: ConfigEntry) -> dict[str, str]:
+        headers: dict[str, str] = {}
+        bearer_token = entry.data.get(CONF_TOKEN, "").strip()
+        if bearer_token:
+            headers["Authorization"] = f"Bearer {bearer_token}"
+        raw_headers = entry.data.get(CONF_HEADERS, "").strip()
+        if raw_headers:
+            headers.update(parse_headers(raw_headers))
+        return headers
 
     def _build_resource(self, entry: ConfigEntry) -> dict[str, Any]:
         """Build the OTLP Resource object with attributes."""
@@ -218,15 +260,14 @@ class OtlpLogExporter(LogExporter):
         )
 
     def generate_submission(self, records: list[OtlpMessage]) -> dict[str, Any]:
-        result: dict[str, str | bytes | dict[str, Any]] = {"headers": {}}
         request = self._build_export_request(records)
-
         if self._use_protobuf:
-            result["data"] = encode_export_logs_request(request)
-            result["headers"]["Content-Type"] = "application/x-protobuf"  # type: ignore
+            content_type = "application/x-protobuf"
+            result: dict[str, Any] = {"data": encode_export_logs_request(request)}
         else:
-            result["json"] = request
-            result["headers"]["Content-Type"] = "application/json"  # type: ignore
+            content_type = "application/json"
+            result = {"json": request}
+        result["headers"] = {"Content-Type": content_type, **self._extra_headers}
         return result
 
     async def flush(self) -> None:
@@ -248,6 +289,11 @@ class OtlpLogExporter(LogExporter):
                 return
             session: aiohttp.ClientSession = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
             async with session.post(self.endpoint_url, timeout=aiohttp.ClientTimeout(total=10), **msg) as resp:
+                if resp.status in (401, 403):
+                    _LOGGER.warning("remote_logger: OTLP authentication failed (%s), triggering reauth", resp.status)
+                    self._in_progress = None
+                    self._entry.async_start_reauth(self._hass)
+                    return
                 if resp.status >= 400:
                     body = await resp.text()
                     _LOGGER.warning(

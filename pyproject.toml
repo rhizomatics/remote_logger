@@ -45,6 +45,10 @@ docs=[
     "mkdocs-material-extensions"
 ]
 
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B105"]
+
 [tool.poetry]
 package-mode = false
 packages = [{ include = "custom_components.remote_logger" }]

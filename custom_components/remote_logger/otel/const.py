@@ -1,5 +1,6 @@
 import voluptuous as vol
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HEADERS, CONF_HOST, CONF_PATH, CONF_PORT, CONF_TOKEN
+from homeassistant.helpers import selector
 
 from custom_components.remote_logger.const import (
     CONF_BATCH_MAX_SIZE,
@@ -24,7 +25,8 @@ SEVERITY_MAP: dict[str, tuple[int, str]] = {
 DEFAULT_SEVERITY = (9, "INFO")
 
 # OTel defaults
-DEFAULT_PORT = 4318
+DEFAULT_HTTP_PORT = 4318
+DEFAULT_GRPC_PORT = 4317
 DEFAULT_USE_TLS = False
 DEFAULT_RESOURCE_ATTRIBUTES = ""
 ENCODING_JSON = "json"
@@ -41,9 +43,20 @@ DEFAULT_SERVICE_NAME = "core"
 
 OTEL_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST): str,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
+    vol.Optional(CONF_PORT, default=DEFAULT_HTTP_PORT): int,
     vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
     vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In([ENCODING_JSON, ENCODING_PROTOBUF]),
     vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
     vol.Optional(CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES): str,
+    vol.Optional(CONF_TOKEN, default=""): selector.TextSelector(
+        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+    ),
+    vol.Optional(CONF_HEADERS, default=""): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
+    vol.Optional(CONF_PATH, default=OTLP_LOGS_PATH): str,
+})
+
+REAUTH_OTEL_DATA_SCHEMA = vol.Schema({
+    vol.Optional(CONF_TOKEN, default=""): selector.TextSelector(
+        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+    ),
 })

@@ -18,7 +18,10 @@
           "use_tls": "Use TLS (HTTPS)",
           "encoding": "Payload encoding",
           "batch_max_size": "Batch max size",
-          "resource_attributes": "Custom resource attributes"
+          "resource_attributes": "Custom resource attributes",
+          "bearer_token": "Bearer token",
+          "headers": "Additional headers",
+          "path": "Logs endpoint path"
         },
         "data_description": {
           "host": "Hostname or IP address of the OTLP collector.",
@@ -26,7 +29,20 @@
           "use_tls": "Enable HTTPS for the connection to the collector.",
           "encoding": "Encoding format for the OTLP payload: json or protobuf.",
           "batch_max_size": "Maximum number of log records to buffer before flushing (1-10000, default 100).",
-          "resource_attributes": "Optional comma-separated key=value pairs added to every log record (e.g. deployment.environment=production,service.namespace=home)."
+          "resource_attributes": "Optional comma-separated key=value pairs added to every log record (e.g. deployment.environment=production,service.namespace=home).",
+          "bearer_token": "Optional bearer token. Sent as 'Authorization: Bearer ...' header.",
+          "headers": "Optional extra HTTP headers, one per line in 'Name: value' format (e.g. stream-name: my-stream).",
+          "path": "Path appended to host:port for the logs endpoint (default /v1/logs). Prefix with any API-specific path (e.g. /api/otlp/v1/logs)."
+        }
+      },
+      "reauth_otel": {
+        "title": "Re-authenticate OTLP Endpoint",
+        "description": "Authentication failed. Enter a new bearer token.",
+        "data": {
+          "bearer_token": "Bearer token"
+        },
+        "data_description": {
+          "bearer_token": "New bearer token to authenticate with the OTLP collector."
         }
       },
       "syslog": {
@@ -53,10 +69,12 @@
     "error": {
       "cannot_connect": "Cannot connect to the endpoint. Verify the host, port, and TLS settings.",
       "invalid_attributes": "Invalid format. Use comma-separated key=value pairs (e.g. env=prod,region=us).",
+      "invalid_headers": "Invalid format. Use one 'Name: value' header per line.",
+      "invalid_auth": "Authentication failed. Check the bearer token.",
       "unknown": "An unexpected error occurred."
     },
     "abort": {
-      "already_configured": "This backend is already configured."
+      "already_configured": "This endpoint is already configured."
     }
   },
   "entity": {

@@ -1,3 +1,10 @@
+# 1.1.0
+- More customization for OTLP, now able to use more platforms, including OpenObserve
+    - Custom HTTP headers
+    - Bearer token
+    - Alternative API endpoint or custom path prefix
+# 1.0.0
+- Dependencies and docs update for public release
 # 0.4.0
 - Add Device to bundle entities
 # 0.3.0
