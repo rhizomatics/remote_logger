@@ -10,6 +10,13 @@ from custom_components.remote_logger.const import (
     DEFAULT_BATCH_MAX_SIZE,
 )
 
+CONF_TOKEN_TYPE = "token_type"  # noqa: S105 # nosec
+TOKEN_TYPE_BEARER = "bearer"  # noqa: S105 # nosec
+TOKEN_TYPE_BASIC = "basic"  # noqa: S105 # nosec
+TOKEN_TYPE_API_KEY = "api_key"  # noqa: S105 # nosec
+TOKEN_TYPE_RAW_BASIC = "raw_basic"  # noqa: S105 # nosec
+DEFAULT_TOKEN_TYPE = TOKEN_TYPE_BEARER
+
 # OTLP endpoint path
 OTLP_LOGS_PATH = "/v1/logs"
 
@@ -48,6 +55,9 @@ OTEL_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In([ENCODING_JSON, ENCODING_PROTOBUF]),
     vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
     vol.Optional(CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES): str,
+    vol.Optional(CONF_TOKEN_TYPE, default=DEFAULT_TOKEN_TYPE): selector.SelectSelector(
+        selector.SelectSelectorConfig(options=[TOKEN_TYPE_BEARER, TOKEN_TYPE_BASIC])
+    ),
     vol.Optional(CONF_TOKEN, default=""): selector.TextSelector(
         selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
     ),
@@ -56,6 +66,9 @@ OTEL_DATA_SCHEMA = vol.Schema({
 })
 
 REAUTH_OTEL_DATA_SCHEMA = vol.Schema({
+    vol.Optional(CONF_TOKEN_TYPE, default=DEFAULT_TOKEN_TYPE): selector.SelectSelector(
+        selector.SelectSelectorConfig(options=[TOKEN_TYPE_BEARER, TOKEN_TYPE_BASIC])
+    ),
     vol.Optional(CONF_TOKEN, default=""): selector.TextSelector(
         selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
     ),

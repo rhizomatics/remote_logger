@@ -19,7 +19,8 @@
           "encoding": "Payload encoding",
           "batch_max_size": "Batch max size",
           "resource_attributes": "Custom resource attributes",
-          "bearer_token": "Bearer token",
+          "token_type": "Token type",
+          "token": "Access token for Authorization header",
           "headers": "Additional headers",
           "path": "Logs endpoint path"
         },
@@ -30,19 +31,22 @@
           "encoding": "Encoding format for the OTLP payload: json or protobuf.",
           "batch_max_size": "Maximum number of log records to buffer before flushing (1-10000, default 100).",
           "resource_attributes": "Optional comma-separated key=value pairs added to every log record (e.g. deployment.environment=production,service.namespace=home).",
-          "bearer_token": "Optional bearer token. Sent as 'Authorization: Bearer ...' header.",
+          "token_type": "Authentication scheme: Bearer sends the token as-is; Basic base64-encodes it as 'username:password'.",
+          "token": "Optional token. Sent in 'Authorization' header.",
           "headers": "Optional extra HTTP headers, one per line in 'Name: value' format (e.g. stream-name: my-stream).",
           "path": "Path appended to host:port for the logs endpoint (default /v1/logs). Prefix with any API-specific path (e.g. /api/otlp/v1/logs)."
         }
       },
       "reauth_otel": {
         "title": "Re-authenticate OTLP Endpoint",
-        "description": "Authentication failed. Enter a new bearer token.",
+        "description": "Authentication failed. Enter a new token.",
         "data": {
-          "bearer_token": "Bearer token"
+          "token_type": "Token type",
+          "token": "Token"
         },
         "data_description": {
-          "bearer_token": "New bearer token to authenticate with the OTLP collector."
+          "token_type": "Authentication scheme: Bearer sends the token as-is; Basic base64-encodes it as 'username:password'. Raw Basic sends as configured. ApiKey sends with 'ApiKey' prefix.",
+          "token": "New token to authenticate with the OTLP collector."
         }
       },
       "syslog": {

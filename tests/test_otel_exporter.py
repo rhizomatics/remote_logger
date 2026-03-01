@@ -12,11 +12,31 @@ from custom_components.remote_logger.otel.exporter import (
     OtlpLogExporter,
     OtlpMessage,
     _kv,
+    build_auth_header,
     parse_resource_attributes,
 )
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+
+# ---------------------------------------------------------------------------
+# build_auth_header
+# ---------------------------------------------------------------------------
+
+
+class TestBuildAuthHeader:
+    def test_bearer(self) -> None:
+        assert build_auth_header("mytoken", "bearer") == "Bearer mytoken"
+
+    def test_basic(self) -> None:
+        import base64
+
+        expected = "Basic " + base64.b64encode(b"user:pass").decode()
+        assert build_auth_header("user:pass", "basic") == expected
+
+    def test_unknown_type_falls_back_to_bearer(self) -> None:
+        assert build_auth_header("tok", "other") == "Bearer tok"
+
 
 # ---------------------------------------------------------------------------
 # parse_resource_attributes
@@ -100,6 +120,42 @@ class TestOtlpLogExporter:
     @pytest.fixture
     def exporter_with_attrs(self, hass: HomeAssistant, mock_entry_otel_protobuf: MagicMock) -> OtlpLogExporter:
         return OtlpLogExporter(hass, mock_entry_otel_protobuf)
+
+    def test_extra_headers_bearer(self, hass: HomeAssistant) -> None:
+        entry = MagicMock()
+        entry.data = {
+            "host": "localhost",
+            "port": 4318,
+            "use_tls": False,
+            "encoding": "json",
+            "batch_max_size": 20,
+            "resource_attributes": "",
+            "token": "mytoken",
+            "token_type": "bearer",
+        }
+        exp = OtlpLogExporter(hass, entry)
+        assert exp._extra_headers["Authorization"] == "Bearer mytoken"
+
+    def test_extra_headers_basic(self, hass: HomeAssistant) -> None:
+        import base64
+
+        entry = MagicMock()
+        entry.data = {
+            "host": "localhost",
+            "port": 4318,
+            "use_tls": False,
+            "encoding": "json",
+            "batch_max_size": 20,
+            "resource_attributes": "",
+            "token": "user:pass",
+            "token_type": "basic",
+        }
+        exp = OtlpLogExporter(hass, entry)
+        expected = "Basic " + base64.b64encode(b"user:pass").decode()
+        assert exp._extra_headers["Authorization"] == expected
+
+    def test_extra_headers_no_token(self, exporter: OtlpLogExporter) -> None:
+        assert "Authorization" not in exporter._extra_headers
 
     def test_name_from_entry_title(self, exporter: OtlpLogExporter) -> None:
         assert exporter.name == "OTel Remote Logger"

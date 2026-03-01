@@ -89,6 +89,29 @@ class TestOtelConfigFlow:
         assert result["type"] == FlowResultType.FORM
         assert result["errors"]["base"] == "cannot_connect"
 
+    async def test_step_otel_basic_auth_stored(self, hass: HomeAssistant) -> None:
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "otel"})
+        with patch(
+            "custom_components.remote_logger.config_flow.otel_validate",
+            new=AsyncMock(return_value={}),
+        ):
+            result = await hass.config_entries.flow.async_configure(
+                result["flow_id"],
+                {
+                    CONF_HOST: "localhost",
+                    CONF_PORT: 4318,
+                    CONF_USE_TLS: False,
+                    "encoding": ENCODING_JSON,
+                    "batch_max_size": 20,
+                    "resource_attributes": "",
+                    "token_type": "basic",
+                    "token": "user:pass",
+                },
+            )
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        assert result["data"]["token_type"] == "basic"  # noqa: S105
+
     async def test_step_otel_invalid_resource_attributes(self, hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
         result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "otel"})

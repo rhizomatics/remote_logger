@@ -18,8 +18,8 @@ from .const import (
     CONF_USE_TLS,
     DOMAIN,
 )
-from .otel.const import OTEL_DATA_SCHEMA, OTLP_LOGS_PATH, REAUTH_OTEL_DATA_SCHEMA
-from .otel.exporter import parse_headers, parse_resource_attributes
+from .otel.const import CONF_TOKEN_TYPE, OTEL_DATA_SCHEMA, OTLP_LOGS_PATH, REAUTH_OTEL_DATA_SCHEMA, TOKEN_TYPE_BEARER
+from .otel.exporter import build_auth_header, parse_headers, parse_resource_attributes
 from .otel.exporter import validate as otel_validate
 from .syslog.const import SYSLOG_DATA_SCHEMA
 from .syslog.exporter import validate as syslog_validate
@@ -60,11 +60,12 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
 
             # Validate header fields format before connecting
             extra_headers: dict[str, str] = {}
-            bearer_token = user_input.get(CONF_TOKEN, "").strip()
-            if bearer_token:
+            token = user_input.get(CONF_TOKEN, "").strip()
+            if token:
                 if not use_tls:
-                    _LOGGER.warning("remote_logger: bearer token configured without TLS; token will be sent in plain text")
-                extra_headers["Authorization"] = f"Bearer {bearer_token}"
+                    _LOGGER.warning("remote_logger: token configured without TLS; token will be sent in plain text")
+                token_type = user_input.get(CONF_TOKEN_TYPE, TOKEN_TYPE_BEARER)
+                extra_headers["Authorization"] = build_auth_header(token, token_type)
             raw_headers = user_input.get(CONF_HEADERS, "").strip()
             if raw_headers:
                 try:
@@ -109,10 +110,11 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            bearer_token = user_input.get(CONF_TOKEN, "").strip()
+            token = user_input.get(CONF_TOKEN, "").strip()
             extra_headers: dict[str, str] = {}
-            if bearer_token:
-                extra_headers["Authorization"] = f"Bearer {bearer_token}"
+            if token:
+                token_type = user_input.get(CONF_TOKEN_TYPE, TOKEN_TYPE_BEARER)
+                extra_headers["Authorization"] = build_auth_header(token, token_type)
             raw_headers = reauth_entry.data.get(CONF_HEADERS, "").strip()
             if raw_headers:
                 extra_headers.update(parse_headers(raw_headers))
@@ -128,7 +130,10 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             if not errors:
                 return self.async_update_reload_and_abort(
                     reauth_entry,
-                    data_updates={CONF_TOKEN: user_input[CONF_TOKEN]},
+                    data_updates={
+                        CONF_TOKEN: user_input[CONF_TOKEN],
+                        CONF_TOKEN_TYPE: user_input.get(CONF_TOKEN_TYPE, TOKEN_TYPE_BEARER),
+                    },
                 )
 
         return self.async_show_form(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import time
@@ -22,6 +23,7 @@ from custom_components.remote_logger.exporter import LogExporter, LogMessage
 from custom_components.remote_logger.helpers import isotimestamp
 
 from .const import (
+    CONF_TOKEN_TYPE,
     DEFAULT_RESOURCE_ATTRIBUTES,
     DEFAULT_SERVICE_NAME,
     DEFAULT_SEVERITY,
@@ -31,6 +33,10 @@ from .const import (
     SCOPE_NAME,
     SCOPE_VERSION,
     SEVERITY_MAP,
+    TOKEN_TYPE_API_KEY,
+    TOKEN_TYPE_BASIC,
+    TOKEN_TYPE_BEARER,
+    TOKEN_TYPE_RAW_BASIC,
 )
 from .protobuf_encoder import encode_export_logs_request
 
@@ -39,6 +45,18 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def build_auth_header(token: str, token_type: str) -> str:
+    """Build the Authorization header value for bearer or basic auth."""
+    if token_type == TOKEN_TYPE_BASIC:
+        credentials = base64.b64encode(token.encode()).decode()
+        return f"Basic {credentials}"
+    if token_type == TOKEN_TYPE_API_KEY:
+        return f"ApiKey {token}"
+    if token_type == TOKEN_TYPE_RAW_BASIC:
+        return f"Basic {token}"
+    return f"Bearer {token}"
 
 
 def parse_resource_attributes(raw: str) -> list[tuple[str, str]]:
@@ -182,9 +200,10 @@ class OtlpLogExporter(LogExporter):
 
     def _build_extra_headers(self, entry: ConfigEntry) -> dict[str, str]:
         headers: dict[str, str] = {}
-        bearer_token = entry.data.get(CONF_TOKEN, "").strip()
-        if bearer_token:
-            headers["Authorization"] = f"Bearer {bearer_token}"
+        token = entry.data.get(CONF_TOKEN, "").strip()
+        if token:
+            token_type = entry.data.get(CONF_TOKEN_TYPE, TOKEN_TYPE_BEARER)
+            headers["Authorization"] = build_auth_header(token, token_type)
         raw_headers = entry.data.get(CONF_HEADERS, "").strip()
         if raw_headers:
             headers.update(parse_headers(raw_headers))
