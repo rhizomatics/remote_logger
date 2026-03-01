@@ -1,3 +1,5 @@
+# 1.2.0
+- Choice of Authorization headers for Basic, Basic already encoded and ApiKey
 # 1.1.0
 - More customization for OTLP, now able to use more platforms, including OpenObserve
     - Custom HTTP headers
