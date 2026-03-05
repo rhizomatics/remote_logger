@@ -77,6 +77,11 @@ def mock_entry_syslog() -> ConfigEntry:
 
 
 @pytest.fixture
+def sample_log_event(sample_event_data: dict[str, Any]) -> Event:
+    return Event("system_log_event", data=sample_event_data)
+
+
+@pytest.fixture
 def sample_event_data() -> dict[str, Any]:
     """Create a sample system_log_event data dict."""
     return {
@@ -89,6 +94,11 @@ def sample_event_data() -> dict[str, Any]:
         "count": 3,
         "first_occurred": 1699999000.0,
     }
+
+
+@pytest.fixture
+def minimal_log_event(minimal_event_data: dict[str, Any]) -> Event:
+    return Event("system_log_event", data=minimal_event_data)
 
 
 @pytest.fixture

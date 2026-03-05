@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from abc import abstractmethod
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -63,7 +62,7 @@ class LogExporter:
             # prevent log loops
             return
         try:
-            record: LogMessage = self._to_log_record(event.data)
+            record: LogMessage = self._to_log_record(event)
             self._buffer.append(record)
 
             if len(self._buffer) >= self._batch_max_size:
@@ -73,7 +72,7 @@ class LogExporter:
             self.on_format_error(str(e))
 
     @callback
-    def handle_ha_event(self, event_type: str, event: Event) -> None:
+    def handle_ha_event(self, event_type: str, event: Event, state_only: bool = False) -> None:
         """Handle a non-system-log HA event (lifecycle, core change, or custom)."""
         self.on_event()
         try:
@@ -91,14 +90,10 @@ class LogExporter:
                 message = [event_type, ":", event.data["user_id"]]
             else:
                 message = [event_type]
-            data: dict[str, Any] = {
-                "level": "INFO",
-                "message": message,
-                "timestamp": event.time_fired.timestamp(),
-                "event": event_type,
-                "ha_event_data": dict(event.data),
-            }
-            record: LogMessage = self._to_log_record(data)
+
+            record: LogMessage = self._to_log_record(
+                event, message_override=message, level_override="INFO", state_only=state_only
+            )
             self._buffer.append(record)
             if len(self._buffer) >= self._batch_max_size:
                 self._hass.async_create_task(self.flush())
@@ -107,7 +102,13 @@ class LogExporter:
             self.on_format_error(str(e))
 
     @abstractmethod
-    def _to_log_record(self, data: Mapping[str, Any]) -> LogMessage:
+    def _to_log_record(
+        self,
+        event: Event,
+        message_override: list[str] | None = None,
+        level_override: str | None = None,
+        state_only: bool = False,
+    ) -> LogMessage:
         pass
 
     @callback

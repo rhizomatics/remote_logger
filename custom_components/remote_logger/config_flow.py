@@ -20,6 +20,7 @@ from .const import (
     CONF_ENCODING,
     CONF_LOG_HA_CORE_ACTIVITY,
     CONF_LOG_HA_CORE_CHANGES,
+    CONF_LOG_HA_FULL_STATE_CHANGES,
     CONF_LOG_HA_LIFECYCLE,
     CONF_LOG_HA_STATE_CHANGES,
     CONF_RESOURCE_ATTRIBUTES,
@@ -39,6 +40,7 @@ COMMON_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_LOG_HA_CORE_CHANGES, default=False): selector.BooleanSelector(),
     vol.Optional(CONF_LOG_HA_CORE_ACTIVITY, default=False): selector.BooleanSelector(),
     vol.Optional(CONF_LOG_HA_STATE_CHANGES, default=False): selector.BooleanSelector(),
+    vol.Optional(CONF_LOG_HA_FULL_STATE_CHANGES, default=False): selector.BooleanSelector(),
     vol.Optional(CONF_CUSTOM_EVENTS, default=""): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
 })
 
@@ -197,16 +199,21 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_common(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Configure common event subscription options."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            title = self._pending_data.pop("_title")
-            return self.async_create_entry(
-                title=title,
-                data={**self._pending_data, **user_input},
-            )
+            if user_input.get(CONF_LOG_HA_STATE_CHANGES) and user_input.get(CONF_LOG_HA_FULL_STATE_CHANGES):
+                errors[CONF_LOG_HA_FULL_STATE_CHANGES] = "state_changes_exclusive"
+            else:
+                title = self._pending_data.pop("_title")
+                return self.async_create_entry(
+                    title=title,
+                    data={**self._pending_data, **user_input},
+                )
 
         return self.async_show_form(
             step_id="common",
             data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, user_input or {}),
+            errors=errors,
         )
 
 
@@ -296,8 +303,12 @@ class RemoteLoggerOptionsFlow(OptionsFlow):
 
     async def async_step_events(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle event subscription options."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(title="", data={**self._pending_options, **user_input})
+            if user_input.get(CONF_LOG_HA_STATE_CHANGES) and user_input.get(CONF_LOG_HA_FULL_STATE_CHANGES):
+                errors[CONF_LOG_HA_FULL_STATE_CHANGES] = "state_changes_exclusive"
+            else:
+                return self.async_create_entry(title="", data={**self._pending_options, **user_input})
 
         merged = {**self._config_entry.data, **self._config_entry.options}
         current = {
@@ -305,9 +316,11 @@ class RemoteLoggerOptionsFlow(OptionsFlow):
             CONF_LOG_HA_LIFECYCLE: merged.get(CONF_LOG_HA_LIFECYCLE, False),
             CONF_LOG_HA_CORE_CHANGES: merged.get(CONF_LOG_HA_CORE_CHANGES, False),
             CONF_LOG_HA_STATE_CHANGES: merged.get(CONF_LOG_HA_STATE_CHANGES, False),
+            CONF_LOG_HA_FULL_STATE_CHANGES: merged.get(CONF_LOG_HA_FULL_STATE_CHANGES, False),
             CONF_CUSTOM_EVENTS: merged.get(CONF_CUSTOM_EVENTS, ""),
         }
         return self.async_show_form(
             step_id="events",
             data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, current),
+            errors=errors,
         )

@@ -14,6 +14,7 @@ from .const import (
     CONF_CUSTOM_EVENTS,
     CONF_LOG_HA_CORE_ACTIVITY,
     CONF_LOG_HA_CORE_CHANGES,
+    CONF_LOG_HA_FULL_STATE_CHANGES,
     CONF_LOG_HA_LIFECYCLE,
     CONF_LOG_HA_STATE_CHANGES,
     CORE_ACTIVITY_EVENTS,
@@ -75,7 +76,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.info("remote_logger: listening for HA core config events")
 
     if opts.get(CONF_LOG_HA_STATE_CHANGES):
-        cancel_listeners.extend(hass.bus.async_listen(et, partial(exporter.handle_ha_event, et)) for et in CORE_STATE_EVENTS)
+        cancel_listeners.extend(
+            hass.bus.async_listen(et, partial(exporter.handle_ha_event, et, state_only=True)) for et in CORE_STATE_EVENTS
+        )
+        _LOGGER.info("remote_logger: listening for HA state changes")
+
+    if opts.get(CONF_LOG_HA_FULL_STATE_CHANGES):
+        cancel_listeners.extend(
+            hass.bus.async_listen(et, partial(exporter.handle_ha_event, et, state_only=False)) for et in CORE_STATE_EVENTS
+        )
         _LOGGER.info("remote_logger: listening for HA state changes")
 
     if opts.get(CONF_LOG_HA_CORE_ACTIVITY):

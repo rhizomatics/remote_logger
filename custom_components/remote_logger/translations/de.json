@@ -45,7 +45,7 @@
           "token": "Token"
         },
         "data_description": {
-          "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
+          "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64. Raw Basic sendet wie konfiguriert. ApiKey sendet mit dem Präfix 'ApiKey'.",
           "token": "Neues Token zur Authentifizierung beim OTLP-Collector."
         }
       },
@@ -76,14 +76,16 @@
           "log_ha_lifecycle": "HA-Lebenszyklusereignisse",
           "log_ha_core_changes": "HA-Kernänderungsereignisse",
           "log_ha_core_activity": "HA-Kernaktivität",
-          "log_ha_state_changes": "HA-Zustandsänderungen",
-          "custom_events": "Benutzerdefinierte Ereignisnamen"
+          "log_ha_state_changes": "HA-Zustandsänderungen, ohne Attribute oder Kontext",
+          "log_ha_full_state_changes": "HA-Zustandsänderungen",
+          "custom_events": "Ein oder mehrere Ereignisse"
         },
         "data_description": {
           "log_ha_lifecycle": "Abonniert homeassistant_start, homeassistant_started und homeassistant_stop.",
           "log_ha_core_changes": "Abonniert component_loaded, core_config_updated, service_registered, service_removed, lovelace_updated, panels_updated, themes_updated, labs_updated, user_added, user_updated und user_removed.",
           "log_ha_core_activity": "HA-Kernaktivität, einschließlich Dienstaufrufe, Automatisierungs- und Skriptausführung.",
-          "log_ha_state_changes": "Home Assistant-Zustandsänderungen und Logbucheinträge.",
+          "log_ha_state_changes": "Home Assistant-Zustandsänderungen (ohne Attribute oder Kontext) und Logbucheinträge.",
+          "log_ha_full_state_changes": "Home Assistant-Zustandsänderungen (vollständiges Ereignis) und Logbucheinträge.",
           "custom_events": "Optionale Liste zusätzlicher HA-Ereignisnamen, einen pro Zeile (z. B. zha_event)."
         }
       }
@@ -92,7 +94,8 @@
       "cannot_connect": "Verbindung zum Endpunkt nicht möglich. Host, Port und TLS-Einstellungen prüfen.",
       "invalid_attributes": "Ungültiges Format. Kommagetrennte Schlüssel=Wert-Paare verwenden (z. B. env=prod,region=de).",
       "invalid_headers": "Ungültiges Format. Einen Header pro Zeile im Format 'Name: Wert' verwenden.",
-      "invalid_auth": "Authentifizierung fehlgeschlagen. Token prüfen.",
+      "invalid_auth": "Authentifizierung fehlgeschlagen. Bearer-Token prüfen.",
+      "state_changes_exclusive": "Nur eine Zustandsänderungs-Option auswählen.",
       "unknown": "Ein unerwarteter Fehler ist aufgetreten."
     },
     "abort": {
@@ -156,14 +159,16 @@
           "log_ha_lifecycle": "HA-Lebenszyklusereignisse",
           "log_ha_core_changes": "HA-Kernänderungsereignisse",
           "log_ha_core_activity": "HA-Kernaktivität",
-          "log_ha_state_changes": "HA-Zustandsänderungen",
+          "log_ha_state_changes": "HA-Zustandsänderungen, ohne Attribute oder Kontext",
+          "log_ha_full_state_changes": "HA-Zustandsänderungen",
           "custom_events": "Benutzerdefinierte Ereignisnamen"
         },
         "data_description": {
           "log_ha_lifecycle": "Abonniert homeassistant_start, homeassistant_started und homeassistant_stop.",
           "log_ha_core_changes": "Abonniert component_loaded, core_config_updated, service_registered, service_removed, lovelace_updated, panels_updated, themes_updated, labs_updated, user_added, user_updated und user_removed.",
           "log_ha_core_activity": "HA-Kernaktivität, einschließlich Dienstaufrufe, Automatisierungs- und Skriptausführung.",
-          "log_ha_state_changes": "Home Assistant-Zustandsänderungen und Logbucheinträge.",
+          "log_ha_state_changes": "Home Assistant-Zustandsänderungen (ohne Attribute oder Kontext) und Logbucheinträge.",
+          "log_ha_full_state_changes": "Home Assistant-Zustandsänderungen (vollständiges Ereignis) und Logbucheinträge.",
           "custom_events": "Optionale Liste zusätzlicher HA-Ereignisnamen, einen pro Zeile (z. B. zha_event)."
         }
       }

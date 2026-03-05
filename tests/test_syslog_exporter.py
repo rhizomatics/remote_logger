@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
 import pytest
+from homeassistant.core import Event
 
 from custom_components.remote_logger.syslog.exporter import (
     SyslogExporter,
@@ -91,7 +92,7 @@ class TestSyslogExporter:
             "count": 3,
             "first_occurred": 1699999000.0,
         }
-        msg = exporter._to_log_record(data)
+        msg = exporter._to_log_record(Event("system_log_event", data=data))
         text = msg.payload.decode("utf-8")
 
         # Check RFC 5424 structure: <PRI>1 TIMESTAMP HOSTNAME APP-NAME - - SD MSG
@@ -103,30 +104,30 @@ class TestSyslogExporter:
     def test_to_syslog_message_pri_calculation(self, exporter: SyslogExporter) -> None:
         # facility=16 (local0), severity=7 (DEBUG) -> PRI = 16*8 + 7 = 135
         data = {"level": "DEBUG", "message": ["debug msg"], "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         assert msg.startswith("<135>1 ")
 
     def test_to_syslog_message_warning_severity(self, exporter: SyslogExporter) -> None:
         # facility=16, severity=4 (WARNING) -> PRI = 132
         data = {"level": "WARNING", "message": ["warn"], "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         assert msg.startswith("<132>1 ")
 
     def test_to_syslog_message_critical_severity(self, exporter: SyslogExporter) -> None:
         # facility=16, severity=2 (CRITICAL) -> PRI = 130
         data = {"level": "CRITICAL", "message": ["crit"], "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         assert msg.startswith("<130>1 ")
 
     def test_to_syslog_message_default_severity(self, exporter: SyslogExporter) -> None:
         # Unknown level falls back to 6 (INFO) -> PRI = 134
         data = {"level": "TRACE", "message": ["trace"], "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         assert msg.startswith("<134>1 ")
 
     def test_to_syslog_message_includes_timestamp(self, exporter: SyslogExporter) -> None:
         data = {"message": ["test"], "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         # Should contain ISO 8601 timestamp
         assert "2023-11-14T" in msg
 
@@ -139,14 +140,14 @@ class TestSyslogExporter:
             "count": 5,
             "first_occurred": 1699999000.0,
         }
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         assert '[opentelemetry code.function.name="my.logger"' in msg
         assert 'exception.count="5"' in msg
         assert 'exception.first_occurred="2023-11-14T13:56:40-08:00"' in msg
 
     def test_to_syslog_message_no_message(self, exporter: SyslogExporter) -> None:
         data = {"level": "INFO", "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         # Empty message list -> "-"
         # The msg field should be just "-" before any exception
         assert "- -" in msg  # PROCID=- MSGID=-
@@ -158,13 +159,13 @@ class TestSyslogExporter:
             "timestamp": 1700000000.0,
             "exception": "ValueError: bad",
         }
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         assert "error happened" in msg
         assert "ValueError: bad" in msg
 
     def test_to_syslog_message_empty_messages(self, exporter: SyslogExporter) -> None:
         data = {"message": [], "level": "INFO", "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         # empty message list -> "-"
         assert " - -" in msg or msg.endswith(" -")
 
@@ -210,8 +211,8 @@ class TestSyslogExporter:
         await exporter.flush()
         assert len(exporter._buffer) == 0
 
-    def test_to_protobuf(self, exporter: SyslogExporter, sample_event_data: dict[str, Any]) -> None:
-        msg = exporter._to_log_record(sample_event_data).payload.decode("utf-8")
+    def test_to_protobuf(self, exporter: SyslogExporter, sample_log_event: Event) -> None:
+        msg = exporter._to_log_record(sample_log_event).payload.decode("utf-8")
         assert msg is not None
         assert msg.startswith("<131>")
         assert len(msg) > 300
@@ -398,34 +399,25 @@ class TestSyslogExporter:
         assert exporter._udp_transport is None
         assert exporter._tcp_writer is None
 
-    def test_to_syslog_message_ha_event_data_in_sd(self, exporter: SyslogExporter) -> None:
+    def test_to_syslog_message_event_data_in_sd(self, exporter: SyslogExporter) -> None:
         data = {
-            "level": "INFO",
-            "message": ["homeassistant_start"],
-            "timestamp": 1700000000.0,
-            "event": "homeassistant_start",
-            "ha_event_data": {"domain": "light", "service": "turn_on"},
+            "domain": "light",
+            "service": "turn_on",
         }
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("service_registered", data=data)).payload.decode("utf-8")
         assert 'event.data.domain="light"' in msg
         assert 'event.data.service="turn_on"' in msg
 
     def test_to_syslog_message_msgid_from_event(self, exporter: SyslogExporter) -> None:
-        data = {
-            "level": "INFO",
-            "message": ["component_loaded"],
-            "timestamp": 1700000000.0,
-            "event": "component_loaded",
-            "ha_event_data": {},
-        }
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+
+        msg = exporter._to_log_record(Event("component_loaded")).payload.decode("utf-8")
         # MSGID field (6th SP-delimited token) should be the event type
         parts = msg.split(" ")
         assert parts[5] == "component_loaded"
 
     def test_to_syslog_message_msgid_default_for_system_log(self, exporter: SyslogExporter) -> None:
         data = {"level": "ERROR", "message": ["err"], "timestamp": 1700000000.0}
-        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        msg = exporter._to_log_record(Event("system_log_event", data=data)).payload.decode("utf-8")
         parts = msg.split(" ")
         assert parts[5] == "-"
 

@@ -18,6 +18,7 @@ from custom_components.remote_logger.const import (
     CONF_ENCODING,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
+    EVENT_SYSTEM_LOG,
 )
 from custom_components.remote_logger.exporter import LogExporter, LogMessage
 from custom_components.remote_logger.helpers import flatten_event_data, isotimestamp
@@ -42,7 +43,7 @@ from .protobuf_encoder import encode_export_logs_request
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
-    from homeassistant.core import HomeAssistant
+    from homeassistant.core import Event, HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -227,7 +228,13 @@ class OtlpLogExporter(LogExporter):
 
         return {"attributes": attrs}
 
-    def _to_log_record(self, data: Any) -> OtlpMessage:
+    def _to_log_record(
+        self,
+        event: Event,
+        message_override: list[str] | None = None,
+        level_override: str | None = None,
+        state_only: bool = False,
+    ) -> OtlpMessage:
         """Convert a system_log_event payload to an OTLP logRecord dict."""
         """ HA System Log Event
             "name": str
@@ -239,37 +246,40 @@ class OtlpLogExporter(LogExporter):
             "count": int
             "first_occurred": float
         """
+        data = event.data or {}
         timestamp_s: float = data.get("timestamp", time.time())
         time_unix_nano = str(int(timestamp_s * 1_000_000_000))
-        observed_time_unix_nano = str(time.time_ns())
+        observed_timestamp: float = event.time_fired.timestamp()
+        observed_time_unix_nano = str(int(observed_timestamp * 1_000_000_000))
 
-        level: str = data.get("level", "INFO").upper()
+        level: str = level_override or data.get("level", "INFO").upper()
         severity_number, severity_text = SEVERITY_MAP.get(level, DEFAULT_SEVERITY)
 
-        messages: list[str] = data.get("message", [])
+        messages: list[str] = message_override or data.get("message", [])
         message: str = "\n".join(messages)
 
         attributes: list[dict[str, Any]] = []
-        source = data.get("source")
-        if source and isinstance(source, tuple):
-            source_path, source_lineno = source
-            attributes.append(_kv("code.file.path", source_path))
-            attributes.append(_kv("code.line.number", source_lineno))
-        logger_name = data.get("name")
-        if data.get("count"):
-            attributes.append(_kv("exception.count", data["count"]))
-        if data.get("first_occurred"):
-            attributes.append(_kv("exception.first_occurred", isotimestamp(data["first_occurred"])))
-        if logger_name:
-            attributes.append(_kv("code.function.name", logger_name))
-        exception = data.get("exception")
-        if exception:
-            attributes.append(_kv("exception.stacktrace", exception))
 
-        ha_event_data = data.get("ha_event_data")
-        if ha_event_data:
-            for k, v in ha_event_data.items():
-                for flat_key, flat_val in flatten_event_data(f"event.data.{k}", v):
+        if event.event_type == EVENT_SYSTEM_LOG:
+            source = data.get("source")
+            if source and isinstance(source, tuple):
+                source_path, source_lineno = source
+                attributes.append(_kv("code.file.path", source_path))
+                attributes.append(_kv("code.line.number", source_lineno))
+            logger_name = data.get("name")
+            if data.get("count"):
+                attributes.append(_kv("exception.count", data["count"]))
+            if data.get("first_occurred"):
+                attributes.append(_kv("exception.first_occurred", isotimestamp(data["first_occurred"])))
+            if logger_name:
+                attributes.append(_kv("code.function.name", logger_name))
+            exception = data.get("exception")
+            if exception:
+                attributes.append(_kv("exception.stacktrace", exception))
+
+        else:
+            for k, v in data.items():
+                for flat_key, flat_val in flatten_event_data(f"event.data.{k}", v, state_only):
                     attributes.append(_kv(flat_key, flat_val))
 
         # https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/logs/v1/logs.proto
@@ -281,7 +291,7 @@ class OtlpLogExporter(LogExporter):
                 "severityText": severity_text,
                 "body": {"string_value": message},
                 "attributes": attributes,
-                "eventName": data.get("event"),
+                "eventName": event.event_type if event != EVENT_SYSTEM_LOG else None,
             }
         )
 

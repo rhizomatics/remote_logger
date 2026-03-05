@@ -1,3 +1,6 @@
+# 1.3.1
+- Improve eventName handling
+- Allow state changes to be sent without their attributes
 # 1.3.0
 - Add any HA event to logging, and use the OTEL `event_name` field for them
     - Pre-bundled events for HA lifecycle and core changes

@@ -30,14 +30,13 @@ Only Home Assistant server itself, with its custom components is supported. Logs
 
 ## Installation
 
-**Remote Logger** is a HACS component, so that has to be installed first, using the instructions
-at [Getting Started with HACS](https://www.hacs.xyz/docs/use/).
+**Remote Logger** is a HACS component, so that has to be installed first, using the instruction at [Getting Started with HACS](https://www.hacs.xyz/docs/use/).
 
-The integration installs using the Home Assistant integrations page, and has no YAML configuration.
+The integration installs using the Home Assistant integrations page, and has **no YAML configuration**.
 
 ![Choose Integration](./assets/images/config_choose.png){width=400}
 
-However, a YAML change is required to the Home Assistant [System Log](https://www.home-assistant.io/integrations/system_log/) integration, to enable event forwarding.
+However, a YAML change is required to the Home Assistant [System Log](https://www.home-assistant.io/integrations/system_log/) integration, to enable event forwarding for `system_log_event`.
 
 ```yaml title="Home Assistant Configuration"
 system_log:
@@ -62,7 +61,18 @@ Syslog can be sent as TCP or UDP.
 
 ![Configure Syslog](./assets/images/config_syslog.png){width=400}
 
-## Additional Attributes
+## Events
+
+### System Log Event
+
+Note the requirement at [Installation](#installation) to enable this event,
+which isn't fired by default.
+
+*Remote Logger* will omit its own log events from the stream, to prevent
+the possibility of event loops. As an alternative, error stats and messages
+are available as diagnostic entities.
+
+#### Additional Attributes
 
 The following additional attributes, derived directly from the
 Home Assistant log event, are provided as Syslog `STRUCTURED-DATA` attributes, or OTEL attributes.
@@ -76,6 +86,24 @@ Home Assistant log event, are provided as Syslog `STRUCTURED-DATA` attributes, o
 
 OTEL taxonomy is used for both OTEL and Syslog since there's no standard taxonomy at this
 level of Syslog.
+
+### Other Events
+
+*Remote Logger* can log any Home Assistant event, and knows about the core
+ones, in order to create a more readable message.
+
+For convenience, four pre-defined bundles of events can be switched on.
+
+| Bundle | Description |
+| ------ | ----------- |
+| Lifecycle | Home Assistant server start and stop events |
+| Core Changes | Components and services loading or unloading, config reapplied |
+| Core Activity | Actions, mobile actions, scripts, automations executed |
+| State Changes | Entity state changes and log book entries, with states stripped of attributes and context to avoid huge log entries |
+| Full State Changes | Entity state changes and log book entries, full and untrimmed |
+
+The free-form event box can be used as an alternative to pick specific
+Home Assistant events, or any other custom component events.
 
 ## Log Servers
 

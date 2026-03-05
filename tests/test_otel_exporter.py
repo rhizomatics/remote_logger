@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
+from homeassistant.core import Event
 
 from custom_components.remote_logger.otel.exporter import (
     OtlpLogExporter,
@@ -187,8 +188,8 @@ class TestOtlpLogExporter:
         assert "env" in keys
         assert "region" in keys
 
-    def test_to_log_record_full(self, exporter: OtlpLogExporter, sample_event_data: dict[str, Any]) -> None:
-        record: OtlpMessage = exporter._to_log_record(sample_event_data)
+    def test_to_log_record_full(self, exporter: OtlpLogExporter, sample_log_event: Event) -> None:
+        record: OtlpMessage = exporter._to_log_record(sample_log_event)
 
         assert record.payload["severityNumber"] == 17
         assert record.payload["severityText"] == "ERROR"
@@ -204,8 +205,8 @@ class TestOtlpLogExporter:
         assert "exception.count" in attr_keys
         assert "exception.first_occurred" in attr_keys
 
-    def test_to_log_record_minimal(self, exporter: OtlpLogExporter, minimal_event_data: dict[str, Any]) -> None:
-        record = exporter._to_log_record(minimal_event_data)
+    def test_to_log_record_minimal(self, exporter: OtlpLogExporter, minimal_log_event: Event) -> None:
+        record = exporter._to_log_record(minimal_log_event)
 
         assert record.payload["severityNumber"] == 9
         assert record.payload["severityText"] == "INFO"
@@ -214,25 +215,25 @@ class TestOtlpLogExporter:
         assert record.payload["attributes"] == []
 
     def test_to_log_record_unknown_level(self, exporter: OtlpLogExporter) -> None:
-        record = exporter._to_log_record({"level": "TRACE", "message": ["test"]})
+        record = exporter._to_log_record(Event("system_log_event", data={"level": "TRACE", "message": ["test"]}))
         # Falls back to default severity (INFO)
         assert record.payload["severityNumber"] == 9
         assert record.payload["severityText"] == "INFO"
 
     def test_to_log_record_multiple_messages(self, exporter: OtlpLogExporter) -> None:
-        record = exporter._to_log_record({"message": ["line 1", "line 2", "line 3"]})
+        record = exporter._to_log_record(Event("system_log_event", data={"message": ["line 1", "line 2", "line 3"]}))
         assert record.payload["body"]["string_value"] == "line 1\nline 2\nline 3"
 
-    def test_to_protobuf(self, exporter: OtlpLogExporter, sample_event_data: dict[str, Any]) -> None:
-        record = exporter._to_log_record(sample_event_data)
+    def test_to_protobuf(self, exporter: OtlpLogExporter, sample_log_event: Event) -> None:
+        record = exporter._to_log_record(sample_log_event)
         exporter._use_protobuf = True
         result = exporter.generate_submission([record])
         assert result["data"] is not None
         assert isinstance(result["data"], bytes)
         assert len(result["data"]) > 400
 
-    def test_to_json(self, exporter: OtlpLogExporter, sample_event_data: dict[str, Any]) -> None:
-        record = exporter._to_log_record(sample_event_data)
+    def test_to_json(self, exporter: OtlpLogExporter, sample_log_event: Event) -> None:
+        record = exporter._to_log_record(sample_log_event)
         exporter._use_protobuf = False
         result = exporter.generate_submission([record])
         body = result["json"]
@@ -402,29 +403,16 @@ class TestOtlpLogExporter:
     async def test_close_is_noop(self, exporter: OtlpLogExporter) -> None:
         await exporter.close()  # Should not raise
 
-    def test_to_log_record_ha_event_data_as_attributes(self, exporter: OtlpLogExporter) -> None:
-        data = {
-            "level": "INFO",
-            "message": ["homeassistant_start"],
-            "timestamp": 1700000000.0,
-            "event": "homeassistant_start",
-            "ha_event_data": {"domain": "light", "service": "turn_on", "count": 3},
-        }
-        record = exporter._to_log_record(data)
+    def test_to_log_record_event_data_as_attributes(self, exporter: OtlpLogExporter) -> None:
+        data = {"domain": "light", "service": "turn_on", "count": 3}
+        record = exporter._to_log_record(Event("homeassistant_start", data=data))
         attr_keys = [a["key"] for a in record.payload["attributes"]]
         assert "event.data.domain" in attr_keys
         assert "event.data.service" in attr_keys
         assert "event.data.count" in attr_keys
 
     def test_to_log_record_ha_event_name_as_event_name(self, exporter: OtlpLogExporter) -> None:
-        data = {
-            "level": "INFO",
-            "message": ["component_loaded"],
-            "timestamp": 1700000000.0,
-            "event": "component_loaded",
-            "ha_event_data": {},
-        }
-        record = exporter._to_log_record(data)
+        record = exporter._to_log_record(Event("component_loaded"))
         assert record.payload["eventName"] == "component_loaded"
 
     def test_handle_ha_event_buffers(self, exporter: OtlpLogExporter) -> None:

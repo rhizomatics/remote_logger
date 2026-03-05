@@ -17,6 +17,7 @@ from custom_components.remote_logger.const import (
     CONF_BATCH_MAX_SIZE,
     CONF_FACILITY,
     CONF_USE_TLS,
+    EVENT_SYSTEM_LOG,
 )
 from custom_components.remote_logger.exporter import LogExporter, LogMessage
 from custom_components.remote_logger.helpers import flatten_event_data, isotimestamp
@@ -31,8 +32,6 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -90,11 +89,17 @@ class SyslogExporter(LogExporter):
         ):
             # prevent log loops
             return
-        self._buffer.append(self._to_log_record(event.data))
+        self._buffer.append(self._to_log_record(event))
         if len(self._buffer) >= self._batch_max_size:
             self._hass.async_create_task(self.flush())
 
-    def _to_log_record(self, data: Mapping[str, Any]) -> SyslogMessage:
+    def _to_log_record(
+        self,
+        event: Event,
+        message_override: list[str] | None = None,
+        level_override: str | None = None,
+        state_only: bool = False,
+    ) -> SyslogMessage:
         """Convert a system_log_event payload to an RFC 5424 syslog message."""
         """
             "name": str
@@ -106,7 +111,8 @@ class SyslogExporter(LogExporter):
             "count": int
             "first_occurred": float
         """
-        level: str = data.get("level", "INFO").upper()
+        data = event.data
+        level: str = level_override or data.get("level", "INFO").upper()
         severity = SYSLOG_SEVERITY_MAP.get(level, DEFAULT_SYSLOG_SEVERITY)
         pri = self._facility * 8 + severity
 
@@ -115,40 +121,40 @@ class SyslogExporter(LogExporter):
         timestamp = isotimestamp(timestamp_s)
 
         # Message body
-        messages: list[str] = data.get("message", [])
+        messages: list[str] = message_override or data.get("message", [])
         msg = " ".join(messages) if messages else "-"
 
         # Structured data with meta info
         sd = "-"
         sd_params: list[str] = []
-        source = data.get("source")
-        if source and isinstance(source, tuple):
-            source_path, source_linenum = source
-            sd_params.append(f'code.file.path="{_sd_escape(source_path)}"')
-            sd_params.append(f'code.line.number="{source_linenum}"')
-        logger_name = data.get("name")
-        if logger_name:
-            sd_params.append(f'code.function.name="{_sd_escape(logger_name)}"')
-        if data.get("count"):
-            sd_params.append(f'exception.count="{data["count"]}"')
-        if data.get("first_occurred"):
-            sd_params.append(f'exception.first_occurred="{isotimestamp(data["first_occurred"])}"')
+        if event.event_type == EVENT_SYSTEM_LOG:
+            source = data.get("source")
+            if source and isinstance(source, tuple):
+                source_path, source_linenum = source
+                sd_params.append(f'code.file.path="{_sd_escape(source_path)}"')
+                sd_params.append(f'code.line.number="{source_linenum}"')
+            logger_name = data.get("name")
+            if logger_name:
+                sd_params.append(f'code.function.name="{_sd_escape(logger_name)}"')
+            if data.get("count"):
+                sd_params.append(f'exception.count="{data["count"]}"')
+            if data.get("first_occurred"):
+                sd_params.append(f'exception.first_occurred="{isotimestamp(data["first_occurred"])}"')
 
-        exception = data.get("exception")
-        if exception:
-            sd_params.append(f'exception.stacktrace="{data["exception"]}"')
-
-        ha_event_data = data.get("ha_event_data")
-        if ha_event_data:
-            for k, v in ha_event_data.items():
-                for flat_key, flat_val in flatten_event_data(f"event.data.{k}", v):
+            exception = data.get("exception")
+            if exception:
+                sd_params.append(f'exception.stacktrace="{data["exception"]}"')
+            msgid: str = "-"
+        else:
+            sd_params.append(f"eventName={event.event_type}")
+            # Use HA event type as MSGID for non-system-log events; "-" otherwise
+            msgid = event.event_type or "-"
+            for k, v in data.items():
+                for flat_key, flat_val in flatten_event_data(f"event.data.{k}", v, state_only):
                     sd_params.append(f'{_sd_escape(flat_key)}="{_sd_escape(str(flat_val))}"')
 
         if sd_params:
             sd = f"[opentelemetry {' '.join(sd_params)}]"
-
-        # Use HA event type as MSGID for non-system-log events; "-" otherwise
-        msgid = data.get("event") or "-"
 
         # RFC 5424: <PRI>VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID SP SD [SP MSG]
         # VERSION = 1, PROCID = -

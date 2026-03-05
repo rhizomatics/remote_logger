@@ -4,7 +4,7 @@ from typing import Any
 from homeassistant.util import dt as dt_util
 
 
-def flatten_event_data(prefix: str, value: Any) -> list[tuple[str, Any]]:
+def flatten_event_data(prefix: str, value: Any, state_only: bool) -> list[tuple[str, Any]]:
     """Flatten a value into (key, scalar) pairs using dotted key notation.
 
     If the value has an ``as_dict`` method it is called first.  The resulting
@@ -18,7 +18,8 @@ def flatten_event_data(prefix: str, value: Any) -> list[tuple[str, Any]]:
     if isinstance(value, dict):
         result: list[tuple[str, Any]] = []
         for k, v in value.items():
-            result.extend(flatten_event_data(f"{prefix}.{k}", v))
+            if k not in ("attributes", "context") or not state_only:
+                result.extend(flatten_event_data(f"{prefix}.{k}", v, state_only))
         return result
     return [(prefix, value)]
 
