@@ -27,6 +27,55 @@ CONF_FACILITY = "facility"
 # HA event type
 EVENT_SYSTEM_LOG = "system_log_event"
 
+# Optional HA event subscriptions config keys
+CONF_LOG_HA_LIFECYCLE = "log_ha_lifecycle"
+CONF_LOG_HA_CORE_CHANGES = "log_ha_core_changes"
+CONF_CUSTOM_EVENTS = "custom_events"
+CONF_LOG_HA_CORE_ACTIVITY = "log_ha_core_activity"
+CONF_LOG_HA_STATE_CHANGES = "log_ha_state_changes"
+
+# HA lifecycle event types (EVENT_HOMEASSISTANT_*)
+LIFECYCLE_EVENTS: list[str] = [
+    "homeassistant_start",
+    "homeassistant_started",
+    "homeassistant_stop",
+    "homeassistant_close",
+    "homeassistant_final_write",
+]
+
+# HA core change event types
+CORE_CHANGE_EVENTS: list[str] = [
+    "component_loaded",
+    "core_config_updated",
+    "service_registered",
+    "service_removed",
+    "automation_reloaded",
+    "lovelace_updated",
+    "data_entry_flow_progressed",
+    "panels_updated",
+    "themes_updated",
+    "scene_reloaded",
+    "labs_updated",
+    "user_added",
+    "user_updated",
+    "user_removed",
+    "device_registry_updated",
+    "entity_registry_updated",
+    "area_registry_updated",
+    "floor_registry_updated",
+    "label_registry_updated",
+    "category_registry_updated",
+    "logging_changed",
+    "labs_updated",
+    "panels_updated",
+    "repairs_issues_registry_updated",
+]
+CORE_STATE_EVENTS: list[str] = [
+    "state_changed",
+    "logbook_entry",
+]
+
+CORE_ACTIVITY_EVENTS: list[str] = ["automation_triggered", "script_started", "call_service", "mobile_app_notification_action"]
 BATCH_FLUSH_INTERVAL_SECONDS = 120
 DEFAULT_BATCH_MAX_SIZE = 20
 

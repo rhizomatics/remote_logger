@@ -68,6 +68,24 @@
           "app_name": "The APP-NAME field in RFC 5424 messages (default: homeassistant).",
           "facility": "Syslog facility code used to calculate the PRI value (default: user)."
         }
+      },
+      "common": {
+        "title": "Additional Home Assistant Events",
+        "description": "Optionally subscribe to Home Assistant events beyond system log messages. [Learn about HA events](https://www.home-assistant.io/docs/configuration/events/)",
+        "data": {
+          "log_ha_lifecycle": "Home Assistant lifecycle events",
+          "log_ha_core_changes": "Home Assistant core change events",
+          "log_ha_core_activity": "Home Assistant core activity",
+          "log_ha_state_changes": "Home Assistant state changes",
+          "custom_events": "Custom event names"
+        },
+        "data_description": {
+          "log_ha_lifecycle": "Subscribe to homeassistant_start, homeassistant_started, and homeassistant_stop events.",
+          "log_ha_core_changes": "Subscribe to component_loaded, core_config_updated, service_registered, service_removed, lovelace_updated, panels_updated, themes_updated, labs_updated, user_added, user_updated, and user_removed events.",
+          "custom_events": "Optional list of additional Home Assistant event names to subscribe to, one per line (e.g. zha_event).",
+          "log_ha_core_activity": "Home Assistant core activity, including service calls, automation and script execution.",
+          "log_ha_state_changes": "Home Assistant state changes and logbook entries"
+        }
       }
     },
     "error": {
@@ -81,7 +99,77 @@
       "already_configured": "This endpoint is already configured."
     }
   },
-   "entity": {
+  "options": {
+    "step": {
+      "otel": {
+        "title": "Configure OTLP Endpoint",
+        "description": "Update the connection details for your OpenTelemetry collector.",
+        "data": {
+          "host": "Collector host",
+          "port": "Collector port",
+          "use_tls": "Use TLS (HTTPS)",
+          "encoding": "Payload encoding",
+          "batch_max_size": "Batch max size",
+          "resource_attributes": "Custom resource attributes",
+          "token_type": "Token type",
+          "token": "Access token for Authorization header",
+          "headers": "Additional headers",
+          "path": "Logs endpoint path"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the OTLP collector.",
+          "port": "HTTP port of the OTLP collector (default 4318).",
+          "use_tls": "Enable HTTPS for the connection to the collector.",
+          "encoding": "Encoding format for the OTLP payload: json or protobuf.",
+          "batch_max_size": "Maximum number of log records to buffer before flushing (1-10000, default 100).",
+          "resource_attributes": "Optional comma-separated key=value pairs added to every log record (e.g. deployment.environment=production,service.namespace=home).",
+          "token_type": "Authentication scheme: Bearer sends the token as-is; Basic base64-encodes it as 'username:password'.",
+          "token": "Optional token. Sent in the 'Authorization' header.",
+          "headers": "Optional extra HTTP headers, one per line in 'Name: value' format (e.g. stream-name: my-stream).",
+          "path": "Path appended to host:port for the logs endpoint (default /v1/logs). Prefix with any API-specific path (e.g. /api/otlp/v1/logs)."
+        }
+      },
+      "syslog": {
+        "title": "Configure Syslog Endpoint",
+        "description": "Update the connection details for your RFC 5424 syslog server.",
+        "data": {
+          "host": "Syslog server host",
+          "port": "Syslog server port",
+          "protocol": "Transport protocol",
+          "use_tls": "Use TLS (TCP only)",
+          "app_name": "Application name",
+          "facility": "Syslog facility"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the syslog server.",
+          "port": "Port of the syslog server (default 514).",
+          "protocol": "Transport protocol: UDP (fire-and-forget) or TCP (reliable delivery).",
+          "use_tls": "Enable TLS encryption for TCP connections. Ignored for UDP.",
+          "app_name": "The APP-NAME field in RFC 5424 messages (default: homeassistant).",
+          "facility": "Syslog facility code used to calculate the PRI value (default: user)."
+        }
+      },
+      "events": {
+        "title": "Additional Home Assistant Events",
+        "description": "Optionally subscribe to Home Assistant events beyond system log messages. [Learn about HA events](https://www.home-assistant.io/docs/configuration/events/)",
+        "data": {
+          "log_ha_lifecycle": "Home Assistant lifecycle events",
+          "log_ha_core_changes": "Home Assistant core change events",
+          "custom_events": "Custom event names",
+          "log_ha_core_activity": "Home Assistant core activity",
+          "log_ha_state_changes": "Home Assistant state changes"
+        },
+        "data_description": {
+          "log_ha_lifecycle": "Subscribe to homeassistant_start, homeassistant_started, and homeassistant_stop events.",
+          "log_ha_core_changes": "Subscribe to component_loaded, core_config_updated, service_registered, service_removed, lovelace_updated, panels_updated, themes_updated, labs_updated, user_added, user_updated, and user_removed events.",
+          "custom_events": "Optional list of additional Home Assistant event names to subscribe to, one per line (e.g. zha_event).",
+          "log_ha_core_activity": "Home Assistant core activity, including service calls, automation and script execution.",
+          "log_ha_state_changes": "Home Assistant state changes and logbook entries"
+        }
+      }
+    }
+  },
+  "entity": {
     "sensor": {
       "format_errors": {
         "name": "Formatting Errors"

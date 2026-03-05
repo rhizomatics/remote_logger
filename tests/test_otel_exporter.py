@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
@@ -236,14 +235,11 @@ class TestOtlpLogExporter:
         record = exporter._to_log_record(sample_event_data)
         exporter._use_protobuf = False
         result = exporter.generate_submission([record])
-        payload = json.dumps(result["json"])
-        assert (
-            payload[:324]
-            == '{"resourceLogs": [{"resource": {"attributes": [{"key": "service.name", "value": {"string_value": "core"}}, '
-            '{"key": "service.version", "value": {"string_value": "2026.1.1"}}]}, "scopeLogs": '
-            '[{"scope": {"name": "homeassistant", "version": "1.0.0"}, "logRecords": '
-            '[{"timeUnixNano": "1700000000000000000", "observedTimeUnixNano"'
-        )
+        body = result["json"]
+        resource_attrs = {a["key"]: a["value"] for a in body["resourceLogs"][0]["resource"]["attributes"]}
+        assert resource_attrs["service.name"]["string_value"] == "homeassistant.core"
+        log_record = body["resourceLogs"][0]["scopeLogs"][0]["logRecords"][0]
+        assert log_record["timeUnixNano"] == "1700000000000000000"
 
     def test_handle_event_buffers(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
         assert len(exporter._buffer) == 0
@@ -405,6 +401,60 @@ class TestOtlpLogExporter:
 
     async def test_close_is_noop(self, exporter: OtlpLogExporter) -> None:
         await exporter.close()  # Should not raise
+
+    def test_to_log_record_ha_event_data_as_attributes(self, exporter: OtlpLogExporter) -> None:
+        data = {
+            "level": "INFO",
+            "message": ["homeassistant_start"],
+            "timestamp": 1700000000.0,
+            "event": "homeassistant_start",
+            "ha_event_data": {"domain": "light", "service": "turn_on", "count": 3},
+        }
+        record = exporter._to_log_record(data)
+        attr_keys = [a["key"] for a in record.payload["attributes"]]
+        assert "event.data.domain" in attr_keys
+        assert "event.data.service" in attr_keys
+        assert "event.data.count" in attr_keys
+
+    def test_to_log_record_ha_event_name_as_event_name(self, exporter: OtlpLogExporter) -> None:
+        data = {
+            "level": "INFO",
+            "message": ["component_loaded"],
+            "timestamp": 1700000000.0,
+            "event": "component_loaded",
+            "ha_event_data": {},
+        }
+        record = exporter._to_log_record(data)
+        assert record.payload["eventName"] == "component_loaded"
+
+    def test_handle_ha_event_buffers(self, exporter: OtlpLogExporter) -> None:
+        event = MagicMock()
+        event.time_fired.timestamp.return_value = 1700000000.0
+        event.data = {"domain": "light"}
+        exporter.handle_ha_event("homeassistant_start", event)
+        assert len(exporter._buffer) == 1
+        assert exporter.event_count == 1
+
+    def test_handle_ha_event_triggers_flush_at_batch_size(self, exporter: OtlpLogExporter) -> None:
+        from unittest.mock import patch
+
+        exporter._batch_max_size = 1
+        event = MagicMock()
+        event.time_fired.timestamp.return_value = 1700000000.0
+        event.data = {}
+        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+            exporter.handle_ha_event("my_event", event)
+        mock_create_task.assert_called_once()
+
+    def test_handle_ha_event_exception_logged(self, exporter: OtlpLogExporter) -> None:
+        from unittest.mock import patch
+
+        event = MagicMock()
+        event.time_fired.timestamp.return_value = 1700000000.0
+        event.data = {}
+        with patch.object(exporter, "_to_log_record", side_effect=RuntimeError("fail")):
+            exporter.handle_ha_event("bad_event", event)
+        assert exporter.format_error_count == 1
 
 
 class TestOtelValidate:

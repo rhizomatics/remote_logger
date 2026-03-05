@@ -1,5 +1,6 @@
 import voluptuous as vol
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_PROTOCOL
+from homeassistant.helpers import selector
 
 from custom_components.remote_logger.const import (
     CONF_APP_NAME,
@@ -52,9 +53,13 @@ DEFAULT_FACILITY = "local0"
 SYSLOG_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST): str,
     vol.Optional(CONF_PORT, default=DEFAULT_SYSLOG_PORT): int,
-    vol.Optional(CONF_PROTOCOL, default=DEFAULT_PROTOCOL): vol.In([PROTOCOL_UDP, PROTOCOL_TCP]),
+    vol.Optional(CONF_PROTOCOL, default=DEFAULT_PROTOCOL): selector.SelectSelector(
+        selector.SelectSelectorConfig(options=[PROTOCOL_UDP, PROTOCOL_TCP])
+    ),
     vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
     vol.Optional(CONF_APP_NAME, default=DEFAULT_APP_NAME): str,
-    vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): vol.In(list(SYSLOG_FACILITY_MAP.keys())),
+    vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): selector.SelectSelector(
+        selector.SelectSelectorConfig(options=list(SYSLOG_FACILITY_MAP.keys()))
+    ),
     vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
 })

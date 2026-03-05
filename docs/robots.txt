@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://remote_logger.rhizomatics.org.uk
+Sitemap: https://remote-logger.rhizomatics.org.uk

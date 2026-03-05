@@ -20,7 +20,7 @@ from custom_components.remote_logger.const import (
     CONF_USE_TLS,
 )
 from custom_components.remote_logger.exporter import LogExporter, LogMessage
-from custom_components.remote_logger.helpers import isotimestamp
+from custom_components.remote_logger.helpers import flatten_event_data, isotimestamp
 
 from .const import (
     CONF_TOKEN_TYPE,
@@ -266,6 +266,12 @@ class OtlpLogExporter(LogExporter):
         if exception:
             attributes.append(_kv("exception.stacktrace", exception))
 
+        ha_event_data = data.get("ha_event_data")
+        if ha_event_data:
+            for k, v in ha_event_data.items():
+                for flat_key, flat_val in flatten_event_data(f"event.data.{k}", v):
+                    attributes.append(_kv(flat_key, flat_val))
+
         # https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/logs/v1/logs.proto
         return OtlpMessage(
             payload={
@@ -275,6 +281,7 @@ class OtlpLogExporter(LogExporter):
                 "severityText": severity_text,
                 "body": {"string_value": message},
                 "attributes": attributes,
+                "eventName": data.get("event"),
             }
         )
 

@@ -398,6 +398,45 @@ class TestSyslogExporter:
         assert exporter._udp_transport is None
         assert exporter._tcp_writer is None
 
+    def test_to_syslog_message_ha_event_data_in_sd(self, exporter: SyslogExporter) -> None:
+        data = {
+            "level": "INFO",
+            "message": ["homeassistant_start"],
+            "timestamp": 1700000000.0,
+            "event": "homeassistant_start",
+            "ha_event_data": {"domain": "light", "service": "turn_on"},
+        }
+        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        assert 'event.data.domain="light"' in msg
+        assert 'event.data.service="turn_on"' in msg
+
+    def test_to_syslog_message_msgid_from_event(self, exporter: SyslogExporter) -> None:
+        data = {
+            "level": "INFO",
+            "message": ["component_loaded"],
+            "timestamp": 1700000000.0,
+            "event": "component_loaded",
+            "ha_event_data": {},
+        }
+        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        # MSGID field (6th SP-delimited token) should be the event type
+        parts = msg.split(" ")
+        assert parts[5] == "component_loaded"
+
+    def test_to_syslog_message_msgid_default_for_system_log(self, exporter: SyslogExporter) -> None:
+        data = {"level": "ERROR", "message": ["err"], "timestamp": 1700000000.0}
+        msg = exporter._to_log_record(data).payload.decode("utf-8")
+        parts = msg.split(" ")
+        assert parts[5] == "-"
+
+    def test_handle_ha_event_buffers(self, exporter: SyslogExporter) -> None:
+        event = MagicMock()
+        event.time_fired.timestamp.return_value = 1700000000.0
+        event.data = {"domain": "light"}
+        exporter.handle_ha_event("homeassistant_stop", event)
+        assert len(exporter._buffer) == 1
+        assert exporter.event_count == 1
+
 
 class TestSyslogValidate:
     async def test_udp_success(self, hass: HomeAssistant) -> None:

@@ -19,7 +19,7 @@ from custom_components.remote_logger.const import (
     CONF_USE_TLS,
 )
 from custom_components.remote_logger.exporter import LogExporter, LogMessage
-from custom_components.remote_logger.helpers import isotimestamp
+from custom_components.remote_logger.helpers import flatten_event_data, isotimestamp
 
 from .const import (
     DEFAULT_APP_NAME,
@@ -138,12 +138,21 @@ class SyslogExporter(LogExporter):
         if exception:
             sd_params.append(f'exception.stacktrace="{data["exception"]}"')
 
+        ha_event_data = data.get("ha_event_data")
+        if ha_event_data:
+            for k, v in ha_event_data.items():
+                for flat_key, flat_val in flatten_event_data(f"event.data.{k}", v):
+                    sd_params.append(f'{_sd_escape(flat_key)}="{_sd_escape(str(flat_val))}"')
+
         if sd_params:
             sd = f"[opentelemetry {' '.join(sd_params)}]"
 
+        # Use HA event type as MSGID for non-system-log events; "-" otherwise
+        msgid = data.get("event") or "-"
+
         # RFC 5424: <PRI>VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID SP SD [SP MSG]
-        # VERSION = 1, PROCID = -, MSGID = -
-        syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - - {sd} {msg}"
+        # VERSION = 1, PROCID = -
+        syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {msgid} {sd} {msg}"
 
         return SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
 

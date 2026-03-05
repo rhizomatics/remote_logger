@@ -5,8 +5,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.auth import HomeAssistant
-from homeassistant.core import Event, callback
+from homeassistant.auth import EVENT_USER_ADDED, EVENT_USER_REMOVED, EVENT_USER_UPDATED, HomeAssistant
+from homeassistant.components.automation import EVENT_AUTOMATION_TRIGGERED
+from homeassistant.components.script import EVENT_SCRIPT_STARTED
+from homeassistant.const import EVENT_COMPONENT_LOADED, EVENT_STATE_CHANGED
+from homeassistant.core import EVENT_CALL_SERVICE, EVENT_SERVICE_REGISTERED, EVENT_SERVICE_REMOVED, Event, callback
 from homeassistant.util import dt as dt_util
 
 from custom_components.remote_logger.const import BATCH_FLUSH_INTERVAL_SECONDS
@@ -67,6 +70,40 @@ class LogExporter:
                 self._hass.async_create_task(self.flush())
         except Exception as e:
             _LOGGER.error("remote_logger: %s handler failure %s on %s", self.logger_type, e, event.data)
+            self.on_format_error(str(e))
+
+    @callback
+    def handle_ha_event(self, event_type: str, event: Event) -> None:
+        """Handle a non-system-log HA event (lifecycle, core change, or custom)."""
+        self.on_event()
+        try:
+            if event_type == EVENT_STATE_CHANGED:
+                old_state: str = (event.data["old_state"] and event.data["old_state"].state) or "N/A"
+                new_state: str = (event.data["new_state"] and event.data["new_state"].state) or "N/A"
+                message: list[str] = [event_type, ":", event.data["entity_id"], old_state, "->", new_state]
+            elif event_type in (EVENT_CALL_SERVICE, EVENT_SERVICE_REGISTERED, EVENT_SERVICE_REMOVED):
+                message = [event_type, ":", event.data["domain"], event.data["service"]]
+            elif event_type == EVENT_COMPONENT_LOADED:
+                message = [event_type, ":", event.data["component"]]
+            elif event_type in (EVENT_SCRIPT_STARTED, EVENT_AUTOMATION_TRIGGERED):
+                message = [event_type, ":", event.data["name"], event.data["entity_id"]]
+            elif event_type in (EVENT_USER_ADDED, EVENT_USER_REMOVED, EVENT_USER_UPDATED):
+                message = [event_type, ":", event.data["user_id"]]
+            else:
+                message = [event_type]
+            data: dict[str, Any] = {
+                "level": "INFO",
+                "message": message,
+                "timestamp": event.time_fired.timestamp(),
+                "event": event_type,
+                "ha_event_data": dict(event.data),
+            }
+            record: LogMessage = self._to_log_record(data)
+            self._buffer.append(record)
+            if len(self._buffer) >= self._batch_max_size:
+                self._hass.async_create_task(self.flush())
+        except Exception as e:
+            _LOGGER.error("remote_logger: %s ha_event handler failure %s on %s", self.logger_type, e, event_type)
             self.on_format_error(str(e))
 
     @abstractmethod

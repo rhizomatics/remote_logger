@@ -1,3 +1,8 @@
+# 1.3.0
+- Add any HA event to logging, and use the OTEL `event_name` field for them
+    - Pre-bundled events for HA lifecycle and core changes
+    - Added float handling to protobuf for event attributes
+- Defaults now to expect Python 3.14, in line with Home Assistant from 2026.3 onwards
 # 1.2.0
 - Choice of Authorization headers for Basic, Basic already encoded and ApiKey
 # 1.1.0

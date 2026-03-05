@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, patch
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_PROTOCOL
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.remote_logger.config_flow import _build_endpoint_url
 from custom_components.remote_logger.const import (
+    CONF_CUSTOM_EVENTS,
+    CONF_LOG_HA_CORE_CHANGES,
+    CONF_LOG_HA_LIFECYCLE,
     CONF_USE_TLS,
     DOMAIN,
 )
@@ -64,6 +68,12 @@ class TestOtelConfigFlow:
                     "resource_attributes": "",
                 },
             )
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "common"
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {"log_ha_lifecycle": False, "log_ha_core_changes": False, "custom_events": ""},
+        )
         assert result["type"] == FlowResultType.CREATE_ENTRY
         assert result["title"] == "OTLP @ localhost:4318"
         assert result["data"][CONF_HOST] == "localhost"
@@ -109,6 +119,12 @@ class TestOtelConfigFlow:
                     "token": "user:pass",
                 },
             )
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "common"
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {"log_ha_lifecycle": False, "log_ha_core_changes": False, "custom_events": ""},
+        )
         assert result["type"] == FlowResultType.CREATE_ENTRY
         assert result["data"]["token_type"] == "basic"  # noqa: S105
 
@@ -161,6 +177,12 @@ class TestSyslogConfigFlow:
                     "batch_max_size": 20,
                 },
             )
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "common"
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {"log_ha_lifecycle": False, "log_ha_core_changes": False, "custom_events": ""},
+        )
         assert result["type"] == FlowResultType.CREATE_ENTRY
         assert "Syslog @" in result["title"]
 
@@ -185,3 +207,134 @@ class TestSyslogConfigFlow:
             )
         assert result["type"] == FlowResultType.FORM
         assert result["errors"]["base"] == "cannot_connect"
+
+
+@pytest.mark.usefixtures("enable_custom_integrations")
+class TestOptionsFlow:
+    def _make_otel_entry(self, extra: dict | None = None) -> ConfigEntry:
+        entry = MagicMock(spec=ConfigEntry)
+        entry.entry_id = "opt_test"
+        entry.domain = DOMAIN
+        entry.data = {
+            "backend": "otel",
+            CONF_HOST: "localhost",
+            CONF_PORT: 4318,
+            CONF_USE_TLS: False,
+            "encoding": ENCODING_JSON,
+            "batch_max_size": 100,
+            "resource_attributes": "",
+            CONF_LOG_HA_LIFECYCLE: False,
+            CONF_LOG_HA_CORE_CHANGES: False,
+            CONF_CUSTOM_EVENTS: "",
+            **(extra or {}),
+        }
+        entry.options = {}
+        return entry
+
+    async def test_options_flow_shows_otel_form(self, hass: HomeAssistant) -> None:
+        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
+
+        entry = self._make_otel_entry()
+        flow = RemoteLoggerOptionsFlow(entry)
+        flow.hass = hass
+        result = await flow.async_step_init(None)
+        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["step_id"] == "otel"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+
+    async def test_options_flow_saves_values(self, hass: HomeAssistant) -> None:
+        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
+
+        entry = self._make_otel_entry()
+        flow = RemoteLoggerOptionsFlow(entry)
+        flow.hass = hass
+        with patch(
+            "custom_components.remote_logger.config_flow.otel_validate",
+            new=AsyncMock(return_value={}),
+        ):
+            result: ConfigFlowResult = await flow.async_step_otel({
+                CONF_HOST: "newhost",
+                CONF_PORT: 4318,
+                CONF_USE_TLS: False,
+                "encoding": ENCODING_JSON,
+                "batch_max_size": 50,
+                "resource_attributes": "",
+            })
+        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["step_id"] == "events"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        result = await flow.async_step_events({
+            CONF_LOG_HA_LIFECYCLE: True,
+            CONF_LOG_HA_CORE_CHANGES: False,
+            CONF_CUSTOM_EVENTS: "my_event",
+        })
+        assert result["type"] == FlowResultType.CREATE_ENTRY  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["data"][CONF_HOST] == "newhost"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["data"][CONF_LOG_HA_LIFECYCLE] is True  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["data"][CONF_CUSTOM_EVENTS] == "my_event"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+
+    async def test_options_flow_prefers_existing_options(self, hass: HomeAssistant) -> None:
+        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
+
+        entry: ConfigEntry[Any] = self._make_otel_entry()
+        entry.options[CONF_LOG_HA_LIFECYCLE] = True  # type: ignore
+        entry.options[CONF_CUSTOM_EVENTS] = "zha_event"  # type: ignore
+        flow = RemoteLoggerOptionsFlow(entry)
+        flow.hass = hass
+        result = await flow.async_step_init(None)
+        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["step_id"] == "otel"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+
+    def _make_syslog_entry(self) -> ConfigEntry:
+        entry = MagicMock(spec=ConfigEntry)
+        entry.entry_id = "opt_syslog"
+        entry.domain = DOMAIN
+        entry.data = {
+            "backend": "syslog",
+            CONF_HOST: "syslog.example.com",
+            CONF_PORT: 514,
+            "protocol": "udp",
+            CONF_USE_TLS: False,
+            "app_name": "homeassistant",
+            "facility": "local0",
+            CONF_LOG_HA_LIFECYCLE: False,
+            CONF_LOG_HA_CORE_CHANGES: False,
+            CONF_CUSTOM_EVENTS: "",
+        }
+        entry.options = {}
+        return entry
+
+    async def test_options_flow_syslog_shows_syslog_form(self, hass: HomeAssistant) -> None:
+        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
+
+        flow = RemoteLoggerOptionsFlow(self._make_syslog_entry())
+        flow.hass = hass
+        result = await flow.async_step_init(None)
+        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["step_id"] == "syslog"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+
+    async def test_options_flow_syslog_saves_values(self, hass: HomeAssistant) -> None:
+        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
+
+        flow = RemoteLoggerOptionsFlow(self._make_syslog_entry())
+        flow.hass = hass
+        with patch(
+            "custom_components.remote_logger.config_flow.syslog_validate",
+            new=AsyncMock(return_value=None),
+        ):
+            result = await flow.async_step_syslog({
+                CONF_HOST: "newhost",
+                CONF_PORT: 514,
+                "protocol": "udp",
+                CONF_USE_TLS: False,
+                "app_name": "homeassistant",
+                "facility": "local0",
+                "batch_max_size": 10,
+            })
+        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["step_id"] == "events"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        result = await flow.async_step_events({
+            CONF_LOG_HA_LIFECYCLE: False,
+            CONF_LOG_HA_CORE_CHANGES: False,
+            CONF_CUSTOM_EVENTS: "",
+        })
+        assert result["type"] == FlowResultType.CREATE_ENTRY  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["data"][CONF_HOST] == "newhost"  # pyright: ignore[reportTypedDictNotRequiredAccess]

@@ -66,6 +66,11 @@ def _encode_fixed64(field_number: int, value: int) -> bytes:
     return _tag(field_number, WIRE_64BIT) + struct.pack("<q", value)
 
 
+def _encode_float64(field_number: int, value: float) -> bytes:
+    """Encode a fixed64 field (tag + 8 bytes little-endian)."""
+    return _tag(field_number, WIRE_64BIT) + struct.pack("<d", value)
+
+
 def _encode_uint32_field(field_number: int, value: int) -> bytes:
     """Encode a uint32/int32/enum as a varint field."""
     return _tag(field_number, WIRE_VARINT) + _encode_varint(value)
@@ -88,7 +93,7 @@ def _encode_any_value(av: dict[str, Any]) -> bytes:
     if "bool_value" in av:
         return _encode_uint32_field(2, 1 if av["bool_value"] else 0)
     if "float_value" in av:
-        return _encode_fixed64(4, av["float_value"])
+        return _encode_float64(4, av["float_value"])
     return b""
 
 
@@ -131,6 +136,7 @@ def _encode_log_record(record: dict[str, Any]) -> bytes:
         trace_id = 9 (bytes)
         span_id = 10 (bytes)
         observed_time_unix_nano = 11 (fixed64)
+        event_name = 12 (string)
     """
     result = b""
 
@@ -157,6 +163,9 @@ def _encode_log_record(record: dict[str, Any]) -> bytes:
 
     if "observedTimeUnixNano" in record:
         result += _encode_fixed64(11, int(record["observedTimeUnixNano"]))
+
+    if record.get("eventName"):
+        result += _encode_string_field(12, record["eventName"])
 
     return result
 
@@ -192,5 +201,5 @@ def encode_export_logs_request(request: dict[str, Any]) -> bytes:
         try:
             result += _encode_submessage(1, _encode_resource_logs(rl))
         except Exception as e:
-            _LOGGER.error("remote_logger: failed to build protobuf: %s", e)
+            _LOGGER.exception("remote_logger: failed to build protobuf for %s: %s", rl, e)
     return result

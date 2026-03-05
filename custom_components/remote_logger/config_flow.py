@@ -5,15 +5,23 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HEADERS, CONF_HOST, CONF_PATH, CONF_PORT, CONF_PROTOCOL, CONF_TOKEN
+from homeassistant.core import callback
+from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     BACKEND_OTEL,
     BACKEND_SYSLOG,
     CONF_BACKEND,
+    CONF_CUSTOM_EVENTS,
     CONF_ENCODING,
+    CONF_LOG_HA_CORE_ACTIVITY,
+    CONF_LOG_HA_CORE_CHANGES,
+    CONF_LOG_HA_LIFECYCLE,
+    CONF_LOG_HA_STATE_CHANGES,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_USE_TLS,
     DOMAIN,
@@ -26,6 +34,14 @@ from .syslog.exporter import validate as syslog_validate
 
 _LOGGER = logging.getLogger(__name__)
 
+COMMON_DATA_SCHEMA = vol.Schema({
+    vol.Optional(CONF_LOG_HA_LIFECYCLE, default=False): selector.BooleanSelector(),
+    vol.Optional(CONF_LOG_HA_CORE_CHANGES, default=False): selector.BooleanSelector(),
+    vol.Optional(CONF_LOG_HA_CORE_ACTIVITY, default=False): selector.BooleanSelector(),
+    vol.Optional(CONF_LOG_HA_STATE_CHANGES, default=False): selector.BooleanSelector(),
+    vol.Optional(CONF_CUSTOM_EVENTS, default=""): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
+})
+
 
 def _build_endpoint_url(host: str, port: int, use_tls: bool, path: str = OTLP_LOGS_PATH) -> str:
     """Build the full OTLP endpoint URL."""
@@ -37,6 +53,16 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for OpenTelemetry Log Exporter."""
 
     VERSION = 2
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._pending_data: dict[str, Any] = {}
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        """Return the options flow handler."""
+        return RemoteLoggerOptionsFlow(config_entry)
 
     async def async_step_user(
         self,
@@ -89,10 +115,9 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             if not errors:
                 await self.async_set_unique_id(f"{DOMAIN}_{BACKEND_OTEL}_{host}_{port}")
                 self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=f"OTLP @ {host}:{port}",
-                    data={**user_input, CONF_BACKEND: BACKEND_OTEL},
-                )
+                self._pending_data = {**user_input, CONF_BACKEND: BACKEND_OTEL}
+                self._pending_data["_title"] = f"OTLP @ {host}:{port}"
+                return await self.async_step_common()
 
         return self.async_show_form(
             step_id="otel",
@@ -160,13 +185,129 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             if not errors:
                 await self.async_set_unique_id(f"{DOMAIN}_{BACKEND_SYSLOG}")
                 self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=f"Syslog @ {host}:{port} ({protocol.upper()})",
-                    data={**user_input, CONF_BACKEND: BACKEND_SYSLOG},
-                )
+                self._pending_data = {**user_input, CONF_BACKEND: BACKEND_SYSLOG}
+                self._pending_data["_title"] = f"Syslog @ {host}:{port} ({protocol.upper()})"
+                return await self.async_step_common()
 
         return self.async_show_form(
             step_id="syslog",
             data_schema=self.add_suggested_values_to_schema(SYSLOG_DATA_SCHEMA, user_input or {}),
             errors=errors,
+        )
+
+    async def async_step_common(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Configure common event subscription options."""
+        if user_input is not None:
+            title = self._pending_data.pop("_title")
+            return self.async_create_entry(
+                title=title,
+                data={**self._pending_data, **user_input},
+            )
+
+        return self.async_show_form(
+            step_id="common",
+            data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, user_input or {}),
+        )
+
+
+class RemoteLoggerOptionsFlow(OptionsFlow):
+    """Allow editing connection details and event subscriptions after setup."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        self._config_entry = config_entry
+        self._pending_options: dict[str, Any] = {}
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:  # noqa: ARG002
+        """Dispatch to the backend-specific connection form."""
+        backend = self._config_entry.data.get(CONF_BACKEND, BACKEND_OTEL)
+        if backend == BACKEND_SYSLOG:
+            return await self.async_step_syslog()
+        return await self.async_step_otel()
+
+    async def async_step_otel(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Handle OTLP connection settings."""
+        errors: dict[str, str] = {}
+        merged = {**self._config_entry.data, **self._config_entry.options}
+
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            port = user_input[CONF_PORT]
+            use_tls = user_input[CONF_USE_TLS]
+            url = _build_endpoint_url(host, port, use_tls, user_input.get(CONF_PATH, OTLP_LOGS_PATH))
+
+            extra_headers: dict[str, str] = {}
+            token = user_input.get(CONF_TOKEN, "").strip()
+            if token:
+                token_type = user_input.get(CONF_TOKEN_TYPE, TOKEN_TYPE_BEARER)
+                extra_headers["Authorization"] = build_auth_header(token, token_type)
+            raw_headers = user_input.get(CONF_HEADERS, "").strip()
+            if raw_headers:
+                try:
+                    extra_headers.update(parse_headers(raw_headers))
+                except ValueError:
+                    errors[CONF_HEADERS] = "invalid_headers"
+
+            if not errors:
+                session = async_get_clientsession(self.hass, verify_ssl=use_tls)
+                errors = await otel_validate(session, url, user_input[CONF_ENCODING], extra_headers or None)
+
+            if not errors:
+                raw_attrs = user_input.get(CONF_RESOURCE_ATTRIBUTES, "")
+                if raw_attrs.strip():
+                    try:
+                        parse_resource_attributes(raw_attrs)
+                    except ValueError:
+                        errors[CONF_RESOURCE_ATTRIBUTES] = "invalid_attributes"
+
+            if not errors:
+                self._pending_options = user_input
+                return await self.async_step_events()
+
+        return self.async_show_form(
+            step_id="otel",
+            data_schema=self.add_suggested_values_to_schema(OTEL_DATA_SCHEMA, user_input or merged),
+            errors=errors,
+        )
+
+    async def async_step_syslog(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Handle Syslog connection settings."""
+        errors: dict[str, str] = {}
+        merged = {**self._config_entry.data, **self._config_entry.options}
+
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            port = user_input[CONF_PORT]
+            protocol = user_input[CONF_PROTOCOL]
+            use_tls = user_input.get(CONF_USE_TLS, False)
+
+            error = await syslog_validate(self.hass, host, port, protocol, use_tls)
+            if error:
+                errors["base"] = error
+
+            if not errors:
+                self._pending_options = user_input
+                return await self.async_step_events()
+
+        return self.async_show_form(
+            step_id="syslog",
+            data_schema=self.add_suggested_values_to_schema(SYSLOG_DATA_SCHEMA, user_input or merged),
+            errors=errors,
+        )
+
+    async def async_step_events(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Handle event subscription options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data={**self._pending_options, **user_input})
+
+        merged = {**self._config_entry.data, **self._config_entry.options}
+        current = {
+            CONF_LOG_HA_CORE_ACTIVITY: merged.get(CONF_LOG_HA_CORE_ACTIVITY, False),
+            CONF_LOG_HA_LIFECYCLE: merged.get(CONF_LOG_HA_LIFECYCLE, False),
+            CONF_LOG_HA_CORE_CHANGES: merged.get(CONF_LOG_HA_CORE_CHANGES, False),
+            CONF_LOG_HA_STATE_CHANGES: merged.get(CONF_LOG_HA_STATE_CHANGES, False),
+            CONF_CUSTOM_EVENTS: merged.get(CONF_CUSTOM_EVENTS, ""),
+        }
+        return self.async_show_form(
+            step_id="events",
+            data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, current),
         )

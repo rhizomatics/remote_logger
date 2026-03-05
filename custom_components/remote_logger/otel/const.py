@@ -46,13 +46,15 @@ SCOPE_NAME = "homeassistant"
 SCOPE_VERSION = "1.0.0"
 
 # Default resource attribute
-DEFAULT_SERVICE_NAME = "core"
+DEFAULT_SERVICE_NAME = "homeassistant.core"
 
 OTEL_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST): str,
     vol.Optional(CONF_PORT, default=DEFAULT_HTTP_PORT): int,
     vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
-    vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): vol.In([ENCODING_JSON, ENCODING_PROTOBUF]),
+    vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): selector.SelectSelector(
+        selector.SelectSelectorConfig(options=[ENCODING_JSON, ENCODING_PROTOBUF])
+    ),
     vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
     vol.Optional(CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES): str,
     vol.Optional(CONF_TOKEN_TYPE, default=DEFAULT_TOKEN_TYPE): selector.SelectSelector(

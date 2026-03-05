@@ -32,6 +32,7 @@ def mock_entry_otel() -> ConfigEntry:
         "resource_attributes": "",
         "backend": "otel",
     }
+    entry.options = {}
     return entry
 
 
@@ -51,6 +52,7 @@ def mock_entry_otel_protobuf() -> ConfigEntry:
         "resource_attributes": "env=prod,region=us-east-1",
         "backend": "otel",
     }
+    entry.options = {}
     return entry
 
 
@@ -70,6 +72,7 @@ def mock_entry_syslog() -> ConfigEntry:
         "facility": "local0",
         "backend": "syslog",
     }
+    entry.options = {}
     return entry
 
 

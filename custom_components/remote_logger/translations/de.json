@@ -1,0 +1,188 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Protokoll-Export-Backend wählen",
+        "description": "Wählen Sie aus, wie Home Assistant-Systemprotokolle exportiert werden sollen.",
+        "menu_options": {
+          "otel": "OpenTelemetry (OTLP)",
+          "syslog": "Syslog (RFC 5424)"
+        }
+      },
+      "otel": {
+        "title": "OTLP-Endpunkt konfigurieren",
+        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector eingeben.",
+        "data": {
+          "host": "Collector-Host",
+          "port": "Collector-Port",
+          "use_tls": "TLS verwenden (HTTPS)",
+          "encoding": "Nutzlast-Kodierung",
+          "batch_max_size": "Maximale Batch-Größe",
+          "resource_attributes": "Benutzerdefinierte Ressourcenattribute",
+          "token_type": "Token-Typ",
+          "token": "Zugriffstoken für den Authorization-Header",
+          "headers": "Zusätzliche Header",
+          "path": "Endpunkt-Pfad für Protokolle"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des OTLP-Collectors.",
+          "port": "HTTP-Port des OTLP-Collectors (Standard: 4318).",
+          "use_tls": "HTTPS für die Verbindung zum Collector aktivieren.",
+          "encoding": "Kodierungsformat der OTLP-Nutzlast: json oder protobuf.",
+          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 100).",
+          "resource_attributes": "Optionale kommagetrennte Schlüssel=Wert-Paare, die jedem Protokolleintrag hinzugefügt werden (z. B. deployment.environment=production,service.namespace=home).",
+          "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
+          "token": "Optionales Token. Wird im Authorization-Header gesendet.",
+          "headers": "Optionale zusätzliche HTTP-Header, einer pro Zeile im Format 'Name: Wert' (z. B. stream-name: mein-stream).",
+          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs)."
+        }
+      },
+      "reauth_otel": {
+        "title": "OTLP-Endpunkt erneut authentifizieren",
+        "description": "Authentifizierung fehlgeschlagen. Bitte ein neues Token eingeben.",
+        "data": {
+          "token_type": "Token-Typ",
+          "token": "Token"
+        },
+        "data_description": {
+          "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
+          "token": "Neues Token zur Authentifizierung beim OTLP-Collector."
+        }
+      },
+      "syslog": {
+        "title": "Syslog-Endpunkt konfigurieren",
+        "description": "Verbindungsdetails für Ihren RFC 5424-Syslog-Server eingeben.",
+        "data": {
+          "host": "Syslog-Server-Host",
+          "port": "Syslog-Server-Port",
+          "protocol": "Transportprotokoll",
+          "use_tls": "TLS verwenden (nur TCP)",
+          "app_name": "Anwendungsname",
+          "facility": "Syslog-Facility"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des Syslog-Servers.",
+          "port": "Port des Syslog-Servers (Standard: 514).",
+          "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
+          "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
+          "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
+          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user)."
+        }
+      },
+      "common": {
+        "title": "Zusätzliche HA-Ereignisse",
+        "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus. [Mehr über HA-Ereignisse](https://www.home-assistant.io/docs/configuration/events/)",
+        "data": {
+          "log_ha_lifecycle": "HA-Lebenszyklusereignisse",
+          "log_ha_core_changes": "HA-Kernänderungsereignisse",
+          "log_ha_core_activity": "HA-Kernaktivität",
+          "log_ha_state_changes": "HA-Zustandsänderungen",
+          "custom_events": "Benutzerdefinierte Ereignisnamen"
+        },
+        "data_description": {
+          "log_ha_lifecycle": "Abonniert homeassistant_start, homeassistant_started und homeassistant_stop.",
+          "log_ha_core_changes": "Abonniert component_loaded, core_config_updated, service_registered, service_removed, lovelace_updated, panels_updated, themes_updated, labs_updated, user_added, user_updated und user_removed.",
+          "log_ha_core_activity": "HA-Kernaktivität, einschließlich Dienstaufrufe, Automatisierungs- und Skriptausführung.",
+          "log_ha_state_changes": "Home Assistant-Zustandsänderungen und Logbucheinträge.",
+          "custom_events": "Optionale Liste zusätzlicher HA-Ereignisnamen, einen pro Zeile (z. B. zha_event)."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum Endpunkt nicht möglich. Host, Port und TLS-Einstellungen prüfen.",
+      "invalid_attributes": "Ungültiges Format. Kommagetrennte Schlüssel=Wert-Paare verwenden (z. B. env=prod,region=de).",
+      "invalid_headers": "Ungültiges Format. Einen Header pro Zeile im Format 'Name: Wert' verwenden.",
+      "invalid_auth": "Authentifizierung fehlgeschlagen. Token prüfen.",
+      "unknown": "Ein unerwarteter Fehler ist aufgetreten."
+    },
+    "abort": {
+      "already_configured": "Dieser Endpunkt ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "otel": {
+        "title": "OTLP-Endpunkt konfigurieren",
+        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector aktualisieren.",
+        "data": {
+          "host": "Collector-Host",
+          "port": "Collector-Port",
+          "use_tls": "TLS verwenden (HTTPS)",
+          "encoding": "Nutzlast-Kodierung",
+          "batch_max_size": "Maximale Batch-Größe",
+          "resource_attributes": "Benutzerdefinierte Ressourcenattribute",
+          "token_type": "Token-Typ",
+          "token": "Zugriffstoken für den Authorization-Header",
+          "headers": "Zusätzliche Header",
+          "path": "Endpunkt-Pfad für Protokolle"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des OTLP-Collectors.",
+          "port": "HTTP-Port des OTLP-Collectors (Standard: 4318).",
+          "use_tls": "HTTPS für die Verbindung zum Collector aktivieren.",
+          "encoding": "Kodierungsformat der OTLP-Nutzlast: json oder protobuf.",
+          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 100).",
+          "resource_attributes": "Optionale kommagetrennte Schlüssel=Wert-Paare, die jedem Protokolleintrag hinzugefügt werden (z. B. deployment.environment=production,service.namespace=home).",
+          "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
+          "token": "Optionales Token. Wird im Authorization-Header gesendet.",
+          "headers": "Optionale zusätzliche HTTP-Header, einer pro Zeile im Format 'Name: Wert' (z. B. stream-name: mein-stream).",
+          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs)."
+        }
+      },
+      "syslog": {
+        "title": "Syslog-Endpunkt konfigurieren",
+        "description": "Verbindungsdetails für Ihren RFC 5424-Syslog-Server aktualisieren.",
+        "data": {
+          "host": "Syslog-Server-Host",
+          "port": "Syslog-Server-Port",
+          "protocol": "Transportprotokoll",
+          "use_tls": "TLS verwenden (nur TCP)",
+          "app_name": "Anwendungsname",
+          "facility": "Syslog-Facility"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des Syslog-Servers.",
+          "port": "Port des Syslog-Servers (Standard: 514).",
+          "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
+          "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
+          "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
+          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user)."
+        }
+      },
+      "events": {
+        "title": "Zusätzliche HA-Ereignisse",
+        "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus. [Mehr über HA-Ereignisse](https://www.home-assistant.io/docs/configuration/events/)",
+        "data": {
+          "log_ha_lifecycle": "HA-Lebenszyklusereignisse",
+          "log_ha_core_changes": "HA-Kernänderungsereignisse",
+          "log_ha_core_activity": "HA-Kernaktivität",
+          "log_ha_state_changes": "HA-Zustandsänderungen",
+          "custom_events": "Benutzerdefinierte Ereignisnamen"
+        },
+        "data_description": {
+          "log_ha_lifecycle": "Abonniert homeassistant_start, homeassistant_started und homeassistant_stop.",
+          "log_ha_core_changes": "Abonniert component_loaded, core_config_updated, service_registered, service_removed, lovelace_updated, panels_updated, themes_updated, labs_updated, user_added, user_updated und user_removed.",
+          "log_ha_core_activity": "HA-Kernaktivität, einschließlich Dienstaufrufe, Automatisierungs- und Skriptausführung.",
+          "log_ha_state_changes": "Home Assistant-Zustandsänderungen und Logbucheinträge.",
+          "custom_events": "Optionale Liste zusätzlicher HA-Ereignisnamen, einen pro Zeile (z. B. zha_event)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "format_errors": {
+        "name": "Formatierungsfehler"
+      },
+      "posting_errors": {
+        "name": "Sendefehler"
+      },
+      "events": {
+        "name": "Protokollereignisse"
+      },
+      "postings": {
+        "name": "Sendungen"
+      }
+    }
+  }
+}
