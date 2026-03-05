@@ -19,7 +19,8 @@
 
 
 Listens to Home Assistant system log events and sends structured log events to a remote
-Syslog or OpenTelemetry (OTLP) collector.
+Syslog or OpenTelemetry (OTLP) collector. Optionally forwards other Home Assistant events, such
+as lifecycle events, service calls, configuration updates, state changes.
 
 ![Example OTEL Stack Trace](./assets/images/otel_stack_trace.png){width=600}
 
