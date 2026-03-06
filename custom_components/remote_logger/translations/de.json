@@ -71,7 +71,7 @@
       },
       "common": {
         "title": "Zusätzliche HA-Ereignisse",
-        "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus. [Mehr über HA-Ereignisse](https://www.home-assistant.io/docs/configuration/events/)",
+        "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus.",
         "data": {
           "log_ha_lifecycle": "HA-Lebenszyklusereignisse",
           "log_ha_core_changes": "HA-Kernänderungsereignisse",
@@ -154,7 +154,7 @@
       },
       "events": {
         "title": "Zusätzliche HA-Ereignisse",
-        "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus. [Mehr über HA-Ereignisse](https://www.home-assistant.io/docs/configuration/events/)",
+        "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus.",
         "data": {
           "log_ha_lifecycle": "HA-Lebenszyklusereignisse",
           "log_ha_core_changes": "HA-Kernänderungsereignisse",
