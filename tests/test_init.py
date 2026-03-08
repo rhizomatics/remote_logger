@@ -58,7 +58,7 @@ class TestAsyncSetupEntry:
 
         entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
         # system_log + update_listener + 3 lifecycle listeners
-        assert len(entry_data["cancel_listeners"]) == 2 + len(LIFECYCLE_EVENTS)
+        assert len(entry_data["cancel_listeners"]) == 3 + len(LIFECYCLE_EVENTS)
 
         entry_data["flush_task"].cancel()
         with contextlib.suppress(asyncio.CancelledError):
@@ -70,7 +70,7 @@ class TestAsyncSetupEntry:
             await async_setup_entry(hass, mock_entry_otel)
 
         entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert len(entry_data["cancel_listeners"]) == 2 + len(CORE_CHANGE_EVENTS)
+        assert len(entry_data["cancel_listeners"]) == 3 + len(CORE_CHANGE_EVENTS)
 
         entry_data["flush_task"].cancel()
         with contextlib.suppress(asyncio.CancelledError):
@@ -82,7 +82,7 @@ class TestAsyncSetupEntry:
             await async_setup_entry(hass, mock_entry_otel)
 
         entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert len(entry_data["cancel_listeners"]) == 2 + 2  # system_log + listener + 2 custom
+        assert len(entry_data["cancel_listeners"]) == 3 + 2  # system_log + stop_listener + update_listener + 2 custom
 
         entry_data["flush_task"].cancel()
         with contextlib.suppress(asyncio.CancelledError):
@@ -96,7 +96,7 @@ class TestAsyncSetupEntry:
             await async_setup_entry(hass, mock_entry_otel)
 
         entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert len(entry_data["cancel_listeners"]) == 2 + len(LIFECYCLE_EVENTS)
+        assert len(entry_data["cancel_listeners"]) == 3 + len(LIFECYCLE_EVENTS)
 
         entry_data["flush_task"].cancel()
         with contextlib.suppress(asyncio.CancelledError):
@@ -139,6 +139,103 @@ class TestAsyncUnloadEntry:
         with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
             result = await async_unload_entry(hass, mock_entry_otel)
         assert result is True
+
+
+class TestShutdownFlush:
+    async def test_homeassistant_stop_flushes_exporter(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            await async_setup_entry(hass, mock_entry_otel)
+
+        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
+        exporter = entry_data["exporter"]
+
+        with patch.object(exporter, "flush", AsyncMock()) as mock_flush:
+            hass.bus.async_fire("homeassistant_stop")
+            await hass.async_block_till_done()
+
+        mock_flush.assert_awaited_once()
+
+        entry_data["flush_task"].cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await entry_data["flush_task"]
+
+
+class TestSendLogService:
+    async def test_service_registered_on_otel_setup(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            await async_setup_entry(hass, mock_entry_otel)
+
+        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
+        entry_data["flush_task"].cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await entry_data["flush_task"]
+
+        assert hass.services.has_service("remote_logger", "send_log")
+
+    async def test_service_registered_on_syslog_setup(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            await async_setup_entry(hass, mock_entry_syslog)
+
+        entry_data = hass.data[DOMAIN][mock_entry_syslog.entry_id]
+        entry_data["flush_task"].cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await entry_data["flush_task"]
+
+        assert hass.services.has_service("remote_logger", "send_log")
+
+    async def test_send_log_routes_to_otel_exporter(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            await async_setup_entry(hass, mock_entry_otel)
+
+        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
+        exporter = entry_data["exporter"]
+
+        await hass.services.async_call(
+            "remote_logger", "send_log", {"event": "unit_test", "message": "direct log", "level": "ERROR"}, blocking=True
+        )
+
+        assert len(exporter._buffer) == 1
+        assert exporter._buffer[0].payload["body"] == {"string_value": "direct log"}
+        assert exporter._buffer[0].payload["severityNumber"] == 17
+
+        entry_data["flush_task"].cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await entry_data["flush_task"]
+
+    async def test_send_log_routes_to_syslog_exporter(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            await async_setup_entry(hass, mock_entry_syslog)
+
+        entry_data = hass.data[DOMAIN][mock_entry_syslog.entry_id]
+        exporter = entry_data["exporter"]
+
+        await hass.services.async_call(
+            "remote_logger", "send_log", {"event": "unit_test", "message": "syslog direct"}, blocking=True
+        )
+
+        assert len(exporter._buffer) == 1
+        assert b"syslog direct" in exporter._buffer[0].payload
+
+        entry_data["flush_task"].cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await entry_data["flush_task"]
+
+    async def test_send_log_not_registered_twice(
+        self, hass: HomeAssistant, mock_entry_otel: MagicMock, mock_entry_syslog: MagicMock
+    ) -> None:
+        """Service is registered once even when multiple entries are set up."""
+        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
+            await async_setup_entry(hass, mock_entry_otel)
+            await async_setup_entry(hass, mock_entry_syslog)
+
+        assert hass.services.has_service("remote_logger", "send_log")
+
+        for entry_id in [mock_entry_otel.entry_id, mock_entry_syslog.entry_id]:
+            hass.data[DOMAIN][entry_id]["flush_task"].cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await hass.data[DOMAIN][entry_id]["flush_task"]
 
 
 class TestUpdateListener:

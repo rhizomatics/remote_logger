@@ -146,3 +146,7 @@ class LogExporter:
     def on_event(self) -> None:
         self.event_count += 1
         self.last_event = dt_util.now()
+
+    @abstractmethod
+    def log_direct(self, event_name: str, message: str, level: str, attributes: dict[str, Any] | None = None) -> None:
+        """Buffer a custom syslog record without requiring a HA Event."""

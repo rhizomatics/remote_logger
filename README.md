@@ -105,6 +105,8 @@ For convenience, four pre-defined bundles of events can be switched on.
 The free-form event box can be used as an alternative to pick specific
 Home Assistant events, or any other custom component events.
 
+![Home Assistant Events in OpenObserve](./assets/images/ha_events_in_openobserve.png)
+
 ## Log Servers
 
 There are a zillion possible solutions for capturing, analyzing, aggregating and storing logs.

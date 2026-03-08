@@ -6,7 +6,10 @@ import asyncio
 import contextlib
 import logging
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+import voluptuous as vol
+from homeassistant.core import callback
 
 from .const import (
     BACKEND_SYSLOG,
@@ -32,11 +35,19 @@ REF_CANCEL_LISTENERS = "cancel_listeners"
 REF_FLUSH_TASK = "flush_task"
 REF_EXPORTER = "exporter"
 
+SERVICE_SEND_LOG = "send_log"
+SERVICE_SEND_LOG_SCHEMA = vol.Schema({
+    vol.Required("event"): str,
+    vol.Required("message"): str,
+    vol.Optional("level", default="INFO"): vol.In(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    vol.Optional("attributes"): dict,
+})
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from homeassistant.config_entries import ConfigEntry
-    from homeassistant.core import HomeAssistant
+    from homeassistant.core import HomeAssistant, ServiceCall
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,8 +72,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Options take precedence over initial data for the three event-subscription keys
     opts = {**entry.data, **entry.options}
 
+    async def _flush_on_stop(_: Any) -> None:
+        await exporter.flush()
+
     cancel_listeners: list[Callable[[], None]] = [
         hass.bus.async_listen(EVENT_SYSTEM_LOG, exporter.handle_event),
+        hass.bus.async_listen_once("homeassistant_stop", _flush_on_stop),
         entry.add_update_listener(_async_update_listener),
     ]
     _LOGGER.info("remote_logger: listening for system_log_event, exporting %s to %s", backend, label)
@@ -105,9 +120,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         REF_FLUSH_TASK: flush_task,
         REF_EXPORTER: exporter,
     }
+
+    if not hass.services.has_service(DOMAIN, SERVICE_SEND_LOG):
+        hass.services.async_register(
+            DOMAIN, SERVICE_SEND_LOG, partial(handle_send_log, hass.data[DOMAIN]), schema=SERVICE_SEND_LOG_SCHEMA
+        )
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
+
+
+@callback
+def handle_send_log(domain_data: dict[str, Any], call: ServiceCall) -> None:
+    message: str = call.data["message"]
+    level: str = call.data["level"]
+    event_name: str = call.data["event"]
+    attributes: dict[str, Any] | None = call.data.get("attributes")
+    for entry in domain_data.values():
+        entry[REF_EXPORTER].log_direct(event_name, message, level, attributes)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

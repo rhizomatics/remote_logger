@@ -1,0 +1,36 @@
+send_log:
+  name: Create Log Event
+  description: >
+    Create a custom log event.
+  fields:
+    event:
+      name: Event
+      description: Name of event to generate
+      required: true
+      selector:
+        text:
+    message:
+      name: Message
+      description: The log message body.
+      required: true
+      selector:
+        text:
+    level:
+      name: Level
+      description: Severity level.
+      required: false
+      default: INFO
+      selector:
+        select:
+          options:
+            - DEBUG
+            - INFO
+            - WARNING
+            - ERROR
+            - CRITICAL
+    attributes:
+      name: Attributes
+      description: Optional key-value attributes to attach to the log record.
+      required: false
+      selector:
+        object:

@@ -162,6 +162,22 @@ class SyslogExporter(LogExporter):
 
         return SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
 
+    def log_direct(self, event_name: str, message: str, level: str, attributes: dict[str, Any] | None = None) -> None:
+        """Buffer a custom syslog record without requiring a HA Event."""
+        severity = SYSLOG_SEVERITY_MAP.get(level.upper(), DEFAULT_SYSLOG_SEVERITY)
+        pri = self._facility * 8 + severity
+        timestamp = isotimestamp(time.time())
+        sd = "-"
+        if attributes:
+            sd_params = [f'{_sd_escape(k)}="{_sd_escape(str(v))}"' for k, v in attributes.items()]
+            sd = f"[opentelemetry {' '.join(sd_params)}]"
+        syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {event_name} {sd} {message}"
+        record = SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
+        self._buffer.append(record)
+        self.on_event()
+        if len(self._buffer) >= self._batch_max_size:
+            self._hass.async_create_task(self.flush())
+
     async def flush(self) -> None:
         """Flush all buffered log records to the syslog endpoint."""
         records: list[SyslogMessage] | None = None

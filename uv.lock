@@ -2737,7 +2737,7 @@ dev = [
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest", specifier = "==9.0.0" },
-    { name = "pytest-cov", specifier = "==7.0.0" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.316" },
     { name = "pytest-icdiff" },
     { name = "pytest-mock" },

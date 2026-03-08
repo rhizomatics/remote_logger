@@ -351,6 +351,28 @@ class OtlpLogExporter(LogExporter):
             self.on_posting_error(str(e))
             self._in_progress = None
 
+    def log_direct(self, event_name: str, message: str, level: str, attributes: dict[str, Any] | None = None) -> None:
+        """Buffer a custom log record without requiring a HA Event."""
+        now = time.time()
+        time_unix_nano = str(int(now * 1_000_000_000))
+        severity_number, severity_text = SEVERITY_MAP.get(level.upper(), DEFAULT_SEVERITY)
+        attrs = [_kv(k, v) for k, v in (attributes or {}).items()]
+        record = OtlpMessage(
+            payload={
+                "timeUnixNano": time_unix_nano,
+                "observedTimeUnixNano": time_unix_nano,
+                "severityNumber": severity_number,
+                "severityText": severity_text,
+                "body": {"string_value": message},
+                "attributes": attrs,
+                "eventName": event_name,
+            }
+        )
+        self._buffer.append(record)
+        self.on_event()
+        if len(self._buffer) >= self._batch_max_size:
+            self._hass.async_create_task(self.flush())
+
     def _build_export_request(self, records: list[OtlpMessage]) -> dict[str, Any]:
         """Wrap logRecords in the ExportLogsServiceRequest envelope."""
         return {

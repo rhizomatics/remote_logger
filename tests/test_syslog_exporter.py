@@ -430,6 +430,48 @@ class TestSyslogExporter:
         assert exporter.event_count == 1
 
 
+class TestSyslogLogDirectMethod:
+    @pytest.fixture
+    def exporter(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> SyslogExporter:
+        return SyslogExporter(hass, mock_entry_syslog)
+
+    def test_log_direct_buffers_record(self, exporter: SyslogExporter) -> None:
+        exporter.log_direct("unit_test", "hello syslog", "INFO")
+        assert len(exporter._buffer) == 1
+        assert exporter.event_count == 1
+
+    def test_log_direct_message_in_payload(self, exporter: SyslogExporter) -> None:
+        exporter.log_direct("unit_test", "my message", "INFO")
+        payload = exporter._buffer[0].payload.decode()
+        assert "my message" in payload
+
+    def test_log_direct_rfc5424_format(self, exporter: SyslogExporter) -> None:
+        exporter.log_direct("unit_test", "test", "ERROR")
+        payload = exporter._buffer[0].payload.decode()
+        # <PRI>1 TIMESTAMP HOSTNAME APP-NAME PROCID MSGID SD MSG
+        assert payload.startswith("<")
+        assert ">1 " in payload
+        assert "homeassistant" in payload
+
+    def test_log_direct_with_attributes(self, exporter: SyslogExporter) -> None:
+        exporter.log_direct("unit_test", "msg", "INFO", {"env": "prod"})
+        payload = exporter._buffer[0].payload.decode()
+        assert 'env="prod"' in payload
+
+    def test_log_direct_no_attributes_uses_nil_sd(self, exporter: SyslogExporter) -> None:
+        exporter.log_direct("unit_test", "msg", "WARNING")
+        payload = exporter._buffer[0].payload.decode()
+        assert " - " in payload  # nil SD field
+
+    def test_log_direct_triggers_flush_at_batch_size(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import patch
+
+        exporter._batch_max_size = 1
+        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+            exporter.log_direct("unit_test", "msg", "INFO")
+        mock_create_task.assert_called_once()
+
+
 class TestSyslogValidate:
     async def test_udp_success(self, hass: HomeAssistant) -> None:
         from unittest.mock import patch

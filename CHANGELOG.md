@@ -1,3 +1,6 @@
+# 1.4.0
+- New action (aka service) to generate events directly
+- Logs flushed on Home Assistant shutdown
 # 1.3.1
 - Improve eventName handling
 - Allow state changes to be sent without their attributes

@@ -445,6 +445,59 @@ class TestOtlpLogExporter:
         assert exporter.format_error_count == 1
 
 
+class TestOtlpLogDirectMethod:
+    @pytest.fixture
+    def exporter(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> OtlpLogExporter:
+        return OtlpLogExporter(hass, mock_entry_otel)
+
+    def test_log_direct_buffers_record(self, exporter: OtlpLogExporter) -> None:
+        exporter.log_direct("unit_test", "hello world", "INFO")
+        assert len(exporter._buffer) == 1
+        assert exporter.event_count == 1
+
+    def test_log_direct_severity_levels(self, exporter: OtlpLogExporter) -> None:
+        for level, (expected_num, expected_text) in {
+            "DEBUG": (5, "DEBUG"),
+            "INFO": (9, "INFO"),
+            "WARNING": (13, "WARN"),
+            "ERROR": (17, "ERROR"),
+            "CRITICAL": (21, "FATAL"),
+        }.items():
+            exporter._buffer.clear()
+            exporter.log_direct("unit_test", "msg", level)
+            payload = exporter._buffer[0].payload
+            assert payload["severityNumber"] == expected_num
+            assert payload["severityText"] == expected_text
+
+    def test_log_direct_message_in_body(self, exporter: OtlpLogExporter) -> None:
+        exporter.log_direct("unit_test", "custom message", "INFO")
+        assert exporter._buffer[0].payload["body"] == {"string_value": "custom message"}
+
+    def test_log_direct_with_attributes(self, exporter: OtlpLogExporter) -> None:
+        exporter.log_direct("unit_test", "msg", "INFO", {"env": "prod", "region": "eu"})
+        attr_keys = [a["key"] for a in exporter._buffer[0].payload["attributes"]]
+        assert "env" in attr_keys
+        assert "region" in attr_keys
+
+    def test_log_direct_no_attributes(self, exporter: OtlpLogExporter) -> None:
+        exporter.log_direct("unit_test", "msg", "INFO")
+        assert exporter._buffer[0].payload["attributes"] == []
+
+    def test_log_direct_triggers_flush_at_batch_size(self, exporter: OtlpLogExporter) -> None:
+        from unittest.mock import patch
+
+        exporter._batch_max_size = 1
+        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+            exporter.log_direct("unit_test", "msg", "INFO")
+        mock_create_task.assert_called_once()
+
+    def test_log_direct_unknown_level_uses_default(self, exporter: OtlpLogExporter) -> None:
+        exporter.log_direct("unit_test", "msg", "TRACE")
+        payload = exporter._buffer[0].payload
+        assert payload["severityNumber"] == 9
+        assert payload["severityText"] == "INFO"
+
+
 class TestOtelValidate:
     async def test_json_success(self) -> None:
         from unittest.mock import AsyncMock
