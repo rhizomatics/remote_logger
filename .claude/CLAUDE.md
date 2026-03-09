@@ -65,7 +65,6 @@ For multi-step tasks, state a brief plan:
 ```
 
 
-
 ## Project Context
 
 The project uses Ruff for formatting and linting, uv for dependency management,
