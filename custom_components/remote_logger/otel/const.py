@@ -12,11 +12,11 @@ from custom_components.remote_logger.const import (
     DEFAULT_CLIENT_TIMEOUT,
 )
 
-CONF_TOKEN_TYPE = "token_type"  # noqa: S105 # nosec
-TOKEN_TYPE_BEARER = "bearer"  # noqa: S105 # nosec
-TOKEN_TYPE_BASIC = "basic"  # noqa: S105 # nosec
-TOKEN_TYPE_API_KEY = "api_key"  # noqa: S105 # nosec
-TOKEN_TYPE_RAW_BASIC = "raw_basic"  # noqa: S105 # nosec
+CONF_TOKEN_TYPE = "token_type"  # nosec
+TOKEN_TYPE_BEARER = "bearer"  # nosec
+TOKEN_TYPE_BASIC = "basic"  # nosec
+TOKEN_TYPE_API_KEY = "api_key"  # nosec
+TOKEN_TYPE_RAW_BASIC = "raw_basic"  # nosec
 DEFAULT_TOKEN_TYPE = TOKEN_TYPE_BEARER
 
 # OTLP endpoint path
@@ -55,15 +55,15 @@ OTEL_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_PORT, default=DEFAULT_HTTP_PORT): int,
     vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
     vol.Optional(CONF_ENCODING, default=DEFAULT_ENCODING): selector.SelectSelector(
-        selector.SelectSelectorConfig(options=[ENCODING_JSON, ENCODING_PROTOBUF])
+        selector.SelectSelectorConfig(options=[ENCODING_JSON, ENCODING_PROTOBUF]),
     ),
     vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
     vol.Optional(CONF_RESOURCE_ATTRIBUTES, default=DEFAULT_RESOURCE_ATTRIBUTES): str,
     vol.Optional(CONF_TOKEN_TYPE, default=DEFAULT_TOKEN_TYPE): selector.SelectSelector(
-        selector.SelectSelectorConfig(options=[TOKEN_TYPE_BEARER, TOKEN_TYPE_BASIC, TOKEN_TYPE_RAW_BASIC, TOKEN_TYPE_API_KEY])
+        selector.SelectSelectorConfig(options=[TOKEN_TYPE_BEARER, TOKEN_TYPE_BASIC, TOKEN_TYPE_RAW_BASIC, TOKEN_TYPE_API_KEY]),
     ),
     vol.Optional(CONF_TOKEN, default=""): selector.TextSelector(
-        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD),
     ),
     vol.Optional(CONF_HEADERS, default=[]): selector.TextSelector(selector.TextSelectorConfig(multiple=True)),
     vol.Optional(CONF_PATH, default=OTLP_LOGS_PATH): str,
@@ -72,9 +72,9 @@ OTEL_DATA_SCHEMA = vol.Schema({
 
 REAUTH_OTEL_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_TOKEN_TYPE, default=DEFAULT_TOKEN_TYPE): selector.SelectSelector(
-        selector.SelectSelectorConfig(options=[TOKEN_TYPE_BEARER, TOKEN_TYPE_BASIC, TOKEN_TYPE_RAW_BASIC, TOKEN_TYPE_API_KEY])
+        selector.SelectSelectorConfig(options=[TOKEN_TYPE_BEARER, TOKEN_TYPE_BASIC, TOKEN_TYPE_RAW_BASIC, TOKEN_TYPE_API_KEY]),
     ),
     vol.Optional(CONF_TOKEN, default=""): selector.TextSelector(
-        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD),
     ),
 })

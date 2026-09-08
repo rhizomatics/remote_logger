@@ -3,7 +3,6 @@ import json
 import logging
 import threading
 from abc import abstractmethod
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -103,7 +102,7 @@ class LogExporter:
 
             if len(self._buffer) >= self._batch_max_size:
                 self._hass.async_create_task(self.flush())
-        except Exception as e:
+        except Exception as e:  # ruff: ignore[blind-except]
             _LOGGER.error("remote_logger: %s event handler failure %s on %s", self.logger_type, e, event.data)
             self.on_format_error(str(e))
 
@@ -121,7 +120,7 @@ class LogExporter:
                     asyncio.get_running_loop().create_task(self.flush())
                 except RuntimeError:
                     self._hass.create_task(self.flush())
-        except Exception as e:
+        except Exception as e:  # ruff: ignore[blind-except]
             _LOGGER.error("remote_logger: %s entry handler failure %s on %s", self.logger_type, e, entry)
             self.on_format_error(str(e))
 
@@ -208,7 +207,7 @@ class LogExporter:
             self._buffer.append(record)
             if len(self._buffer) >= self._batch_max_size:
                 self._hass.async_create_task(self.flush())
-        except Exception as e:
+        except Exception as e:  # ruff: ignore[blind-except]
             _LOGGER.error("remote_logger: %s ha_event handler failure %s on %s", self.logger_type, e, event_type)
             self.on_format_error(str(e))
 
@@ -225,11 +224,11 @@ class LogExporter:
                 await asyncio.sleep(BATCH_FLUSH_INTERVAL_SECONDS)
                 await self.flush()
         except asyncio.CancelledError:
+            _LOGGER.debug("AUTOARM log flush cancelled")
             raise
 
     async def close(self) -> None:
         """Clean up resources (no-op for HTTP-based exporter)."""
-        pass
 
     def on_format_error(self, message: str) -> None:
         self.format_error_count += 1

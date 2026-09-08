@@ -114,7 +114,7 @@ class TestEncodeResource:
         resource = {
             "attributes": [
                 {"key": "service.name", "value": {"stringValue": "core"}},
-            ]
+            ],
         }
         result = _encode_resource(resource)
         assert b"service.name" in result
@@ -178,7 +178,7 @@ class TestEncodeExportLogsRequest:
                     "resource": {
                         "attributes": [
                             {"key": "service.name", "value": {"stringValue": "core"}},
-                        ]
+                        ],
                     },
                     "scopeLogs": [
                         {
@@ -190,12 +190,12 @@ class TestEncodeExportLogsRequest:
                                     "severityText": "ERROR",
                                     "body": {"stringValue": "something broke"},
                                     "attributes": [],
-                                }
+                                },
                             ],
-                        }
+                        },
                     ],
-                }
-            ]
+                },
+            ],
         }
         result = encode_export_logs_request(request)
         assert isinstance(result, bytes)
@@ -219,10 +219,10 @@ class TestEncodeExportLogsRequest:
                                 {"severityNumber": 9, "body": {"stringValue": "msg1"}},
                                 {"severityNumber": 17, "body": {"stringValue": "msg2"}},
                             ],
-                        }
+                        },
                     ],
-                }
-            ]
+                },
+            ],
         }
         result = encode_export_logs_request(request)
         assert b"msg1" in result

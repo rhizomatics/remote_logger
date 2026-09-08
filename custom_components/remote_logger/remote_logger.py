@@ -100,7 +100,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ]
 
     log_handler: logging.Handler | None = None
-    event_based_logging: bool = bool(opts.get(CONF_EVENT_BASED_LOGGING, False))
+    event_based_logging: bool = bool(opts.get(CONF_EVENT_BASED_LOGGING))
     if event_based_logging:
         cancel_listeners.append(hass.bus.async_listen(EVENT_SYSTEM_LOG, exporter.handle_event))
     else:
@@ -163,7 +163,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if not hass.services.has_service(DOMAIN, SERVICE_SEND_LOG):
         hass.services.async_register(
-            DOMAIN, SERVICE_SEND_LOG, partial(handle_send_log, hass.data[DOMAIN]), schema=SERVICE_SEND_LOG_SCHEMA
+            DOMAIN,
+            SERVICE_SEND_LOG,
+            partial(handle_send_log, hass.data[DOMAIN]),
+            schema=SERVICE_SEND_LOG_SCHEMA,
         )
 
     if not hass.services.has_service(DOMAIN, SERVICE_FLUSH):
@@ -225,7 +228,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     for cancel in data.get(REF_CANCEL_LISTENERS, []):
         try:
             cancel()
-        except Exception as e:
+        except Exception as e:  # ruff: ignore[blind-except]
             _LOGGER.warning("remote_logger: Failed to cancel listener on unload: %s", e)
 
     handler = data.get(REF_LOG_HANDLER)

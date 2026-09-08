@@ -212,7 +212,9 @@ class TestSyslogExporter:
 
     def test_to_protobuf(self, exporter: SyslogExporter, sample_log_event: Event) -> None:
         msg = exporter.create_log_record(
-            sample_log_event.data, sample_log_event.event_type, sample_log_event.time_fired
+            sample_log_event.data,
+            sample_log_event.event_type,
+            sample_log_event.time_fired,
         ).payload.decode("utf-8")
         assert msg is not None
         assert msg.startswith("<131>")
@@ -230,9 +232,8 @@ class TestSyslogExporter:
         import asyncio
         from unittest.mock import patch
 
-        with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
-            with pytest.raises(asyncio.CancelledError):
-                await exporter.flush_loop()
+        with patch("asyncio.sleep", side_effect=asyncio.CancelledError), pytest.raises(asyncio.CancelledError):
+            await exporter.flush_loop()
 
     async def test_flush_sends_via_udp(self, exporter: SyslogExporter, mock_event: MagicMock) -> None:
         from unittest.mock import AsyncMock, patch

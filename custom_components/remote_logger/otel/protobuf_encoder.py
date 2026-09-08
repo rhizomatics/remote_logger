@@ -44,7 +44,7 @@ def _encode_string_field(field_number: int, value: str) -> bytes:
     """Encode a string field (tag + length + UTF-8 bytes)."""
     try:
         data: bytes = value.encode("utf-8")
-    except Exception:
+    except Exception:  # ruff: ignore[blind-except]
         # don't log or there'll be infinite loop
         # _LOGGER.exception("remote_logger non string found at %s: %s", field_number, value)
         data = f"TYPE ERROR ({value})".encode()
@@ -200,6 +200,6 @@ def encode_export_logs_request(request: dict[str, Any]) -> bytes:
     for rl in request.get("resourceLogs", []):
         try:
             result += _encode_submessage(1, _encode_resource_logs(rl))
-        except Exception as e:
-            _LOGGER.exception("remote_logger: failed to build protobuf for %s: %s", rl, e)
+        except Exception:
+            _LOGGER.exception("remote_logger: failed to build protobuf for %s", rl)
     return result

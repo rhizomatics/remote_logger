@@ -37,7 +37,9 @@ class TestExportingLogHandler:
         mock_handler.assert_called_once()
 
     def test_emit_does_not_skip_other_custom_components(
-        self, log_handler: ExportingLogHandler, mock_handler: MagicMock
+        self,
+        log_handler: ExportingLogHandler,
+        mock_handler: MagicMock,
     ) -> None:
         log_handler.emit(self._record("custom_components.other_integration"))
         mock_handler.assert_called_once()

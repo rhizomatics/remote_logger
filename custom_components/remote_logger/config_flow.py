@@ -58,7 +58,7 @@ COMMON_DATA_SCHEMA = vol.Schema({
         selector.SelectSelectorConfig(
             options=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
             mode=selector.SelectSelectorMode.DROPDOWN,
-        )
+        ),
     ),
     vol.Required("ha_standard_events"): section(
         vol.Schema({
@@ -99,7 +99,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self,
-        user_input: dict[str, Any] | None = None,  # noqa: ARG002
+        user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Show menu to choose backend type."""
         return self.async_show_menu(
@@ -158,7 +158,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:  # noqa: ARG002
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
         """Initiate reauth after authentication failure."""
         return await self.async_step_reauth_otel()
 
@@ -250,7 +250,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, user_input or {}),
             errors=errors,
             description_placeholders={
-                "learn_more": "[Learn about HA events](https://www.home-assistant.io/docs/configuration/events/)"
+                "learn_more": "[Learn about HA events](https://www.home-assistant.io/docs/configuration/events/)",
             },
         )
 
@@ -262,7 +262,7 @@ class RemoteLoggerOptionsFlow(OptionsFlow):
         self._config_entry = config_entry
         self._pending_options: dict[str, Any] = {}
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:  # noqa: ARG002
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Dispatch to the backend-specific connection form."""
         backend = self._config_entry.data.get(CONF_BACKEND, BACKEND_OTEL)
         if backend == BACKEND_SYSLOG:
@@ -373,6 +373,6 @@ class RemoteLoggerOptionsFlow(OptionsFlow):
             data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, current),
             errors=errors,
             description_placeholders={
-                "learn_more": "[Learn about HA events](https://www.home-assistant.io/docs/configuration/events/)"
+                "learn_more": "[Learn about HA events](https://www.home-assistant.io/docs/configuration/events/)",
             },
         )

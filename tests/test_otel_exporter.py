@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
@@ -109,10 +110,14 @@ class TestKv:
         assert _kv("key", True) == {"key": "key", "value": {"boolValue": True}}
 
     def test_float_value(self) -> None:
-        assert _kv("key", 3.14) == {"key": "key", "value": {"doubleValue": 3.14}}
+        assert _kv("key", math.pi) == {"key": "key", "value": {"doubleValue": math.pi}}
 
     def test_float_nan_becomes_none(self) -> None:
         assert _kv("key", float("nan")) == {"key": "key", "value": {"doubleValue": None}}
+
+    def test_float_inf_becomes_none(self) -> None:
+        assert _kv("key", float("inf")) == {"key": "key", "value": {"doubleValue": None}}
+        assert _kv("key", float("-inf")) == {"key": "key", "value": {"doubleValue": None}}
 
     def test_bytes_value(self) -> None:
         assert _kv("key", b"data") == {"key": "key", "value": {"bytesValue": b"data"}}
@@ -205,7 +210,9 @@ class TestOtlpLogExporter:
 
     def test_to_log_record_full(self, exporter: OtlpLogExporter, sample_log_event: Event) -> None:
         record: OtlpMessage = exporter.create_log_record(
-            sample_log_event.data, sample_log_event.event_type, sample_log_event.time_fired
+            sample_log_event.data,
+            sample_log_event.event_type,
+            sample_log_event.time_fired,
         )
 
         assert record.payload["severityNumber"] == 17
@@ -339,9 +346,8 @@ class TestOtlpLogExporter:
         import asyncio
         from unittest.mock import patch
 
-        with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
-            with pytest.raises(asyncio.CancelledError):
-                await exporter.flush_loop()
+        with patch("asyncio.sleep", side_effect=asyncio.CancelledError), pytest.raises(asyncio.CancelledError):
+            await exporter.flush_loop()
 
     async def test_flush_sends_data_json(self, exporter: OtlpLogExporter, mock_event: MagicMock) -> None:
         from unittest.mock import AsyncMock, patch
@@ -438,7 +444,8 @@ class TestOtlpLogExporter:
 
     def test_to_log_record_system_log_has_no_event_name(self, exporter: OtlpLogExporter) -> None:
         event: Event[Mapping[str, list[str] | str | float]] = Event(
-            EVENT_SYSTEM_LOG, {"message": ["test"], "level": "error", "timestamp": 1700000000.0}
+            EVENT_SYSTEM_LOG,
+            {"message": ["test"], "level": "error", "timestamp": 1700000000.0},
         )
         record: OtlpMessage = exporter.create_log_record(event.data, event.event_type, event.time_fired)
         assert "eventName" not in record.payload

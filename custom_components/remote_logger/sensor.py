@@ -10,8 +10,6 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.util import slugify
 
-from custom_components.remote_logger.exporter import LogExporter
-
 from .const import DOMAIN
 from .remote_logger import REF_EXPORTER
 
@@ -23,6 +21,7 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
     from custom_components.remote_logger.exporter import LogExporter
+
 
 from typing import TYPE_CHECKING, Any
 
@@ -91,7 +90,10 @@ class LoggerEntity(SensorEntity):
     _attr_has_entity_name = True
 
     def __init__(
-        self, exporter: LogExporter, description: RemoteLoggerDiagnosticEntityDescription, device_info: DeviceInfo
+        self,
+        exporter: LogExporter,
+        description: RemoteLoggerDiagnosticEntityDescription,
+        device_info: DeviceInfo,
     ) -> None:
         super().__init__()
         self._exporter: LogExporter = exporter
@@ -102,12 +104,12 @@ class LoggerEntity(SensorEntity):
 
     @property
     def native_value(self) -> str | int | float | None:  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Return the state."""
+        """Entity state."""
         return self.entity_description.value_fn(self._exporter)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Return the state attributes."""
+        """Entity state attributes."""
         return self.entity_description.attr_fn(self._exporter)
 
 

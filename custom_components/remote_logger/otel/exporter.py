@@ -5,6 +5,7 @@ import base64
 import datetime as dt
 import json
 import logging
+import math
 import re
 import time
 import typing
@@ -139,7 +140,7 @@ def _kv(key: str, value: typing.Any, force_null: bool = False) -> dict[str, typi
         int_val: int | str = value if -(2**31) <= value <= 2**31 - 1 else str(value)
         return {"key": key, "value": {"intValue": int_val}}
     if isinstance(value, float):
-        return {"key": key, "value": {"doubleValue": None if value != value else value}}
+        return {"key": key, "value": {"doubleValue": None if math.isnan(value) or math.isinf(value) else value}}
     if isinstance(value, bytes):
         return {"key": key, "value": {"bytesValue": value}}
     return {"key": key, "value": {"stringValue": str(value)}}
@@ -183,7 +184,7 @@ async def validate(
     except aiohttp.ClientError as e2:
         errors["base"] = "cannot_connect"
         _LOGGER.error("remote_logger: connect client error: %s", e2)
-    except Exception as e3:
+    except Exception as e3:  # ruff: ignore[blind-except]
         errors["base"] = "unknown"
         _LOGGER.error("remote_logger: connect unknown error: %s", e3)
     return errors
@@ -196,7 +197,10 @@ class OtlpMessage(LogMessage):
 
 class OtlpSubmission(LogSubmission):
     def __init__(
-        self, resource: dict[str, typing.Any], records: list[OtlpMessage], extra_headers: dict[str, typing.Any] | None = None
+        self,
+        resource: dict[str, typing.Any],
+        records: list[OtlpMessage],
+        extra_headers: dict[str, typing.Any] | None = None,
     ) -> None:
         self.extra_headers = extra_headers or {}
         self.resource: dict[str, typing.Any] = resource
@@ -219,16 +223,19 @@ class OtlpSubmission(LogSubmission):
                                 "version": SCOPE_VERSION,
                             },
                             "logRecords": [r.payload for r in records],
-                        }
+                        },
                     ],
-                }
+                },
             ],
         }
 
 
 class OtlpJsonSubmission(OtlpSubmission):
     def __init__(
-        self, resource: dict[str, typing.Any], records: list[OtlpMessage], extra_headers: dict[str, typing.Any] | None = None
+        self,
+        resource: dict[str, typing.Any],
+        records: list[OtlpMessage],
+        extra_headers: dict[str, typing.Any] | None = None,
     ) -> None:
         super().__init__(resource, records, extra_headers)
 
@@ -242,7 +249,10 @@ class OtlpJsonSubmission(OtlpSubmission):
 
 class OtlpProtobufSubmission(OtlpSubmission):
     def __init__(
-        self, resource: dict[str, typing.Any], records: list[OtlpMessage], extra_headers: dict[str, typing.Any] | None = None
+        self,
+        resource: dict[str, typing.Any],
+        records: list[OtlpMessage],
+        extra_headers: dict[str, typing.Any] | None = None,
     ) -> None:
         super().__init__(resource, records, extra_headers)
 
@@ -442,10 +452,10 @@ class OtlpLogExporter(LogExporter):
             if "Session is closed" in str(err):
                 _LOGGER.debug("remote_logger: session closed during flush (shutdown), dropping %d records", len(records or []))
             else:
-                _LOGGER.exception("remote_logger: unexpected error %s sending logs, skipping records", err)
+                _LOGGER.exception("remote_logger: unexpected error sending logs, skipping records")
                 self.on_posting_error(str(err))
         except Exception as e:
-            _LOGGER.exception("remote_logger: unexpected error %s sending logs, skipping records", e)
+            _LOGGER.exception("remote_logger: unexpected error sending logs, skipping records")
             self.on_posting_error(str(e))
 
     def log_direct(self, event_name: str, message: str, level: str, attributes: dict[str, typing.Any] | None = None) -> None:
@@ -466,7 +476,7 @@ class OtlpLogExporter(LogExporter):
                 "body": {"stringValue": message},
                 "attributes": attrs,
                 "eventName": event_name,
-            }
+            },
         )
         self._buffer.append(record)
         self.on_event()

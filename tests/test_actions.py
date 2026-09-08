@@ -52,7 +52,10 @@ class TestSendLogService:
         exporter = entry_data["exporter"]
 
         await hass.services.async_call(
-            "remote_logger", "send_log", {"event": "unit_test", "message": "direct log", "level": "ERROR"}, blocking=True
+            "remote_logger",
+            "send_log",
+            {"event": "unit_test", "message": "direct log", "level": "ERROR"},
+            blocking=True,
         )
 
         assert len(exporter._buffer) == 1
@@ -71,7 +74,10 @@ class TestSendLogService:
         exporter = entry_data["exporter"]
 
         await hass.services.async_call(
-            "remote_logger", "send_log", {"event": "unit_test", "message": "syslog direct"}, blocking=True
+            "remote_logger",
+            "send_log",
+            {"event": "unit_test", "message": "syslog direct"},
+            blocking=True,
         )
 
         assert len(exporter._buffer) == 1
@@ -82,7 +88,10 @@ class TestSendLogService:
             await entry_data["flush_task"]
 
     async def test_send_log_not_registered_twice(
-        self, hass: HomeAssistant, mock_entry_otel: MagicMock, mock_entry_syslog: MagicMock
+        self,
+        hass: HomeAssistant,
+        mock_entry_otel: MagicMock,
+        mock_entry_syslog: MagicMock,
     ) -> None:
         """Service is registered once even when multiple entries are set up."""
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
@@ -126,7 +135,10 @@ class TestFlushService:
             await entry_data["flush_task"]
 
     async def test_flush_not_registered_twice(
-        self, hass: HomeAssistant, mock_entry_otel: MagicMock, mock_entry_syslog: MagicMock
+        self,
+        hass: HomeAssistant,
+        mock_entry_otel: MagicMock,
+        mock_entry_syslog: MagicMock,
     ) -> None:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
@@ -161,7 +173,11 @@ class TestLastLogService:
             await async_setup_entry(hass, mock_entry_otel)
 
         result = await hass.services.async_call(
-            "remote_logger", "last_log", {"config_entry_id": mock_entry_otel.entry_id}, blocking=True, return_response=True
+            "remote_logger",
+            "last_log",
+            {"config_entry_id": mock_entry_otel.entry_id},
+            blocking=True,
+            return_response=True,
         )
 
         assert result == {}
@@ -173,11 +189,16 @@ class TestLastLogService:
         entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
         exporter = entry_data["exporter"]
         exporter.last_sent_payload = OtlpJsonSubmission(
-            {}, records=[OtlpMessage(payload={"body": {"stringValue": "hello"}, "severityText": "INFO"})]
+            {},
+            records=[OtlpMessage(payload={"body": {"stringValue": "hello"}, "severityText": "INFO"})],
         )
 
         result = await hass.services.async_call(
-            "remote_logger", "last_log", {"config_entry_id": mock_entry_otel.entry_id}, blocking=True, return_response=True
+            "remote_logger",
+            "last_log",
+            {"config_entry_id": mock_entry_otel.entry_id},
+            blocking=True,
+            return_response=True,
         )
 
         assert result == {
@@ -190,10 +211,10 @@ class TestLastLogService:
                             {
                                 "scope": {"name": "homeassistant", "version": "1.0.0"},
                                 "logRecords": [{"body": {"stringValue": "hello"}, "severityText": "INFO"}],
-                            }
+                            },
                         ],
-                    }
-                ]
+                    },
+                ],
             },
         }
 
@@ -217,7 +238,11 @@ class TestLastLogService:
             await exporter.flush()
 
         result = await hass.services.async_call(
-            "remote_logger", "last_log", {"config_entry_id": mock_entry_otel.entry_id}, blocking=True, return_response=True
+            "remote_logger",
+            "last_log",
+            {"config_entry_id": mock_entry_otel.entry_id},
+            blocking=True,
+            return_response=True,
         )
 
         assert result["headers"]["Content-Type"] == "application/json"
@@ -271,7 +296,11 @@ class TestLastLogService:
             await exporter.flush()
 
         result = await hass.services.async_call(
-            "remote_logger", "last_log", {"config_entry_id": mock_entry_syslog.entry_id}, blocking=True, return_response=True
+            "remote_logger",
+            "last_log",
+            {"config_entry_id": mock_entry_syslog.entry_id},
+            blocking=True,
+            return_response=True,
         )
 
         assert result["protocol"] == "udp"
@@ -284,7 +313,9 @@ class TestLastLogService:
         credential = "mysecrettoken123"
         entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
         entry_data["exporter"].last_sent_payload = OtlpJsonSubmission(
-            {}, records=[OtlpMessage(payload={})], extra_headers={"Authorization": f"Bearer {credential}"}
+            {},
+            records=[OtlpMessage(payload={})],
+            extra_headers={"Authorization": f"Bearer {credential}"},
         )
 
         result = await hass.services.async_call(
@@ -298,7 +329,9 @@ class TestLastLogService:
         assert result["headers"]["Authorization"] == "Bearer ****************"
 
     async def test_last_log_masks_bearer_token_in_protobuf_headers(
-        self, hass: HomeAssistant, mock_entry_otel_protobuf: MagicMock
+        self,
+        hass: HomeAssistant,
+        mock_entry_otel_protobuf: MagicMock,
     ) -> None:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel_protobuf)
@@ -306,7 +339,9 @@ class TestLastLogService:
         credential = "protosecret99"
         entry_data = hass.data[DOMAIN][mock_entry_otel_protobuf.entry_id]
         entry_data["exporter"].last_sent_payload = OtlpProtobufSubmission(
-            {}, records=[OtlpMessage(payload={})], extra_headers={"Authorization": f"Bearer {credential}"}
+            {},
+            records=[OtlpMessage(payload={})],
+            extra_headers={"Authorization": f"Bearer {credential}"},
         )
 
         result = await hass.services.async_call(
@@ -324,6 +359,10 @@ class TestLastLogService:
             await async_setup_entry(hass, mock_entry_otel)
 
         result: dict[str, Any] = await hass.services.async_call(
-            "remote_logger", "last_log", {"config_entry_id": "nonexistent"}, blocking=True, return_response=True
+            "remote_logger",
+            "last_log",
+            {"config_entry_id": "nonexistent"},
+            blocking=True,
+            return_response=True,
         )
         assert result == {}

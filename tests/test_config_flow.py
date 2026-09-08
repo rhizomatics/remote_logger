@@ -144,7 +144,7 @@ class TestOtelConfigFlow:
             },
         )
         assert result["type"] == FlowResultType.CREATE_ENTRY
-        assert result["data"]["token_type"] == "basic"  # noqa: S105
+        assert result["data"]["token_type"] == "basic"
 
     async def test_step_otel_invalid_resource_attributes(self, hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})

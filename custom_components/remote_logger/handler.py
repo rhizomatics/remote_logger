@@ -5,7 +5,7 @@ import logging
 import re
 import typing
 
-from homeassistant import __path__ as HOMEASSISTANT_PATH  # noqa: N812
+from homeassistant import __path__ as HOMEASSISTANT_PATH
 from homeassistant.components.system_log import LogEntry
 from homeassistant.util import dt as dt_util
 

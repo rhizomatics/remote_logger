@@ -1,3 +1,8 @@
+# 2.0.4
+## Fixes
+- Ruff checks extended, tightened, and fixes applied
+- OTel formatting handles infinity correctly
+- Dependencies updated
 # 2.0.3
 ## Fixes
 - Prevent `state_changed` event handling mutating event data and interfering with subsequent handlers

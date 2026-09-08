@@ -140,8 +140,7 @@ class SyslogExporter(LogExporter):
             source = data.get("source")
             if source and isinstance(source, tuple):
                 source_path, source_linenum = source
-                sd_params.append(f'code.file.path="{_sd_escape(source_path)}"')
-                sd_params.append(f'code.line.number="{source_linenum}"')
+                sd_params.extend([f'code.file.path="{_sd_escape(source_path)}"', f'code.line.number="{source_linenum}"'])
             logger_name = data.get("name")
             if logger_name:
                 sd_params.append(f'code.function.name="{_sd_escape(logger_name)}"')
@@ -315,7 +314,7 @@ async def validate(hass: Any, host: str, port: int, protocol: str, use_tls: bool
     except (OSError, TimeoutError, ConnectionRefusedError) as err:
         _LOGGER.error("remote_logger: Syslog connect failed: %s", err)
         return "cannot_connect"
-    except Exception as err:
+    except Exception as err:  # ruff: ignore[blind-except]
         _LOGGER.error("remote_logger: Syslog connect unknown error: %s", err)
         return "unknown"
     return None
