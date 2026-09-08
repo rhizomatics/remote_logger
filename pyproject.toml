@@ -6,7 +6,7 @@ dynamic = ["version"]
 requires-python = ">=3.13.2"
 
 dependencies = [
-    "homeassistant>=2026.6.4; python_full_version >= '3.14.2'",
+    "homeassistant>=2026.9.0; python_full_version >= '3.14.2'",
     "homeassistant>=2025.10.4,<2026.3.0; python_full_version < '3.14.2'",
 ]
 
@@ -33,7 +33,7 @@ docs=[
     "mkdocs-autorefs",
     "mkdocs-coverage",
     "mkdocs-pagetree-plugin",
-    "mkdocs<2.0.0",
+    "properdocs",
     "pngquant",
     "mkdocstrings",
     "mkdocstrings-python",
@@ -104,11 +104,11 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-preview = false
+preview = true
 select = ["E", "C","R", "F", "B", "W", "I", "C90", "N", "D", "UP", "YTT","UP",
 "RUF","PGH","PT","T20","DTZ","TD","PTH","ARG","INT","TCH","TID","SIM","PERF","ASYNC","ANN","S","A","COM","C4"]
 ignore = [
-    "W191","E111","E114","E117","D206","D300","Q000","Q001","COM812","COM819","ISC001","ISC002", # std formatter conflicts
+    
     "D203","D213", # other formatter clashes
     "TD002","TD003","TD005","SIM102","SIM117","ANN002", "ANN003","SIM108",
     "D103","D100","D101","D102","D104","D107","D415","D400","D415","ANN401",
@@ -131,9 +131,9 @@ environments = [
 ]
 override-dependencies = [
     "homeassistant>=2025.10.4,<2026.3.0; python_full_version < '3.14.2'",
-    "homeassistant>=2026.6.4; python_full_version >= '3.14.2'",
+    "homeassistant>=2026.9.0; python_full_version >= '3.14.2'",
     "homeassistant-stubs<2026.3.0; python_full_version < '3.14.2'",
-    "homeassistant-stubs>=2026.6.4; python_full_version >= '3.14.2'",
+    "homeassistant-stubs>=2026.9.0; python_full_version >= '3.14.2'",
 ]
 
 

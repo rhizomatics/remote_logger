@@ -78,6 +78,6 @@ jobs:
       # run in the build workflow since schemagen has homeassistant dependency
       run: |
         uv sync --group docs
-        uv run mkdocs gh-deploy --force --config-file mkdocs.yml
+        uv run properdocs gh-deploy --force --config-file properdocs.yml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
