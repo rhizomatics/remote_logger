@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -38,11 +39,6 @@ from .const import (
 from .otel.exporter import OtlpLogExporter
 from .syslog.exporter import SyslogExporter
 
-REF_CANCEL_LISTENERS = "cancel_listeners"
-REF_FLUSH_TASK = "flush_task"
-REF_EXPORTER = "exporter"
-REF_LOG_HANDLER = "log_handler"
-
 SERVICE_SEND_LOG = "send_log"
 SERVICE_SEND_LOG_SCHEMA = vol.Schema({
     vol.Required("event"): str,
@@ -64,17 +60,30 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant, ServiceCall
 
-    from custom_components.remote_logger.exporter import LogSubmission
+    from custom_components.remote_logger.exporter import LogExporter, LogSubmission
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+@dataclass
+class RemoteLoggerData:
+    """Runtime state for a loaded remote_logger config entry."""
+
+    exporter: LogExporter
+    flush_task: asyncio.Task[None]
+    cancel_listeners: list[Callable[[], None]]
+    log_handler: logging.Handler | None
+
+
+type RemoteLoggerConfigEntry = ConfigEntry[RemoteLoggerData]
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> None:
     """Reload the entry when options are updated."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> bool:
     """Set up remote logs from a config entry."""
     backend = entry.data.get(CONF_BACKEND)
 
@@ -153,30 +162,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     flush_task: asyncio.Task[None] = asyncio.create_task(exporter.flush_loop())
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {
-        REF_CANCEL_LISTENERS: cancel_listeners,
-        REF_FLUSH_TASK: flush_task,
-        REF_EXPORTER: exporter,
-        REF_LOG_HANDLER: log_handler,
-    }
+    entry.runtime_data = RemoteLoggerData(
+        exporter=exporter,
+        flush_task=flush_task,
+        cancel_listeners=cancel_listeners,
+        log_handler=log_handler,
+    )
 
     if not hass.services.has_service(DOMAIN, SERVICE_SEND_LOG):
         hass.services.async_register(
             DOMAIN,
             SERVICE_SEND_LOG,
-            partial(handle_send_log, hass.data[DOMAIN]),
+            handle_send_log,
             schema=SERVICE_SEND_LOG_SCHEMA,
         )
 
     if not hass.services.has_service(DOMAIN, SERVICE_FLUSH):
-        hass.services.async_register(DOMAIN, SERVICE_FLUSH, partial(handle_flush, hass.data[DOMAIN]))
+        hass.services.async_register(DOMAIN, SERVICE_FLUSH, handle_flush)
 
     if not hass.services.has_service(DOMAIN, SERVICE_LAST_LOG):
         hass.services.async_register(
             DOMAIN,
             SERVICE_LAST_LOG,
-            partial(handle_last_log, hass.data[DOMAIN]),
+            handle_last_log,
             schema=SERVICE_LAST_LOG_SCHEMA,
             supports_response=SupportsResponse.ONLY,
         )
@@ -186,63 +194,60 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def handle_flush(domain_data: dict[str, Any], _call: ServiceCall) -> None:
-    for entry in domain_data.values():
-        await entry[REF_EXPORTER].flush()
+def _loaded_entries(hass: HomeAssistant) -> list[RemoteLoggerConfigEntry]:
+    return hass.config_entries.async_loaded_entries(DOMAIN)
+
+
+async def handle_flush(call: ServiceCall) -> None:
+    for entry in _loaded_entries(call.hass):
+        await entry.runtime_data.exporter.flush()
 
 
 @callback
-def handle_last_log(domain_data: dict[str, Any], call: ServiceCall) -> dict[str, Any]:
+def handle_last_log(call: ServiceCall) -> dict[str, Any]:
     entry_id: str | None = call.data.get("config_entry_id")
-    entry = None
-    if entry_id:
-        entry = domain_data.get(entry_id)
+    entry = next((e for e in _loaded_entries(call.hass) if e.entry_id == entry_id), None)
     if entry is None:
         return {}
-    submission: LogSubmission | None = entry[REF_EXPORTER].last_sent_payload
+    submission: LogSubmission | None = entry.runtime_data.exporter.last_sent_payload
     if submission is None:
         return {}
     return submission.for_display()
 
 
 @callback
-def handle_send_log(domain_data: dict[str, Any], call: ServiceCall) -> None:
+def handle_send_log(call: ServiceCall) -> None:
     message: str = call.data["message"]
     level: str = call.data["level"]
     event_name: str = call.data["event"]
     attributes: dict[str, Any] | None = call.data.get("attributes")
-    for entry in domain_data.values():
-        entry[REF_EXPORTER].log_direct(event_name, message, level, attributes)
+    for entry in _loaded_entries(call.hass):
+        entry.runtime_data.exporter.log_direct(event_name, message, level, attributes)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> bool:
     """Unload remote_logger config entry.
 
     https://developers.home-assistant.io/docs/config_entries_index#unloading-entries
     """
     await hass.config_entries.async_unload_platforms(entry, ["sensor"])
-    data = hass.data[DOMAIN].pop(entry.entry_id, None)
-    if data is None:
-        return True
+    data = entry.runtime_data
 
-    for cancel in data.get(REF_CANCEL_LISTENERS, []):
+    for cancel in data.cancel_listeners:
         try:
             cancel()
         except Exception as e:  # ruff: ignore[blind-except]
             _LOGGER.warning("remote_logger: Failed to cancel listener on unload: %s", e)
 
-    handler = data.get(REF_LOG_HANDLER)
-    if handler is not None:
-        logging.root.removeHandler(handler)
+    if data.log_handler is not None:
+        logging.root.removeHandler(data.log_handler)
 
-    if data.get(REF_FLUSH_TASK):
-        data[REF_FLUSH_TASK].cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await data[REF_FLUSH_TASK]
+    data.flush_task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await data.flush_task
 
-    if data.get(REF_EXPORTER):
-        await data[REF_EXPORTER].flush()
-        await data[REF_EXPORTER].close()
+    await data.exporter.flush()
+    await data.exporter.close()
 
     _LOGGER.info("remote_logger: unloaded, flushed remaining logs")
     return True

@@ -1,3 +1,11 @@
+# 2.0.5
+## Home Assistant Alignment
+- Counters now persist properly as stats
+  - Diagnostic counter sensors (format errors, posting errors, events, postings) use the `total_increasing` state class instead of `measurement`
+  - **Warning**: existing long-term statistics for these sensors were recorded as measurements (mean/min/max). After upgrading, Home Assistant may report a state class change under *Developer Tools → Statistics*; use *Fix issue* there to delete or keep the old statistics
+## Internal
+- Added `ty` as additional type checker and tightened up some types
+- Migrated `hass.data` calls to use `entry.runtime_data`
 # 2.0.4
 ## Fixes
 - Ruff checks extended, tightened, and fixes applied

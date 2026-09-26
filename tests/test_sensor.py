@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
+from homeassistant.components.sensor import SensorStateClass
+from homeassistant.const import EntityCategory
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from custom_components.remote_logger.sensor import SENSORS, LoggerEntity
+from custom_components.remote_logger.sensor import SENSORS, LoggerEntity, RemoteLoggerDiagnosticEntityDescription
 
 
 def _make_entity(exporter: MagicMock, sensor_index: int = 0) -> LoggerEntity:
@@ -41,4 +44,18 @@ class TestLoggerEntity:
         exporter = MagicMock()
         exporter.name = "OTLP @ localhost:4318"
         entity = _make_entity(exporter, sensor_index=0)
-        assert entity._attr_translation_key == "format_errors"
+        assert entity.translation_key == "format_errors"
+
+
+@pytest.mark.parametrize("description", SENSORS, ids=lambda d: d.key)
+def test_counters_are_total_increasing(description: RemoteLoggerDiagnosticEntityDescription) -> None:
+    """Counters only increase and reset on restart, so statistics must treat them as totals."""
+    assert description.state_class == SensorStateClass.TOTAL_INCREASING
+
+
+@pytest.mark.parametrize("description", SENSORS, ids=lambda d: d.key)
+def test_entities_are_diagnostic(description: RemoteLoggerDiagnosticEntityDescription) -> None:
+    exporter = MagicMock()
+    exporter.name = "OTLP @ localhost:4318"
+    entity = LoggerEntity(exporter, description, MagicMock(spec=DeviceInfo))
+    assert entity.entity_category == EntityCategory.DIAGNOSTIC

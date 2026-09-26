@@ -2,54 +2,78 @@
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.remote_logger import async_setup_entry
-from custom_components.remote_logger.const import (
-    DOMAIN,
-)
+from custom_components.remote_logger.config_flow import OtelLogsConfigFlow
+from custom_components.remote_logger.const import CONF_EVENT_BASED_LOGGING, DOMAIN
 from custom_components.remote_logger.otel.exporter import OtlpJsonSubmission, OtlpMessage, OtlpProtobufSubmission
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Awaitable, Callable
 
+    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
+
+    from custom_components.remote_logger.remote_logger import RemoteLoggerConfigEntry
+
+type SetupEntry = Callable[[ConfigEntry], Awaitable[RemoteLoggerConfigEntry]]
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
+    """Allow Home Assistant to load the integration from custom_components."""
+
+
+@pytest.fixture
+async def setup_entry(hass: HomeAssistant) -> AsyncGenerator[SetupEntry]:
+    """Set up a real config entry, built from a mock entry's data, and unload it afterwards."""
+    entries: list[MockConfigEntry] = []
+
+    async def _setup(template: ConfigEntry) -> RemoteLoggerConfigEntry:
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=OtelLogsConfigFlow.VERSION,
+            entry_id=template.entry_id,
+            title=template.title,
+            # Event-based logging keeps HA's own setup logging out of the exporter buffer
+            data={**template.data, CONF_EVENT_BASED_LOGGING: True},
+        )
+        entry.add_to_hass(hass)
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        entries.append(entry)
+        return entry
+
+    yield _setup
+    for entry in entries:
+        await hass.config_entries.async_unload(entry.entry_id)
 
 
 class TestSendLogService:
-    async def test_service_registered_on_otel_setup(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
-
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        entry_data["flush_task"].cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+    async def test_service_registered_on_otel_setup(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        await setup_entry(mock_entry_otel)
 
         assert hass.services.has_service("remote_logger", "send_log")
 
-    async def test_service_registered_on_syslog_setup(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_syslog)
-
-        entry_data = hass.data[DOMAIN][mock_entry_syslog.entry_id]
-        entry_data["flush_task"].cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+    async def test_service_registered_on_syslog_setup(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_syslog: MagicMock
+    ) -> None:
+        await setup_entry(mock_entry_syslog)
 
         assert hass.services.has_service("remote_logger", "send_log")
 
-    async def test_send_log_routes_to_otel_exporter(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+    async def test_send_log_routes_to_otel_exporter(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        entry = await setup_entry(mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        exporter = entry_data["exporter"]
+        exporter = entry.runtime_data.exporter
 
         await hass.services.async_call(
             "remote_logger",
@@ -62,16 +86,12 @@ class TestSendLogService:
         assert exporter._buffer[0].payload["body"] == {"stringValue": "direct log"}
         assert exporter._buffer[0].payload["severityNumber"] == 17
 
-        entry_data["flush_task"].cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+    async def test_send_log_routes_to_syslog_exporter(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_syslog: MagicMock
+    ) -> None:
+        entry = await setup_entry(mock_entry_syslog)
 
-    async def test_send_log_routes_to_syslog_exporter(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_syslog)
-
-        entry_data = hass.data[DOMAIN][mock_entry_syslog.entry_id]
-        exporter = entry_data["exporter"]
+        exporter = entry.runtime_data.exporter
 
         await hass.services.async_call(
             "remote_logger",
@@ -83,94 +103,65 @@ class TestSendLogService:
         assert len(exporter._buffer) == 1
         assert b"syslog direct" in exporter._buffer[0].payload
 
-        entry_data["flush_task"].cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
-
     async def test_send_log_not_registered_twice(
         self,
         hass: HomeAssistant,
+        setup_entry: SetupEntry,
         mock_entry_otel: MagicMock,
         mock_entry_syslog: MagicMock,
     ) -> None:
         """Service is registered once even when multiple entries are set up."""
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
-            await async_setup_entry(hass, mock_entry_syslog)
+        await setup_entry(mock_entry_otel)
+        await setup_entry(mock_entry_syslog)
 
         assert hass.services.has_service("remote_logger", "send_log")
 
-        for entry_id in [mock_entry_otel.entry_id, mock_entry_syslog.entry_id]:
-            hass.data[DOMAIN][entry_id]["flush_task"].cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await hass.data[DOMAIN][entry_id]["flush_task"]
-
 
 class TestFlushService:
-    async def test_flush_service_registered(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
-
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        entry_data["flush_task"].cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+    async def test_flush_service_registered(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        await setup_entry(mock_entry_otel)
 
         assert hass.services.has_service("remote_logger", "flush")
 
-    async def test_flush_service_calls_exporter_flush(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+    async def test_flush_service_calls_exporter_flush(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        entry = await setup_entry(mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        exporter = entry_data["exporter"]
+        exporter = entry.runtime_data.exporter
 
         with patch.object(exporter, "flush", AsyncMock()) as mock_flush:
             await hass.services.async_call("remote_logger", "flush", blocking=True)
 
         mock_flush.assert_awaited_once()
 
-        entry_data["flush_task"].cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
-
     async def test_flush_not_registered_twice(
         self,
         hass: HomeAssistant,
+        setup_entry: SetupEntry,
         mock_entry_otel: MagicMock,
         mock_entry_syslog: MagicMock,
     ) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
-            await async_setup_entry(hass, mock_entry_syslog)
+        await setup_entry(mock_entry_otel)
+        await setup_entry(mock_entry_syslog)
 
         assert hass.services.has_service("remote_logger", "flush")
 
-        for entry_id in [mock_entry_otel.entry_id, mock_entry_syslog.entry_id]:
-            hass.data[DOMAIN][entry_id]["flush_task"].cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await hass.data[DOMAIN][entry_id]["flush_task"]
-
 
 class TestLastLogService:
-    @pytest.fixture(autouse=True)
-    async def _cancel_flush_tasks(self, hass: HomeAssistant) -> AsyncGenerator[None, Any]:
-        yield
-        for entry_data in hass.data.get(DOMAIN, {}).values():
-            if task := entry_data.get("flush_task"):
-                task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await task
-
-    async def test_last_log_service_registered(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+    async def test_last_log_service_registered(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        await setup_entry(mock_entry_otel)
 
         assert hass.services.has_service("remote_logger", "last_log")
 
-    async def test_last_log_returns_empty_before_any_send(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+    async def test_last_log_returns_empty_before_any_send(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        await setup_entry(mock_entry_otel)
 
         result = await hass.services.async_call(
             "remote_logger",
@@ -182,12 +173,12 @@ class TestLastLogService:
 
         assert result == {}
 
-    async def test_last_log_returns_payload_after_send(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+    async def test_last_log_returns_payload_after_send(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        entry = await setup_entry(mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        exporter = entry_data["exporter"]
+        exporter = entry.runtime_data.exporter
         exporter.last_sent_payload = OtlpJsonSubmission(
             {},
             records=[OtlpMessage(payload={"body": {"stringValue": "hello"}, "severityText": "INFO"})],
@@ -218,14 +209,15 @@ class TestLastLogService:
             },
         }
 
-    async def test_last_log_otel_json_after_flush(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+    async def test_last_log_otel_json_after_flush(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
         from unittest.mock import AsyncMock as _AsyncMock
         from unittest.mock import patch as _patch
 
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+        entry = await setup_entry(mock_entry_otel)
 
-        exporter = hass.data[DOMAIN][mock_entry_otel.entry_id]["exporter"]
+        exporter = entry.runtime_data.exporter
         exporter.log_direct("test.event", "hello json", "INFO")
 
         mock_resp = MagicMock()
@@ -249,14 +241,15 @@ class TestLastLogService:
         log_record = result["json"]["resourceLogs"][0]["scopeLogs"][0]["logRecords"][0]
         assert log_record["body"]["stringValue"] == "hello json"
 
-    async def test_last_log_otel_protobuf_after_flush(self, hass: HomeAssistant, mock_entry_otel_protobuf: MagicMock) -> None:
+    async def test_last_log_otel_protobuf_after_flush(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel_protobuf: MagicMock
+    ) -> None:
         from unittest.mock import AsyncMock as _AsyncMock
         from unittest.mock import patch as _patch
 
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel_protobuf)
+        entry = await setup_entry(mock_entry_otel_protobuf)
 
-        exporter = hass.data[DOMAIN][mock_entry_otel_protobuf.entry_id]["exporter"]
+        exporter = entry.runtime_data.exporter
         exporter.log_direct("test.event", "hello protobuf", "WARNING")
 
         mock_resp = MagicMock()
@@ -281,14 +274,15 @@ class TestLastLogService:
         assert "hello protobuf" in result["data"]
         assert "\ufffd" not in result["data"]
 
-    async def test_last_log_syslog_after_flush(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+    async def test_last_log_syslog_after_flush(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_syslog: MagicMock
+    ) -> None:
         from unittest.mock import AsyncMock as _AsyncMock
         from unittest.mock import patch as _patch
 
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_syslog)
+        entry = await setup_entry(mock_entry_syslog)
 
-        exporter = hass.data[DOMAIN][mock_entry_syslog.entry_id]["exporter"]
+        exporter = entry.runtime_data.exporter
         exporter.log_direct("test.event", "hello syslog", "ERROR")
 
         with _patch.object(exporter, "_send_udp", _AsyncMock()) as mock_send:
@@ -306,13 +300,13 @@ class TestLastLogService:
         assert result["protocol"] == "udp"
         assert "hello syslog" in result["data"]
 
-    async def test_last_log_masks_bearer_token_in_json_headers(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+    async def test_last_log_masks_bearer_token_in_json_headers(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        entry = await setup_entry(mock_entry_otel)
 
         credential = "mysecrettoken123"
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        entry_data["exporter"].last_sent_payload = OtlpJsonSubmission(
+        entry.runtime_data.exporter.last_sent_payload = OtlpJsonSubmission(
             {},
             records=[OtlpMessage(payload={})],
             extra_headers={"Authorization": f"Bearer {credential}"},
@@ -331,14 +325,13 @@ class TestLastLogService:
     async def test_last_log_masks_bearer_token_in_protobuf_headers(
         self,
         hass: HomeAssistant,
+        setup_entry: SetupEntry,
         mock_entry_otel_protobuf: MagicMock,
     ) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel_protobuf)
+        entry = await setup_entry(mock_entry_otel_protobuf)
 
         credential = "protosecret99"
-        entry_data = hass.data[DOMAIN][mock_entry_otel_protobuf.entry_id]
-        entry_data["exporter"].last_sent_payload = OtlpProtobufSubmission(
+        entry.runtime_data.exporter.last_sent_payload = OtlpProtobufSubmission(
             {},
             records=[OtlpMessage(payload={})],
             extra_headers={"Authorization": f"Bearer {credential}"},
@@ -354,9 +347,10 @@ class TestLastLogService:
 
         assert result["headers"]["Authorization"] == "Bearer *************"
 
-    async def test_last_log_returns_empty_dict_for_unknown_entry(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
-            await async_setup_entry(hass, mock_entry_otel)
+    async def test_last_log_returns_empty_dict_for_unknown_entry(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        await setup_entry(mock_entry_otel)
 
         result: dict[str, Any] = await hass.services.async_call(
             "remote_logger",

@@ -16,9 +16,9 @@ from custom_components.remote_logger.const import (
     CONF_LOG_HA_LIFECYCLE,
     CONF_LOG_LEVEL,
     CORE_CHANGE_EVENTS,
-    DOMAIN,
     LIFECYCLE_EVENTS,
 )
+from custom_components.remote_logger.remote_logger import RemoteLoggerData
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -31,65 +31,63 @@ class TestAsyncSetupEntry:
             result = await async_setup_entry(hass, mock_entry_otel)
 
         assert result is True
-        assert mock_entry_otel.entry_id in hass.data[DOMAIN]
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert "flush_task" in entry_data
-        assert "exporter" in entry_data
+        entry_data = mock_entry_otel.runtime_data
+        assert isinstance(entry_data, RemoteLoggerData)
 
         # Cancel the background flush task
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
     async def test_syslog_backend(self, hass: HomeAssistant, mock_entry_syslog: ConfigEntry) -> None:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             result = await async_setup_entry(hass, mock_entry_syslog)
 
         assert result is True
-        assert mock_entry_syslog.entry_id in hass.data[DOMAIN]
+        entry_data = mock_entry_syslog.runtime_data
+        assert isinstance(entry_data, RemoteLoggerData)
 
         # Cancel the background flush task
-        entry_data = hass.data[DOMAIN][mock_entry_syslog.entry_id]
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
     async def test_lifecycle_events_registered(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
         mock_entry_otel.data = {**mock_entry_otel.data, CONF_LOG_HA_LIFECYCLE: True}
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
+        entry_data = mock_entry_otel.runtime_data
         # stop + close + final_write + update_listener + lifecycle listeners
-        assert len(entry_data["cancel_listeners"]) == 4 + len(LIFECYCLE_EVENTS)
+        assert len(entry_data.cancel_listeners) == 4 + len(LIFECYCLE_EVENTS)
 
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
     async def test_core_change_events_registered(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
         mock_entry_otel.data = {**mock_entry_otel.data, CONF_LOG_HA_CORE_CHANGES: True}
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert len(entry_data["cancel_listeners"]) == 4 + len(CORE_CHANGE_EVENTS)
+        entry_data = mock_entry_otel.runtime_data
+        assert len(entry_data.cancel_listeners) == 4 + len(CORE_CHANGE_EVENTS)
 
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
     async def test_custom_events_registered(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
         mock_entry_otel.data = {**mock_entry_otel.data, CONF_CUSTOM_EVENTS: ["my_event", "another_event"]}
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert len(entry_data["cancel_listeners"]) == 4 + 2  # stop + close + final_write + update_listener + 2 custom
+        entry_data = mock_entry_otel.runtime_data
+        assert len(entry_data.cancel_listeners) == 4 + 2  # stop + close + final_write + update_listener + 2 custom
 
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
     async def test_options_override_data(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
         """Options take precedence over data for event config keys."""
@@ -98,16 +96,16 @@ class TestAsyncSetupEntry:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert len(entry_data["cancel_listeners"]) == 4 + len(LIFECYCLE_EVENTS)
+        entry_data = mock_entry_otel.runtime_data
+        assert len(entry_data.cancel_listeners) == 4 + len(LIFECYCLE_EVENTS)
 
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
 
 class TestAsyncUnloadEntry:
-    async def _setup_entry_data(self, hass: HomeAssistant, entry_id: str) -> tuple[MagicMock, asyncio.Task[None], AsyncMock]:
+    async def _setup_entry_data(self, entry: MagicMock) -> tuple[MagicMock, asyncio.Task[None], AsyncMock]:
         cancel_listener = MagicMock()
 
         mock_exporter = AsyncMock()
@@ -116,16 +114,16 @@ class TestAsyncUnloadEntry:
             await asyncio.sleep(1000)
 
         flush_task: asyncio.Task[None] = asyncio.create_task(_long_sleep())
-        hass.data.setdefault(DOMAIN, {})
-        hass.data[DOMAIN][entry_id] = {
-            "cancel_listeners": [cancel_listener],
-            "flush_task": flush_task,
-            "exporter": mock_exporter,
-        }
+        entry.runtime_data = RemoteLoggerData(
+            exporter=mock_exporter,
+            flush_task=flush_task,
+            cancel_listeners=[cancel_listener],
+            log_handler=None,
+        )
         return cancel_listener, flush_task, mock_exporter
 
     async def test_unload_cancels_task_and_flushes(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        cancel_listener, flush_task, mock_exporter = await self._setup_entry_data(hass, mock_entry_otel.entry_id)
+        cancel_listener, flush_task, mock_exporter = await self._setup_entry_data(mock_entry_otel)
 
         with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
             result = await async_unload_entry(hass, mock_entry_otel)
@@ -135,13 +133,6 @@ class TestAsyncUnloadEntry:
         cancel_listener.assert_called_once()
         mock_exporter.flush.assert_awaited_once()
         mock_exporter.close.assert_awaited_once()
-        assert mock_entry_otel.entry_id not in hass.data[DOMAIN]
-
-    async def test_unload_missing_entry_returns_true(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
-        hass.data[DOMAIN] = {}
-        with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
-            result = await async_unload_entry(hass, mock_entry_otel)
-        assert result is True
 
 
 class TestShutdownFlush:
@@ -151,8 +142,8 @@ class TestShutdownFlush:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        exporter = entry_data["exporter"]
+        entry_data = mock_entry_otel.runtime_data
+        exporter = entry_data.exporter
 
         with patch.object(exporter, "flush", AsyncMock()) as mock_flush:
             hass.bus.async_fire("homeassistant_stop")
@@ -160,9 +151,9 @@ class TestShutdownFlush:
 
         mock_flush.assert_awaited_once()
 
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
 
 class TestEventBasedLogging:
@@ -171,9 +162,9 @@ class TestEventBasedLogging:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert entry_data["log_handler"] is not None
-        assert entry_data["log_handler"] in logging.root.handlers
+        entry_data = mock_entry_otel.runtime_data
+        assert entry_data.log_handler is not None
+        assert entry_data.log_handler in logging.root.handlers
 
         with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
             await async_unload_entry(hass, mock_entry_otel)
@@ -183,21 +174,21 @@ class TestEventBasedLogging:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert entry_data["log_handler"] is None
+        entry_data = mock_entry_otel.runtime_data
+        assert entry_data.log_handler is None
         # stop + close + final_write + update_listener + system_log listener
-        assert len(entry_data["cancel_listeners"]) == 5
+        assert len(entry_data.cancel_listeners) == 5
 
-        entry_data["flush_task"].cancel()
+        entry_data.flush_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await entry_data["flush_task"]
+            await entry_data.flush_task
 
     async def test_log_handler_default_level_is_info(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert entry_data["log_handler"].level == logging.INFO
+        entry_data = mock_entry_otel.runtime_data
+        assert entry_data.log_handler.level == logging.INFO
 
         with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
             await async_unload_entry(hass, mock_entry_otel)
@@ -207,8 +198,8 @@ class TestEventBasedLogging:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        entry_data = hass.data[DOMAIN][mock_entry_otel.entry_id]
-        assert entry_data["log_handler"].level == logging.WARNING
+        entry_data = mock_entry_otel.runtime_data
+        assert entry_data.log_handler.level == logging.WARNING
 
         with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):
             await async_unload_entry(hass, mock_entry_otel)
@@ -217,7 +208,7 @@ class TestEventBasedLogging:
         with patch.object(hass.config_entries, "async_forward_entry_setups", AsyncMock()):
             await async_setup_entry(hass, mock_entry_otel)
 
-        handler = hass.data[DOMAIN][mock_entry_otel.entry_id]["log_handler"]
+        handler = mock_entry_otel.runtime_data.log_handler
         assert handler in logging.root.handlers
 
         with patch.object(hass.config_entries, "async_unload_platforms", AsyncMock(return_value=True)):

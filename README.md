@@ -18,12 +18,11 @@
 <br/>
 <br/>
 
-Use log aggregation and analysis tools to get a complete picture of your home automation. Remote Logger for Home Assistant
-listens to Home Assistant logging at source and sends structured log events to a remote Syslog or OpenTelemetry (OTLP) collector. Optionally forwards other Home Assistant events, such as lifecycle events, service calls, configuration updates, state changes.
+Use log aggregation and analysis tools to get a complete picture of your home automation. Remote Logger for Home Assistant listens to Home Assistant logging at source and sends structured log events to a remote Syslog or OpenTelemetry (OTLP) collector. Optionally forwards other Home Assistant events, such as lifecycle events, service calls, configuration updates, state changes.
 
 ![Example OTEL Stack Trace](https://remote-logger.rhizomatics.org.uk/assets/images/otel_stack_trace.png){width=600}
 
-Unlike many logging solutions that scrape consoles logs, Remote Logger taps into either the root Python logger or the `system_log_event` Event fired by Home Assistant, preserving the full structure so multi-line logs and stacktraces are preserved as single log entries, utilizes the Home Assistant logic to tie exceptions back to source code lines, and will capture script names, line numbers and versions properly.
+Unlike many logging solutions that scrape consoles logs, Remote Logger taps into either the root Python logger or the `system_log_event` Event fired by Home Assistant, preserving the **full structure so multi-line logs and stacktraces are preserved as single log entries**, utilizes the Home Assistant logic to **tie exceptions back to source code lines**, and will capture script names, line numbers and versions properly.
 
 Only Home Assistant server itself, with its custom components is supported. Logs from *apps* (previously known as 'add-ins'), HAOS or the HA Supervisor aren't provided as events to be captured, so require an alternative solution, like Bert Baron's [LogSpout Home Assistant App](https://github.com/bertbaron/hassio-addons/tree/main/logspout) will cover these. It can be used in combination with *Remote Logger* so that Home Assistant has good structured logs, and everything else is at least logged. Since it uses Syslog and OTLP it can also be easily integrated with practically
 everything else in your environment, including SIEM cybersecurity logs from firewalls, Unifi networking, Docker logs etc. See the section on [aggregators](aggregators.md) for suggestions if you're not familiar with these.
