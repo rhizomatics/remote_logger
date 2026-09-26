@@ -73,4 +73,3 @@ ci:
       - bandit
       - mypy
     submodules: false
-
