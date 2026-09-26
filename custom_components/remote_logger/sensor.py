@@ -98,7 +98,7 @@ class LoggerEntity(SensorEntity):
     ) -> None:
         super().__init__()
         self._exporter: LogExporter = exporter
-        self.entity_description = description
+        self.entity_description = description  # pyright: ignore[reportIncompatibleVariableOverride]
         self._attr_unique_id = slugify(f"{exporter.name}_{description.key}")
         self._attr_device_info = device_info
         self._attr_translation_key = description.translation_key
