@@ -82,7 +82,7 @@ Common commands:
 - `uv run pytest` - run tests
 - `uv run ruff check --fix` - lint and auto-fix
 - `uv run ruff format` - format code
-- `uv run mypy custom_components/supernotify` - type check
+- `uv run mypy custom_components/remote_logger` - type check
 - `uv run codespell` - spell check
 - `pre-commit run` - check all staged files
 - `mkdocs build` - build the documentation without starting a server

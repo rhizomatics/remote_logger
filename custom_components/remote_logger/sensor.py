@@ -88,6 +88,7 @@ class LoggerEntity(SensorEntity):
     _attr_entity_category: EntityCategory = EntityCategory.DIAGNOSTIC  # pyright: ignore[reportIncompatibleVariableOverride]
     _attr_should_poll = True
     _attr_has_entity_name = True
+    entity_description: RemoteLoggerDiagnosticEntityDescription  # pyright: ignore[reportIncompatibleVariableOverride]
 
     def __init__(
         self,
@@ -97,7 +98,7 @@ class LoggerEntity(SensorEntity):
     ) -> None:
         super().__init__()
         self._exporter: LogExporter = exporter
-        self.entity_description: RemoteLoggerDiagnosticEntityDescription = description  # pyright: ignore[reportIncompatibleVariableOverride]
+        self.entity_description = description
         self._attr_unique_id = slugify(f"{exporter.name}_{description.key}")
         self._attr_device_info = device_info
         self._attr_translation_key = description.translation_key
