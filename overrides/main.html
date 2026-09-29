@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  {% if page and page.meta.markdown_url %}
+    <link rel="alternate" type="text/markdown" href="{{ page.meta.markdown_url }}">
+  {% endif %}
+{% endblock %}

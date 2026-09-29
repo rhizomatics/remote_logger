@@ -1,4 +1,4 @@
-site_name: Home Assistant Remote Logger
+site_name: Remote Logger for Home Assistant
 site_url: https://remote-logger.rhizomatics.org.uk
 site_description: Remote Logging for Home Assistant using Syslog or OTEL
 
@@ -9,6 +9,7 @@ docs_dir: docs
 
 theme:
   name: materialx
+  custom_dir: overrides
   highlightjs: true
   language: en
   icon:
@@ -32,6 +33,11 @@ theme:
     - search.share
     - toc.follow
     - toc.integrate
+hooks:
+  # heading anchors match GitHub (incl. non-ASCII), so translated README links work
+  - docs_hooks/slugs.py
+  - docs_hooks/llmstxt_hooks.py
+
 plugins:
   - search
   - autorefs
@@ -41,6 +47,35 @@ plugins:
   - tags
   - htmlproofer:
       skip_downloads: True
+  - llmstxt:
+      full_output: llms-full.txt
+      preprocess: docs_hooks/llmstxt_preprocess.py
+      markdown_description: >
+        Remote Logger is a Home Assistant custom integration (installed via HACS) that forwards
+        Home Assistant log records and selected events to a remote Syslog server or an
+        OpenTelemetry (OTLP) collector, with structured multi-line entries and stack traces.
+      sections:
+        Getting started:
+          - index.md: Overview, installation, configuration and supported protocols
+        Guides:
+          - events.md: Logging Home Assistant events as well as log records
+          - aggregators.md: Log aggregators known to work with Syslog and OTLP
+        Examples:
+          - examples/vector_openobserve/*.md
+          - examples/vector_greptimedb/*.md
+        Optional:
+          - changelog.md: Release history
+        Translations:
+          - de/index.md: Overview in German
+          - es/index.md: Overview in Spanish
+          - fr/index.md: Overview in French
+          - hi/index.md: Overview in Hindi
+          - it/index.md: Overview in Italian
+          - ja/index.md: Overview in Japanese
+          - nl/index.md: Overview in Dutch
+          - pl/index.md: Overview in Polish
+          - pt/index.md: Overview in Portuguese
+          - zh/index.md: Overview in Simplified Chinese
   - minify:
       minify_html: true
   - git-revision-date-localized:
@@ -121,6 +156,7 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
+  - pymdownx.superfences
   - toc:
       permalink: true
   - sane_lists
