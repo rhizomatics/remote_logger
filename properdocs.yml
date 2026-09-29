@@ -8,7 +8,7 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 
 theme:
-  name: material
+  name: materialx
   highlightjs: true
   language: en
   icon:
