@@ -34,7 +34,14 @@ from .const import (
     DEFAULT_LOG_LEVEL,
     DOMAIN,
 )
-from .otel.const import CONF_TOKEN_TYPE, OTEL_DATA_SCHEMA, OTLP_LOGS_PATH, REAUTH_OTEL_DATA_SCHEMA, TOKEN_TYPE_BEARER
+from .otel.const import (
+    CONF_TOKEN_TYPE,
+    OTEL_DATA_SCHEMA,
+    OTLP_LOGS_PATH,
+    REAUTH_OTEL_DATA_SCHEMA,
+    TOKEN_TYPE_BEARER,
+    VALIDATION_MESSAGE,
+)
 from .otel.exporter import build_auth_header, parse_headers, parse_resource_attributes
 from .otel.exporter import validate as otel_validate
 from .syslog.const import SYSLOG_DATA_SCHEMA
@@ -156,6 +163,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="otel",
             data_schema=self.add_suggested_values_to_schema(OTEL_DATA_SCHEMA, user_input or {}),
             errors=errors,
+            description_placeholders={"validation_message": VALIDATION_MESSAGE},
         )
 
     async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
@@ -198,6 +206,7 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="reauth_otel",
             data_schema=self.add_suggested_values_to_schema(REAUTH_OTEL_DATA_SCHEMA, user_input or {}),
             errors=errors,
+            description_placeholders={"validation_message": VALIDATION_MESSAGE},
         )
 
     async def async_step_syslog(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -313,6 +322,7 @@ class RemoteLoggerOptionsFlow(OptionsFlow):
             step_id="otel",
             data_schema=self.add_suggested_values_to_schema(OTEL_DATA_SCHEMA, suggested),
             errors=errors,
+            description_placeholders={"validation_message": VALIDATION_MESSAGE},
         )
 
     async def async_step_syslog(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:

@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "Configurar o endpoint OTLP",
-        "description": "Introduza os detalhes de ligação do seu coletor OpenTelemetry.",
+        "description": "Introduza os detalhes de ligação do seu coletor OpenTelemetry. Será enviado um registo de teste para verificar a ligação: \"{validation_message}\".",
         "data": {
           "host": "Anfitrião do coletor",
           "port": "Porta do coletor",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "Reautenticar o endpoint OTLP",
-        "description": "Falha na autenticação. Introduza um novo token.",
+        "description": "Falha na autenticação. Introduza um novo token. Será enviado um registo de teste para verificar a ligação: \"{validation_message}\".",
         "data": {
           "token_type": "Tipo de token",
           "token": "Token"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "Configurar o endpoint OTLP",
-        "description": "Atualize os detalhes de ligação do seu coletor OpenTelemetry.",
+        "description": "Atualize os detalhes de ligação do seu coletor OpenTelemetry. Será enviado um registo de teste para verificar a ligação: \"{validation_message}\".",
         "data": {
           "host": "Anfitrião do coletor",
           "port": "Porta do coletor",

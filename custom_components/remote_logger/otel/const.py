@@ -50,6 +50,10 @@ SCOPE_VERSION = "1.0.0"
 # Default resource attribute
 DEFAULT_SERVICE_NAME = "homeassistant.core"
 
+# Log record sent when validating the endpoint during configuration
+VALIDATION_MESSAGE = "Home Assistant remote_logger configuration validation, safe to ignore"
+VALIDATION_EVENT_NAME = "remote_logger.validation"
+
 OTEL_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST): str,
     vol.Optional(CONF_PORT, default=DEFAULT_HTTP_PORT): int,

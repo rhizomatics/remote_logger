@@ -1,3 +1,10 @@
+# 2.0.6
+## Fixes
+- OTLP validation now sends a single real log record, clearly marked as a configuration validation message, instead of an empty payload
+  - Some backends reject empty payloads (Loki with 422, Snowflake Observe with 400), and treating those codes as success also hid genuine problems such as a wrong encoding
+  - 400 and 422 responses are now reported as connection failures
+  - The message text is shown in the OTLP setup, options and reauth forms
+
 # 2.0.5
 ## Home Assistant Alignment
 - Counters now persist properly as stats

@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "Configurer le point de terminaison OTLP",
-        "description": "Saisissez les informations de connexion de votre collecteur OpenTelemetry.",
+        "description": "Saisissez les informations de connexion de votre collecteur OpenTelemetry. Un enregistrement de journal de test sera envoyé pour vérifier la connexion : « {validation_message} ».",
         "data": {
           "host": "Hôte du collecteur",
           "port": "Port du collecteur",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "Ré-authentifier le point de terminaison OTLP",
-        "description": "Authentification échouée. Saisissez un nouveau jeton.",
+        "description": "Authentification échouée. Saisissez un nouveau jeton. Un enregistrement de journal de test sera envoyé pour vérifier la connexion : « {validation_message} ».",
         "data": {
           "token_type": "Type de jeton",
           "token": "Jeton"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "Configurer le point de terminaison OTLP",
-        "description": "Mettez à jour les informations de connexion de votre collecteur OpenTelemetry.",
+        "description": "Mettez à jour les informations de connexion de votre collecteur OpenTelemetry. Un enregistrement de journal de test sera envoyé pour vérifier la connexion : « {validation_message} ».",
         "data": {
           "host": "Hôte du collecteur",
           "port": "Port du collecteur",

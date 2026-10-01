@@ -19,7 +19,7 @@ from custom_components.remote_logger.const import (
     CONF_USE_TLS,
     DOMAIN,
 )
-from custom_components.remote_logger.otel.const import ENCODING_JSON
+from custom_components.remote_logger.otel.const import ENCODING_JSON, VALIDATION_MESSAGE
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -49,6 +49,7 @@ class TestOtelConfigFlow:
         result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "otel"})
         assert result["type"] == FlowResultType.FORM
         assert result["step_id"] == "otel"
+        assert result["description_placeholders"] == {"validation_message": VALIDATION_MESSAGE}
 
     async def test_step_otel_success(self, hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
@@ -267,6 +268,7 @@ class TestOptionsFlow:
         result = await flow.async_step_init(None)
         assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
         assert result["step_id"] == "otel"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["description_placeholders"] == {"validation_message": VALIDATION_MESSAGE}  # pyright: ignore[reportTypedDictNotRequiredAccess]
 
     async def test_options_flow_saves_values(self, hass: HomeAssistant) -> None:
         from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow

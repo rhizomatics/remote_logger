@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "Configura l'endpoint OTLP",
-        "description": "Inserisci i dettagli di connessione per il tuo collector OpenTelemetry.",
+        "description": "Inserisci i dettagli di connessione per il tuo collector OpenTelemetry. Verrà inviato un record di log di prova per verificare la connessione: \"{validation_message}\".",
         "data": {
           "host": "Host del collector",
           "port": "Porta del collector",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "Ri-autentica l'endpoint OTLP",
-        "description": "Autenticazione fallita. Inserisci un nuovo token.",
+        "description": "Autenticazione fallita. Inserisci un nuovo token. Verrà inviato un record di log di prova per verificare la connessione: \"{validation_message}\".",
         "data": {
           "token_type": "Tipo di token",
           "token": "Token"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "Configura l'endpoint OTLP",
-        "description": "Aggiorna i dettagli di connessione per il tuo collector OpenTelemetry.",
+        "description": "Aggiorna i dettagli di connessione per il tuo collector OpenTelemetry. Verrà inviato un record di log di prova per verificare la connessione: \"{validation_message}\".",
         "data": {
           "host": "Host del collector",
           "port": "Porta del collector",

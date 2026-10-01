@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "OTLPエンドポイントの設定",
-        "description": "OpenTelemetryコレクターの接続情報を入力してください。",
+        "description": "OpenTelemetryコレクターの接続情報を入力してください。接続を確認するためにテストログレコードが送信されます：「{validation_message}」",
         "data": {
           "host": "コレクターホスト",
           "port": "コレクターポート",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "OTLPエンドポイントの再認証",
-        "description": "認証に失敗しました。新しいトークンを入力してください。",
+        "description": "認証に失敗しました。新しいトークンを入力してください。接続を確認するためにテストログレコードが送信されます：「{validation_message}」",
         "data": {
           "token_type": "トークンタイプ",
           "token": "トークン"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "OTLPエンドポイントの設定",
-        "description": "OpenTelemetryコレクターの接続情報を更新してください。",
+        "description": "OpenTelemetryコレクターの接続情報を更新してください。接続を確認するためにテストログレコードが送信されます：「{validation_message}」",
         "data": {
           "host": "コレクターホスト",
           "port": "コレクターポート",

@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import base64
 import datetime as dt
-import json
 import logging
 import math
 import re
@@ -45,6 +44,8 @@ from .const import (
     TOKEN_TYPE_BASIC,
     TOKEN_TYPE_BEARER,
     TOKEN_TYPE_RAW_BASIC,
+    VALIDATION_EVENT_NAME,
+    VALIDATION_MESSAGE,
 )
 from .protobuf_encoder import encode_export_logs_request
 
@@ -152,27 +153,38 @@ async def validate(
     encoding: str,
     extra_headers: dict[str, str] | None = None,
 ) -> dict[str, str]:
-    # Validate connectivity
+    # Validate connectivity by sending a real log record, since some backends reject empty payloads
     errors: dict[str, str] = {}
+    resource: dict[str, typing.Any] = {"attributes": []}
+    append_attr(resource["attributes"], "service.name", DEFAULT_SERVICE_NAME)
+    append_attr(resource["attributes"], "service.version", hass_version or "unknown")
+    now = str(time.time_ns())
+    severity_number, severity_text = DEFAULT_SEVERITY
+    record = OtlpMessage(
+        payload={
+            "timeUnixNano": now,
+            "observedTimeUnixNano": now,
+            "severityNumber": severity_number,
+            "severityText": severity_text,
+            "body": {"stringValue": VALIDATION_MESSAGE},
+            "attributes": [],
+            "eventName": VALIDATION_EVENT_NAME,
+        },
+    )
+    submission: OtlpSubmission
     if encoding == ENCODING_PROTOBUF:
-        data: bytes = encode_export_logs_request({"resourceLogs": []})
-        content_type = "application/x-protobuf"
+        submission = OtlpProtobufSubmission(resource, [record], extra_headers)
     elif encoding == ENCODING_JSON:
-        data = json.dumps({"resourceLogs": []}).encode("utf-8")
-        content_type = "application/json"
+        submission = OtlpJsonSubmission(resource, [record], extra_headers)
     else:
         raise ValueError(f"Unknown encoding {encoding}")
-    headers = {"Content-Type": content_type, **(extra_headers or {})}
     try:
         async with session.post(
             url,
-            data=data,
-            headers=headers,
             timeout=aiohttp.ClientTimeout(total=10),
+            **submission.body(),
         ) as resp:
-            if resp.status >= 400 and resp.status < 500 and resp.status != 422:
-                # 422 Unprocessable Entity means the endpoint is reachable but rejected
-                # our empty validation payload — that confirms connectivity.
+            if resp.status >= 400 and resp.status < 500:
                 errors["base"] = "cannot_connect"
                 _LOGGER.error("remote_logger: client connect failed (%s): %s", resp.status, await resp.text())
             if resp.status >= 500:

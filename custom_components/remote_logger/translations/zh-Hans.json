@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "配置 OTLP 端点",
-        "description": "输入 OpenTelemetry 采集器的连接信息。",
+        "description": "输入 OpenTelemetry 采集器的连接信息。将发送一条测试日志记录以检查连接：“{validation_message}”。",
         "data": {
           "host": "采集器主机",
           "port": "采集器端口",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "重新验证 OTLP 端点",
-        "description": "认证失败，请输入新令牌。",
+        "description": "认证失败，请输入新令牌。将发送一条测试日志记录以检查连接：“{validation_message}”。",
         "data": {
           "token_type": "令牌类型",
           "token": "令牌"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "配置 OTLP 端点",
-        "description": "更新 OpenTelemetry 采集器的连接信息。",
+        "description": "更新 OpenTelemetry 采集器的连接信息。将发送一条测试日志记录以检查连接：“{validation_message}”。",
         "data": {
           "host": "采集器主机",
           "port": "采集器端口",

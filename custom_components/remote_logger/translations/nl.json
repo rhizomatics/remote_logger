@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "OTLP-eindpunt configureren",
-        "description": "Voer de verbindingsgegevens in voor uw OpenTelemetry-collector.",
+        "description": "Voer de verbindingsgegevens in voor uw OpenTelemetry-collector. Er wordt een testlogrecord verzonden om de verbinding te controleren: \"{validation_message}\".",
         "data": {
           "host": "Collector-host",
           "port": "Collector-poort",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "OTLP-eindpunt opnieuw verifiëren",
-        "description": "Verificatie mislukt. Voer een nieuw token in.",
+        "description": "Verificatie mislukt. Voer een nieuw token in. Er wordt een testlogrecord verzonden om de verbinding te controleren: \"{validation_message}\".",
         "data": {
           "token_type": "Tokentype",
           "token": "Token"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "OTLP-eindpunt configureren",
-        "description": "Werk de verbindingsgegevens bij voor uw OpenTelemetry-collector.",
+        "description": "Werk de verbindingsgegevens bij voor uw OpenTelemetry-collector. Er wordt een testlogrecord verzonden om de verbinding te controleren: \"{validation_message}\".",
         "data": {
           "host": "Collector-host",
           "port": "Collector-poort",

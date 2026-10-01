@@ -713,22 +713,62 @@ class TestOtelValidate:
         result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
         assert result == {"base": "cannot_connect"}
 
-    async def test_422_does_not_return_cannot_connect(self) -> None:
-        # Loki returns 422 for empty payloads; this confirms the endpoint is reachable.
+    @pytest.mark.parametrize("status", [400, 422])
+    async def test_rejected_payload_returns_cannot_connect(self, status: int) -> None:
+        # A real log record is sent, so 400/422 means bad encoding, path or payload handling
         from unittest.mock import AsyncMock
 
         from custom_components.remote_logger.otel.exporter import validate
 
         mock_resp = MagicMock()
-        mock_resp.status = 422
-        mock_resp.text = AsyncMock(return_value="empty resourceLogs")
+        mock_resp.status = status
+        mock_resp.text = AsyncMock(return_value="rejected")
         mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
         mock_resp.__aexit__ = AsyncMock(return_value=False)
         mock_session = MagicMock()
         mock_session.post = MagicMock(return_value=mock_resp)
 
-        result = await validate(mock_session, "http://localhost:3100/otlp/v1/logs", "json")
-        assert result == {}
+        result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
+        assert result == {"base": "cannot_connect"}
+
+    async def test_json_sends_validation_log_record(self) -> None:
+        # Empty payloads are rejected by some backends (Loki 422, Observe 400), so send a real record
+        from unittest.mock import AsyncMock
+
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        await validate(mock_session, "http://localhost:4318/v1/logs", "json", {"Authorization": "Bearer x"})
+        kwargs = mock_session.post.call_args.kwargs
+        assert kwargs["headers"]["Authorization"] == "Bearer x"
+        assert kwargs["headers"]["Content-Type"] == "application/json"
+        records = kwargs["json"]["resourceLogs"][0]["scopeLogs"][0]["logRecords"]
+        assert len(records) == 1
+        assert "configuration validation" in records[0]["body"]["stringValue"]
+        assert records[0]["eventName"] == "remote_logger.validation"
+
+    async def test_protobuf_sends_validation_log_record(self) -> None:
+        from unittest.mock import AsyncMock
+
+        from custom_components.remote_logger.otel.exporter import validate
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_resp)
+
+        await validate(mock_session, "http://localhost:4318/v1/logs", "protobuf")
+        kwargs = mock_session.post.call_args.kwargs
+        assert kwargs["headers"]["Content-Type"] == "application/x-protobuf"
+        assert b"configuration validation" in kwargs["data"]
 
     async def test_5xx_returns_cannot_connect(self) -> None:
         from unittest.mock import AsyncMock

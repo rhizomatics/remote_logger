@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "OTLP-Endpunkt konfigurieren",
-        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector eingeben.",
+        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector eingeben. Zur Prüfung der Verbindung wird ein Test-Logeintrag gesendet: \"{validation_message}\".",
         "data": {
           "host": "Collector-Host",
           "port": "Collector-Port",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "OTLP-Endpunkt erneut authentifizieren",
-        "description": "Authentifizierung fehlgeschlagen. Bitte ein neues Token eingeben.",
+        "description": "Authentifizierung fehlgeschlagen. Bitte ein neues Token eingeben. Zur Prüfung der Verbindung wird ein Test-Logeintrag gesendet: \"{validation_message}\".",
         "data": {
           "token_type": "Token-Typ",
           "token": "Token"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "OTLP-Endpunkt konfigurieren",
-        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector aktualisieren.",
+        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector aktualisieren. Zur Prüfung der Verbindung wird ein Test-Logeintrag gesendet: \"{validation_message}\".",
         "data": {
           "host": "Collector-Host",
           "port": "Collector-Port",

@@ -11,7 +11,7 @@
       },
       "otel": {
         "title": "Konfiguruj punkt końcowy OTLP",
-        "description": "Wprowadź dane połączenia z kolektorem OpenTelemetry.",
+        "description": "Wprowadź dane połączenia z kolektorem OpenTelemetry. W celu sprawdzenia połączenia zostanie wysłany testowy wpis dziennika: \"{validation_message}\".",
         "data": {
           "host": "Host kolektora",
           "port": "Port kolektora",
@@ -39,7 +39,7 @@
       },
       "reauth_otel": {
         "title": "Ponowna autoryzacja punktu końcowego OTLP",
-        "description": "Uwierzytelnianie nie powiodło się. Wprowadź nowy token.",
+        "description": "Uwierzytelnianie nie powiodło się. Wprowadź nowy token. W celu sprawdzenia połączenia zostanie wysłany testowy wpis dziennika: \"{validation_message}\".",
         "data": {
           "token_type": "Typ tokenu",
           "token": "Token"
@@ -123,7 +123,7 @@
     "step": {
       "otel": {
         "title": "Konfiguruj punkt końcowy OTLP",
-        "description": "Zaktualizuj dane połączenia z kolektorem OpenTelemetry.",
+        "description": "Zaktualizuj dane połączenia z kolektorem OpenTelemetry. W celu sprawdzenia połączenia zostanie wysłany testowy wpis dziennika: \"{validation_message}\".",
         "data": {
           "host": "Host kolektora",
           "port": "Port kolektora",
