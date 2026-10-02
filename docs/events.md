@@ -14,7 +14,11 @@ However, it can also be useful to listen and log many of the other [events](http
 * [Automation Executions](https://www.home-assistant.io/docs/configuration/events/#automation_triggered) - for automations, scripts and scenes
 * Custom Component events - like `autoarm_change`
 
-## Selecting Events in Remote Logger
+## Selecting Events in Remote Logger
+
+The screen below is shown as a second config page once you submit the main configure logging hub configuration.
+
+![Additional Events Configuration](assets/images/config_addntl_ha_events.png){align=right}
 
 The free-form event box can be used as an alternative to pick specific
 Home Assistant events, or any other custom component events.
@@ -27,6 +31,8 @@ Its easy to log whole categories of these from the Remote Logger configuration, 
 | Core Activity      | Actions, mobile actions, scripts, automations executed                                                              |
 | State Changes      | Entity state changes and log book entries, with states stripped of attributes and context to avoid huge log entries |
 | Full State Changes | Entity state changes and log book entries, full and untrimmed                                                       |
+
+State Changes and Full State Changes are mutually exclusive - only one may be enabled at a time, since the full version is a superset of the bare one. Enabling both together is rejected with a validation error, and the form will show your other inputs unchanged so you can correct it.
 
 ## Beyond Home Assistant
 

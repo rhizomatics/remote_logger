@@ -1,3 +1,11 @@
+# 2.0.7
+
+## 🐛 Bug fixes
+- When you flip "Home Assistant state changes" on while the other, mutually-exclusive "state changes (without attributes)" toggle is already on, the flow correctly rejects it (state_changes_exclusive error) — but then re-renders the form using the old stored config values instead of what you just submitted. Now fixed, to use the newly supplied values.
+
+## 📚 Documentation
+- Additional Home Assistant events doc now gets a screenshot of what the full dialog looks like, and text improved.
+
 # 2.0.6
 
 ## ✨ Enhancements

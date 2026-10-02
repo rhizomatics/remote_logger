@@ -363,24 +363,27 @@ class RemoteLoggerOptionsFlow(OptionsFlow):
             else:
                 return self.async_create_entry(title="", data={**self._pending_options, **flat})
 
-        merged = {**self._config_entry.data, **self._config_entry.options}
-        current = {
-            CONF_EVENT_BASED_LOGGING: merged.get(CONF_EVENT_BASED_LOGGING, False),
-            CONF_LOG_LEVEL: merged.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL),
-            "ha_standard_events": {
-                CONF_LOG_HA_LIFECYCLE: merged.get(CONF_LOG_HA_LIFECYCLE, False),
-                CONF_LOG_HA_CORE_CHANGES: merged.get(CONF_LOG_HA_CORE_CHANGES, False),
-                CONF_LOG_HA_CORE_ACTIVITY: merged.get(CONF_LOG_HA_CORE_ACTIVITY, False),
-                CONF_LOG_HA_STATE_CHANGES: merged.get(CONF_LOG_HA_STATE_CHANGES, False),
-                CONF_LOG_HA_FULL_STATE_CHANGES: merged.get(CONF_LOG_HA_FULL_STATE_CHANGES, False),
-            },
-            CONF_LOG_HA_EVENT_BODY: merged.get(CONF_LOG_HA_EVENT_BODY, False),
-            CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME: merged.get(CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME, True),
-            CONF_CUSTOM_EVENTS: _to_list(merged.get(CONF_CUSTOM_EVENTS, [])),
-        }
+        if user_input is not None:
+            suggested = user_input
+        else:
+            merged = {**self._config_entry.data, **self._config_entry.options}
+            suggested = {
+                CONF_EVENT_BASED_LOGGING: merged.get(CONF_EVENT_BASED_LOGGING, False),
+                CONF_LOG_LEVEL: merged.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL),
+                "ha_standard_events": {
+                    CONF_LOG_HA_LIFECYCLE: merged.get(CONF_LOG_HA_LIFECYCLE, False),
+                    CONF_LOG_HA_CORE_CHANGES: merged.get(CONF_LOG_HA_CORE_CHANGES, False),
+                    CONF_LOG_HA_CORE_ACTIVITY: merged.get(CONF_LOG_HA_CORE_ACTIVITY, False),
+                    CONF_LOG_HA_STATE_CHANGES: merged.get(CONF_LOG_HA_STATE_CHANGES, False),
+                    CONF_LOG_HA_FULL_STATE_CHANGES: merged.get(CONF_LOG_HA_FULL_STATE_CHANGES, False),
+                },
+                CONF_LOG_HA_EVENT_BODY: merged.get(CONF_LOG_HA_EVENT_BODY, False),
+                CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME: merged.get(CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME, True),
+                CONF_CUSTOM_EVENTS: _to_list(merged.get(CONF_CUSTOM_EVENTS, [])),
+            }
         return self.async_show_form(
             step_id="events",
-            data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, current),
+            data_schema=self.add_suggested_values_to_schema(COMMON_DATA_SCHEMA, suggested),
             errors=errors,
             description_placeholders={
                 "learn_more": "[Learn about HA events](https://www.home-assistant.io/docs/configuration/events/)",

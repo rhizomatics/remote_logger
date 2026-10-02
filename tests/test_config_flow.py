@@ -15,7 +15,9 @@ from custom_components.remote_logger.config_flow import _build_endpoint_url
 from custom_components.remote_logger.const import (
     CONF_CUSTOM_EVENTS,
     CONF_LOG_HA_CORE_CHANGES,
+    CONF_LOG_HA_FULL_STATE_CHANGES,
     CONF_LOG_HA_LIFECYCLE,
+    CONF_LOG_HA_STATE_CHANGES,
     CONF_USE_TLS,
     DOMAIN,
 )
@@ -311,6 +313,37 @@ class TestOptionsFlow:
         result = await flow.async_step_init(None)
         assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
         assert result["step_id"] == "otel"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+
+    async def test_options_flow_events_error_keeps_attempted_toggle(self, hass: HomeAssistant) -> None:
+        """On a validation error, the re-shown form must reflect the just-submitted toggles, not stored options."""
+        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
+
+        entry = self._make_otel_entry({CONF_LOG_HA_STATE_CHANGES: True})
+        flow = RemoteLoggerOptionsFlow(entry)
+        flow.hass = hass
+        flow._pending_options = {}
+
+        result = await flow.async_step_events({
+            "ha_standard_events": {
+                CONF_LOG_HA_LIFECYCLE: False,
+                CONF_LOG_HA_CORE_CHANGES: False,
+                CONF_LOG_HA_STATE_CHANGES: True,
+                CONF_LOG_HA_FULL_STATE_CHANGES: True,
+            },
+            CONF_CUSTOM_EVENTS: [],
+        })
+
+        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["errors"] == {CONF_LOG_HA_FULL_STATE_CHANGES: "state_changes_exclusive"}  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        data_schema = result["data_schema"].schema  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        section_key = next(k for k in data_schema if k.schema == "ha_standard_events")
+        section_schema = data_schema[section_key].schema.schema
+        suggested = {
+            key.schema: key.description.get("suggested_value")
+            for key in section_schema
+            if hasattr(key, "description") and key.description
+        }
+        assert suggested[CONF_LOG_HA_FULL_STATE_CHANGES] is True
 
     def _make_syslog_entry(self) -> ConfigEntry:
         entry = MagicMock(spec=ConfigEntry)
