@@ -335,7 +335,7 @@ class TestOptionsFlow:
 
         assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
         assert result["errors"] == {CONF_LOG_HA_FULL_STATE_CHANGES: "state_changes_exclusive"}  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        data_schema = result["data_schema"].schema  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        data_schema = result["data_schema"].schema  # type: ignore
         section_key = next(k for k in data_schema if k.schema == "ha_standard_events")
         section_schema = data_schema[section_key].schema.schema
         suggested = {
