@@ -130,7 +130,8 @@ buffers and show the last payload posted.
 ##  Rhizomatics Open Source for Home Assistant
 
 ### HACS
-- [AutoArm](https://autoarm.rhizomatics.org.uk) - Automatically arm and disarm Home Assistant alarm control panels using physical buttons, presence, calendars, sun and more
+- [Auto Arm](https://autoarm.rhizomatics.org.uk) - Automatically arm and disarm Home Assistant alarm control panels using physical buttons, presence, calendars, sun and more
+- [Dev Shell](https://dev_shell.rhizomatics.org.uk) - Python REPL for Home Assistant development and data exploration
 - [Supernotify](https://supernotify.rhizomatics.org.uk) - Unified notification for easy multi-channel messaging, including powerful chime and security camera integration.
 
 
