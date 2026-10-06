@@ -1,0 +1,1064 @@
+# Remote Logger for Home Assistant
+
+> Remote Logging for Home Assistant using Syslog or OTEL
+
+Remote Logger is a Home Assistant custom integration (installed via HACS) that forwards Home Assistant log records and selected events to a remote Syslog server or an OpenTelemetry (OTLP) collector, with structured multi-line entries and stack traces.
+
+
+# Getting started
+
+# Remote Logger for Home Assistant
+
+Use log aggregation and analysis tools to get a complete picture of your home automation. Remote Logger for Home Assistant listens to Home Assistant logging at source and sends structured log events to a remote Syslog or OpenTelemetry (OTLP) collector. Optionally forwards other Home Assistant events, such as lifecycle events, service calls, configuration updates, state changes.
+
+Unlike many logging solutions that scrape consoles logs, Remote Logger taps into either the root Python logger or the `system_log_event` Event fired by Home Assistant, preserving the **full structure so multi-line logs and stacktraces are preserved as single log entries**, utilizes the Home Assistant logic to **tie exceptions back to source code lines**, and will capture script names, line numbers and versions properly.
+
+Only Home Assistant server itself, with its custom components is supported. Logs from *apps* (previously known as 'add-ins'), HAOS or the HA Supervisor aren't provided as events to be captured, so require an alternative solution, like Bert Baron's [LogSpout Home Assistant App](https://github.com/bertbaron/hassio-addons/tree/main/logspout) will cover these. It can be used in combination with *Remote Logger* so that Home Assistant has good structured logs, and everything else is at least logged. Since it uses Syslog and OTLP it can also be easily integrated with practically everything else in your environment, including SIEM cybersecurity logs from firewalls, Unifi networking, Docker logs etc. See the section on [aggregators](https://remote-logger.rhizomatics.org.uk/aggregators/index.md) for suggestions if you're not familiar with these.
+
+Translations are available for Dutch, English, French, German, Hindi, Italian, Japanese, Polish, Portuguese, Simplified Mandarin and Spanish.
+
+## Installation
+
+**Remote Logger** is a HACS component, so that has to be installed first, using the instruction at [Getting Started with HACS](https://www.hacs.xyz/docs/use/).
+
+The integration installs using the Home Assistant integrations page, and has **no YAML configuration**.
+
+### Event Based Logging
+
+If choosing event based logging over the Python root logger, then a YAML change is required to the Home Assistant [System Log](https://www.home-assistant.io/integrations/system_log/) integration, to enable event forwarding for `system_log_event`. This is not required if using the default Python root logger approach.
+
+Home Assistant Configuration
+
+```yaml
+system_log:
+    fire_event: true
+```
+
+Choosing a Log Format
+
+If you're not sure about which log format to choose, Open Telemetry (*aka* **OTEL Logging**, *aka* **OTLP**) is the best if you have a modern logging service that can handle it. It has the richest format, for example knows how to hold a multi-line stacktrace attached to a log message, and generally requires minimal configuration. Syslog is the best choice if the back end logging is more primitive, since it has been around since the dawn of time, although is much more semantically limited.
+
+## Open Telemetry (OTEL)
+
+Logs are sent using Open Telemetry Logs specification over a [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/)(OTLP) connection, either as Protobuf or JSON, and currently only as HTTP (gRPC may be added in future).
+
+For more information, see [OpenTelemetry Logging](https://opentelemetry.io/docs/specs/otel/logs/).
+
+Log records are collected and sent in a bundle
+
+## Syslog
+
+Messages are sent using the more recent [RFC5424](https://datatracker.ietf.org/doc/html/rfc5424) format, with additional structured data using OTEL taxonomy (see [Additional Attributes](#additional-attributes)).
+
+Syslog can be sent as TCP or UDP.
+
+## Events
+
+### System Log Event
+
+Note the requirement at [Installation](#installation) to enable this event, which isn't fired by default. This is limited to *Warning* and *Error* events. Find out more at the [System Log](https://www.home-assistant.io/integrations/system_log/) integration documentation.
+
+*Remote Logger* will omit its own log events from the stream, to prevent the possibility of event loops. As an alternative, error stats and messages are available as diagnostic entities.
+
+#### Additional Attributes
+
+The following additional attributes, derived directly from the Home Assistant log event, are provided as Syslog `STRUCTURED-DATA` attributes, or OTEL attributes.
+
+- `code.file.path`
+- `code.line.number`
+- `code.function.name` (this is the `logger` value from Home Assistant)
+- `exception.count`
+- `exception.first_occurred`
+- `exception.stacktrace`
+
+OTEL taxonomy is used for both OTEL and Syslog since there's no standard taxonomy at this level of Syslog.
+
+### Other Events
+
+*Remote Logger* can log any Home Assistant event, and knows about the core ones, in order to create a more readable message. Find out more in the [Events](https://remote-logger.rhizomatics.org.uk/events/index.md) guidance.
+
+## Log Servers
+
+There are a zillion possible solutions for capturing, analyzing, aggregating and storing logs. Generally a log setup requires:
+
+- **Collector** - The thing that sits on the monitored service and sends out the logs. This *Remote Logger* is a collector for Home Assistant core, as is [LogSpout Home Assistant App](https://github.com/bertbaron/hassio-addons/tree/main/logspout) for HAOS.
+- **Aggregator** - Receives logs from collectors, enriches, filters, converts formats and forwards on. See [Log Aggregators](https://remote-logger.rhizomatics.org.uk/aggregators/index.md) for more information.
+- **Store** - Typically a database that holds the logs, and any column indexes or free text search indexes
+- **Analytics** - Query by SQL or similar, keyword search, graphing, counting etc
+
+These suggestions are for options that are open source and free, at least for home use, and will work in Docker.
+
+- [Vector](https://vector.dev) as the aggregator and [GreptimeDb](https://greptime.com) as the store and analytics - they are fast, lightweight, open source, customizable and run under Docker. Vector has support for OTEL logging, as well as Syslog, and has good remapping ability to fine tune each source. Its then easy to pull in logs from Docker servers, firewalls, Unifi switches or wherever else into one time-line, as well as server and network metrics. See the [examples](https://remote-logger.rhizomatics.org.uk/examples/vector_greptimedb/index.md) for a sample configuration.
+- [OpenObserve](https://openobserve.ai) can do all three jobs ( aggregator, store, analytics ) for many sources, although it now recommends using Vector for Syslog. It also has a more functional log query interface, especially for people used to Splunk, and reuses the *VRL* (Vector Remap Language) for its own pipelines.
+
+## Diagnostic Entities
+
+Home Assistant sensors are created and updated to monitor log activity, plus any errors either generating log messages or posting them to remote servers.
+
+## Diagnostic Actions
+
+Home Assistant actions are supported to send a test event, force flush the log buffers and show the last payload posted.
+
+## Rhizomatics Open Source for Home Assistant
+
+### HACS
+
+- [Auto Arm](https://autoarm.rhizomatics.org.uk) - Automatically arm and disarm Home Assistant alarm control panels using physical buttons, presence, calendars, sun and more
+- [Supernotify](https://supernotify.rhizomatics.org.uk) - Unified notification for easy multi-channel messaging, including powerful chime and security camera integration.
+
+### Python / Docker
+
+- [Anpr2MQTT](https://anpr2mqtt.rhizomatics.org.uk) - Integrate with ANPR/ALPR licence plate cameras via file system (NAS/FTP) to MQTT with optional image analysis and UK DVLA integration.
+- [Dev Shell](https://devshell.rhizomatics.org.uk) - Python REPL for Home Assistant development and data exploration.
+- [Updates2MQTT](https://updates2mqtt.rhizomatics.org.uk) - Automatically notify via MQTT on Docker image updates, with advanced handling to extract versions and release notes from images, and option to remotely pull and restart containers from Home Assistant. Also available on [PyPI](https://pypi.org/project/updates2mqtt/)
+# Guides
+
+# Event Logging
+
+The core job of Remote Logger is listening to either the root system logger (Python `logging`) or subscribe to the `system_log_events` raised by Home Assistant, and forwarding on as Syslog or OTLP messages. The resulting message is the same whatever mechanism is used, the main difference is the Root Logger approach allows `INFO` or `DEBUG` logs.
+
+However, it can also be useful to listen and log many of the other [events](https://www.home-assistant.io/docs/configuration/events/) that Home Assistant emits.
+
+## Home Assistant Events
+
+- [Platform Lifecycle Events](https://www.home-assistant.io/docs/configuration/events/#homeassistant_stop-homeassistant_final_write-homeassistant_close) such as `homeassistant_stop`
+- [Component Lifecycle Events](https://www.home-assistant.io/docs/configuration/events/#component_loaded)
+- Registry Events - for new and changed devices, services, entities, users, labels, floors, areas and categories
+- [Service Calls](https://www.home-assistant.io/docs/configuration/events/#call_service)
+- [State Changes](https://www.home-assistant.io/docs/configuration/events/#state_changed) - state value often with a slew of additional attributes
+- [Automation Executions](https://www.home-assistant.io/docs/configuration/events/#automation_triggered) - for automations, scripts and scenes
+- Custom Component events - like `autoarm_change`
+
+## Selecting Events in Remote Logger
+
+The screen below is shown as a second config page once you submit the main configure logging hub configuration.
+
+The free-form event box can be used as an alternative to pick specific Home Assistant events, or any other custom component events. Its easy to log whole categories of these from the Remote Logger configuration, or select individual ones you need. State changes can be huge in volume, and can also stress log aggregators by creating huge numbers of columns, so Remote Logger offers two versions of state logging - the bare state, or the full version with attributes ( and also a choice in how events are sent over JSON, as simplified messages, or full raw native ones with all the fields).
+
+| Bundle             | Description                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Lifecycle          | Home Assistant server start and stop events                                                                         |
+| Core Changes       | Components and services loading or unloading, config reapplied                                                      |
+| Core Activity      | Actions, mobile actions, scripts, automations executed                                                              |
+| State Changes      | Entity state changes and log book entries, with states stripped of attributes and context to avoid huge log entries |
+| Full State Changes | Entity state changes and log book entries, full and untrimmed                                                       |
+
+State Changes and Full State Changes are mutually exclusive - only one may be enabled at a time, since the full version is a superset of the bare one. Enabling both together is rejected with a validation error, and the form will show your other inputs unchanged so you can correct it.
+
+## Beyond Home Assistant
+
+Debugging issues is much easier with full context, not only from Home Assistant itself, also add-on Apps running in HAOS, and other services on the network. For example, include logging from Frigate via a Docker syslog or OTLP collector, or network issues from a Unifi or OPNSense installation.
+
+OpenObserve, GreptimeDB and similar tools (there's a [big list of OTEL vendors and projects](https://opentelemetry.io/ecosystem/vendors/)) can also pull in metrics and traces, for a fuller picture, though its also easy to get overwhelmed - CPU, storage, mentally - by the sheer scale of what could be aggregated, even in a home lab.
+
+See the [examples](https://remote-logger.rhizomatics.org.uk/examples/index.md) for working configuration.
+
+# Log Aggregators
+
+There are many aggregators that will accept Syslog and OTLP (Otel Logging), some of which are open source, free for self-hosting and work well.
+
+Some aggregators can directly consume remote logs, while others need an ingestion/transformation engine like Datadog's [Vector](https://vector.dev), [FluentD](https://www.fluentd.org) etc. These also allow logs to be pulled in, so events in HomeAssistant can be seen in the context of what's happening in HAOS Apps, docker containers, network switches, firewalls etc.
+
+## OpenObserve
+
+This is one of the easiest to use, since it can accept OTLP natively so doesn't need any other components, though it can work with Vector and others, and now needs Vector for Syslog. It also has a Splunk type UI to show the schema and automatically populate known values for each field to make quick filtering easier.
+
+To configure the preferred OTLP logging, a few overrides are needed.
+
+Use the built-in configuration generator in OpenObserve, as below:
+
+OpenObserve has a non-default port, a non-default API end-point and needs additional headers.
+
+*Remote Logger* has options to support all of these, as in this example:
+
+Note that *Raw Basic* has been selected rather than *Basic* since the token provided by OpenObserve has already been encoded.
+
+## GreptimeDB
+
+Uses Vector for ingestion, and no transforms are needed when using OTLP.
+
+```yaml
+sources:
+  otlp:
+    type: opentelemetry
+    http:
+      address: 0.0.0.0:4318
+    use_otlp_decoding: false
+sinks:
+  greptime:
+    inputs:
+      - "otlp.logs"
+    type: "greptimedb_logs"
+    endpoint: http://greptime:4000
+    dbname: public
+    compression: gzip
+    table: logs
+```
+# Examples
+
+# Example Configuration - OpenObserve with Vector
+
+These are working examples, not ideal recommendations.
+
+The Vector config will also pull in Docker logs and systemd journal from the box on which it runs ( excluding Vector and OpenObserve from the Docker logging to prevent cycles).
+
+OpenObserve handles OTLP directly, so Vector can be skipped if there's no syslog to capture, and no Docker ( or a native OTLP collector installed for Docker)
+
+```yaml
+ services:
+
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve-enterprise:latest
+    container_name: openobserve
+    restart: always
+    user: "994:994"
+    environment:
+      ZO_ROOT_USER_EMAIL: "REDACTED_OO_USER"
+      ZO_ROOT_USER_PASSWORD: "REDACTED_OO_PASSWORD"
+      ZO_DATA_DIR: "/data"
+      ZO_ALLOW_USER_DEFINED_SCHEMAS: true
+      ZO_SMTP_ENABLED: true
+      ZO_SMTP_HOST: 10.111.10.100
+      RUST_LOG: warn
+      O2_AI_ENABLED: true
+      O2_TOOL_API_URL: http://localhost:5080
+      O2_MCP_VALIDATION_ENABLED: false
+      O2_INCIDENTS_ENABLED: "true"
+      O2_INCIDENTS_RCA_ENABLED: "true"
+      O2_INCIDENTS_ALERT_GRAPH_ENABLED: "true"
+    ports:
+    - protocol: tcp
+      published: 5080
+      target: 5080
+    volumes:
+      - ./oo_data:/data
+  vector:
+    image: timberio/vector:latest-debian
+    container_name: vector
+    user: "994:994"
+    group_add:
+      - "119"
+      - "101"
+    command: --config /etc/vector/vector.yaml
+    volumes:
+      - ./conf:/etc/vector
+      - ./logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./vector_data:/var/vector
+    environment:
+      VECTOR_LOG: warn
+    ports:
+      - 8686:8686
+      - 514:514/udp
+      - 5514:5514/tcp
+    cap_add:
+      - CAP_NET_BIND_SERVICE
+    restart: always
+
+  o2-sre-agent:
+    # The AI add-on, completely usable without this
+    image: public.ecr.aws/zinclabs/o2-sre-agent:latest
+    container_name: o2-sre-agent
+    restart: always
+    environment:
+      O2_SRE_HOST: 0.0.0.0
+      O2_SRE_PORT: 5088
+      O2_SRE_LOG_LEVEL: INFO
+      O2_OTEL_ENABLED: true
+      O2_AI_PROVIDER: anthropic
+      O2_AI_API_KEY: REDACTED_CLAUDE_API_KEY
+      O2_TOOL_API_URL: http://openobserve:5080/api/default/mcp
+      O2_MCP_VALIDATION_ENABLED: "true"
+      O2_MCP_VALIDATION_RETRY: "true"
+      O2_MCP_CONTENT_VALIDATION_ENABLED: "true"
+      O2_MCP_CONTENT_VALIDATION_MODE: "hybrid"
+      O2_MCP_RESPONSE_VALIDATION_ENABLED: "true"
+      O2_MCP_USERNAME: "REDACTED_MCP_USER"
+      O2_MCP_PASSWORD: "REDACTED_MCP_PASSWORD"
+
+    ports:
+      - protocol: tcp
+        published: 5088
+        target: 5088
+```
+
+```text
+parsed, err = parse_json(.message)
+if err == null {
+  .severity_text = "UNSPECIFIED"
+  .severity_number = 0
+
+  level = downcase(string(parsed.level) ?? "")
+  if level == "trace" {
+    .severity_text = "TRACE"
+    .severity_number = 1
+  } else if level == "debug" {
+    .severity_text = "DEBUG"
+    .severity_number = 5
+  } else if level == "info" {
+    .severity_text = "INFO"
+    .severity_number = 9
+  } else if level == "warn" || level == "warning" {
+    .severity_text = "WARN"
+    .severity_number = 13
+  } else if level == "error" {
+    .severity_text = "ERROR"
+    .severity_number = 17
+  } else if level == "fatal" || level == "panic" {
+    .severity_text = "FATAL"
+    .severity_number = 21
+  }
+}
+
+resourceLogs,err = [{
+        "resource": {
+        "attributes": [
+                  { "key": "source_type", "value": { "stringValue": .source_type  } },
+                  { "key": "service.name", "value": { "stringValue": .container_name} },
+                  { "key": "net.host.ip", "value": { "stringValue": .source_ip } },
+                  { "key": "host.hostname", "value": { "stringValue": .host } }
+        ]
+       },
+       "scopeLogs": [{
+                     "scope": {
+                     "name": .msgid
+                    },
+                     "logRecords": [{
+                       "timeUnixNano": to_unix_timestamp!(.timestamp, unit: "nanoseconds"),
+                       "body": { "stringValue": .message },
+                       "severityText": .severity_text,
+                       "severityNumber": .severity_number,
+                       "attributes": [
+                              { "key": "syslog.procid", "value": { "stringValue": to_string(.procid) } },
+                              { "key": "syslog.facility", "value": { "stringValue": .facility } },
+                              { "key": "syslog.version", "value": { "stringValue": to_string(.version) } },
+                              { "key": "docker.container.id", "value": { "stringValue": to_string(.container_id) } },
+                              { "key": "docker.image", "value": { "stringValue": .image } },
+                              { "key": "docker.stream", "value": { "stringValue": to_string(.stream) } },
+                              { "key": "docker.container.created", "value": { "stringValue": to_string(.container_created_at) } }
+                             ]
+                       }]
+                   }]
+      }]
+      del(.message)
+      del(.timestamp)
+      del(.service)
+      del(.source_type)
+      del(.appname)
+      del(.facility)
+      del(.host)
+      del(.hostname)
+      del(.severity)
+      del(.source_ip)
+      del(.severity_number)
+      del(.severity_text)
+      assert!(err == null,message:err)
+      .resourceLogs = resourceLogs
+```
+
+```text
+# remove Home Assistant from HAOS LogSpout since richer events received from Remote Logger
+
+if .appname == "homeassistant" {
+abort
+}
+
+severity_number = if .severity == "emergency" {
+22
+} else if .severity == "alert" {
+18
+} else if .severity == "critical" {
+21
+} else if .severity == "error" {
+17
+} else if .severity == "warning" {
+13
+} else if .severity == "notice" {
+10
+} else if .severity == "info" {
+9
+} else if .severity == "debug" {
+5
+} else if .severity == "trace" {
+1
+} else {
+0
+}
+
+severity_text = upcase(string(.severity) ?? "UNSPECIFIED")
+
+resourceLogs,err = [{
+                "resource": {
+                        "attributes": [
+                                { "key": "source_type", "value": { "stringValue": .source_type  } },
+                                { "key": "service.name", "value": { "stringValue": .appname  } },
+                                { "key": "net.host.ip", "value": { "stringValue": .source_ip } },
+                                { "key": "host.hostname", "value": { "stringValue": .hostname } }
+                        ]
+                },
+                "scopeLogs": [{
+                        "scope": {
+                                "name": .msgid
+                        },
+                        "logRecords": [{
+                                "timeUnixNano": to_unix_timestamp!(.timestamp, unit: "nanoseconds"),
+                                "body": { "stringValue": .message },
+                                "severityText": severity_text,
+                                "severityNumber": severity_number,
+                                "attributes": [
+                                        { "key": "syslog.procid", "value": { "stringValue": to_string(.procid) } },
+                                        { "key": "syslog.facility", "value": { "stringValue": .facility } },
+                                        { "key": "syslog.version", "value": { "stringValue": to_string(.version) } }
+                                ]
+                        }]
+                }]
+        }]
+
+del(.message)
+del(.timestamp)
+del(.service)
+del(.source_type)
+del(.appname)
+del(.facility)
+del(.host)
+del(.hostname)
+del(.severity)
+del(.source_ip)
+assert!(err == null,message:err)
+.resourceLogs = resourceLogs
+```
+
+```yaml
+data_dir: /var/vector
+schema:
+  log_namespace: false
+
+api:
+    enabled: true
+    address: 0.0.0.0:8686
+
+sources:
+  vector_logs:
+   type: "internal_logs"
+
+  dockernuc_docker:
+    type: docker_logs
+    exclude_containers:
+      - vector
+      - greptime
+      - openobserve
+
+  syslog_daemon:
+    type: syslog
+    address: 0.0.0.0:514
+    mode: udp
+
+  syslog_daemon_tcp:
+     type: syslog
+     address: 0.0.0.0:5514
+     mode: tcp
+
+transforms:
+  vector_errors:
+    type: "filter"
+    inputs:
+      - "vector_logs"
+    condition: '.metadata.level != "INFO"'
+
+  docker_to_otlp:
+    type: remap
+    inputs:
+      - dockernuc_docker
+    file: /etc/vector/docker_to_otlp.vrl
+
+  syslog_to_otlp:
+    type: remap
+    inputs:
+       - syslog_daemon
+       - syslog_daemon_tcp
+    drop_on_abort: true
+    drop_on_error: true
+    reroute_dropped: true
+    file: /etc/vector/syslog_to_otlp.vrl
+
+
+sinks:
+  file_vector:
+    type: "file"
+    inputs:
+      - "vector_errors"
+    compression: "none"
+    path: "/logs/internal_vector_errors.log"
+    encoding:
+      codec: "json"
+  file_dropped:
+    type: "file"
+    inputs:
+      - "syslog_to_otlp.dropped"
+    path: "/logs/syslog_remap_drops.log"
+    compression: "none"
+    encoding:
+      codec: "json"
+  openobserve:
+    inputs:
+      - syslog_to_otlp
+      - docker_to_otlp
+    type: opentelemetry
+    protocol:
+      type: http
+      uri: "http://openobserve:5080/api/default/v1/logs"
+      encoding:
+        codec: otlp
+      method: post
+      request:
+        headers:
+          stream-name: default
+      auth:
+        strategy: basic
+        user: "REDACTED_OO_USER"
+        password: "REDACTED_OO_PASSWORD"
+    healthcheck:
+      enabled: true
+      uri: http://openobserve:5080/healthz
+```
+
+# Example Configuration - GreptimeDb with Vector
+
+These are working examples, not ideal recommendations.
+
+The Vector config will also pull in Docker logs and systemd journal from the box on which it runs ( excluding Vector and Greptime from the Docker logging to prevent cycles).
+
+```yaml
+services:
+  vector:
+    image: timberio/vector:latest-debian
+    container_name: vector
+    user: "994:994"
+    group_add:
+      - "119" # docker group, for access to daemon socket
+      - "101" # systemd-journal group
+    command: --config /etc/vector/vector.yaml
+    volumes:
+      - ./conf:/etc/vector
+      - ./logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./vector_data:/var/vector
+    ports:
+      - 8686:8686
+      - 514:514/udp
+      - 5514:5514/tcp
+      - 4317:4317/tcp # otel gRPC
+      - 4318:4318/tcp # otel http
+    #environment:
+        #- VECTOR_LOG=debug,hyper=debug,h2=debug
+    cap_add:
+      - CAP_NET_BIND_SERVICE
+    restart: always
+  greptime:
+    image: greptime/greptimedb:latest
+    container_name: greptime
+    restart: always
+    volumes:
+      - ./greptimedb_data:/greptimedb_data
+      - ./conf/greptime.toml:/etc/greptime/config.toml
+    ports:
+      - 4000:4000
+      - 4001:4001
+      - 4002:4002
+      - 4003:4003
+    command:
+      - standalone
+      - start
+      - --http-addr=0.0.0.0:4000
+      - --rpc-bind-addr=0.0.0.0:4001
+      - --mysql-addr=127.0.0.1:4002
+      - --postgres-addr=127.0.0.1:4003
+      - --config-file=/etc/greptime/config.toml
+```
+
+```toml
+## The default timezone of the server.
+default_timezone = "Europe/London"
+
+## The default column prefix for auto-created time index and value columns.
+default_column_prefix = "greptime"
+
+## Initialize all regions in the background during the startup.
+## By default, it provides services after all regions have been initialized.
+init_regions_in_background = false
+
+## Parallelism of initializing regions.
+init_regions_parallelism = 16
+
+## The maximum current queries allowed to be executed. Zero means unlimited.
+## NOTE: This setting affects scan_memory_limit's privileged tier allocation.
+## When set, 70% of queries get privileged memory access (full scan_memory_limit).
+## The remaining 30% get standard tier access (70% of scan_memory_limit).
+max_concurrent_queries = 3
+
+## Enable telemetry to collect anonymous usage data. Enabled by default.
+enable_telemetry = false
+
+[http]
+addr = "0.0.0.0:4000"
+## HTTP request timeout. Set to 0 to disable timeout.
+timeout = "0s"
+## HTTP request body limit.
+## The following units are supported: `B`, `KB`, `KiB`, `MB`, `MiB`, `GB`, `GiB`, `TB`, `TiB`, `PB`, `PiB`.
+## Set to 0 to disable limit.
+body_limit = "64MB"
+enable_cors = true
+prom_validation_mode = "lossy"
+
+[mysql]
+enable = true
+addr = "127.0.0.1:4002"
+## The number of server worker threads.
+runtime_size = 2
+## Server-side keep-alive time.
+## Set to 0 (default) to disable.
+keep_alive = "0s"
+## Maximum entries in the MySQL prepared statement cache; default is 10,000.
+prepared_stmt_cache_size= 10000
+# MySQL server TLS options.
+
+[postgres]
+enable = true
+addr = "127.0.0.1:4003"
+## The number of server worker threads.
+runtime_size = 2
+## Server-side keep-alive time.
+## Set to 0 (default) to disable.
+keep_alive = "0s"
+
+[opentsdb]
+enable = true
+
+[influxdb]
+enable = true
+
+[jaeger]
+enable = false
+
+[prom_store]
+enable = true
+## Whether to store the data from Prometheus remote write in metric engine.
+with_metric_engine = true
+
+[wal]
+provider = "raft_engine"
+dir = "./greptimedb_data/wal"
+file_size = "128MB"
+purge_threshold = "1GB"
+purge_interval = "1m"
+read_batch_size = 128
+sync_write = false
+enable_log_recycle = true
+prefill_log_files = false
+sync_period = "10s"
+recovery_parallelism = 2
+overwrite_entry_start_id = false
+
+[metadata_store]
+file_size = "64MB"
+purge_threshold = "256MB"
+purge_interval = "1m"
+
+[procedure]
+max_retry_times = 3
+retry_delay = "500ms"
+max_running_procedures = 128
+
+[flow]
+[query]
+parallelism = 0
+
+## Memory pool size for query execution operators (aggregation, sorting, join).
+## Supports absolute size (e.g., "2GB", "4GB") or percentage of system memory (e.g., "20%").
+## Setting it to 0 disables the limit (unbounded, default behavior).
+## When this limit is reached, queries will fail with ResourceExhausted error.
+## NOTE: This does NOT limit memory used by table scans.
+memory_pool_size = "25%"
+
+[storage]
+data_home = "./greptimedb_data"
+type = "File"
+cache_capacity = "5GiB"
+
+[logging]
+dir = "/logs"
+level = "info"
+enable_otlp_tracing = false
+append_stdout = true
+log_format = "json"
+max_log_files = 720
+
+[slow_query]
+enable = true
+```
+
+```yaml
+data_dir: /var/vector
+schema:
+  log_namespace: false
+
+api:
+    enabled: true
+    address: 0.0.0.0:8686
+
+sources:
+
+  vector_logs:
+    type: "internal_logs"
+
+  otlp:
+    type: opentelemetry
+    grpc:
+      address: 0.0.0.0:4317
+    http:
+      address: 0.0.0.0:4318
+      headers: []
+      keepalive:
+        max_connection_age_jitter_factor: 0.1
+        max_connection_age_secs: 300
+    use_otlp_decoding: false
+
+  dockernuc_journald:
+    type: journald
+
+  dockernuc_docker:
+    type: docker_logs
+    exclude_containers:
+      - vector
+      - greptime
+
+  syslog_daemon:
+    type: syslog
+    address: 0.0.0.0:514
+    mode: udp
+
+  syslog_daemon_tcp:
+     type: syslog
+     address: 0.0.0.0:5514
+     mode: tcp
+
+transforms:
+  vector_errors:
+    type: "filter"
+    inputs:
+      - "vector_logs"
+    condition: '.metadata.level != "INFO"'
+
+  remap_docker:
+    inputs:
+      - "dockernuc_docker"
+    type: "remap"
+    source: |
+      # Map container_name to appname
+      if exists(.container_name) {
+        .appname = .container_name
+        del(.container_name)
+      }
+      . = filter(object(.)) -> |key, _value| {
+        !starts_with(key, "label")
+      }
+
+  remap_syslog:
+    inputs:
+       - "syslog_daemon"
+       - "syslog_daemon_tcp"
+    type:   "remap"
+    drop_on_error: false
+    drop_on_abort: true
+    source: |
+      # Ensure message is a string and strip ANSI color codes
+      .message = strip_ansi_escape_codes(string!(.message))
+
+      # Try to parse syslog format
+      parsed, err = parse_syslog(.message)
+
+      # remove Home Assistant from HAOS LogSpout since richer events received from Remote Logger
+      if .appname == "homeassistant" {
+        abort
+      }
+
+      if err == null {
+        . = merge(., parsed)
+        # Normalize msg -> message
+        if exists(.msg) {
+          .message = .msg
+          del(.msg)
+        }
+      }
+
+      # Ensure consistent types matching schema
+      .procid = if exists(.procid) {
+        if is_string(.procid) {
+          to_int(.procid) ?? 0
+        } else if is_integer(.procid) {
+        .procid
+        } else {
+        0
+      }
+      } else {
+        0
+      }
+      # remove redundant timestamp in message
+      ts_match = parse_regex(.message, r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+Z?\s*(?P<msg>.*)') ?? {}
+      if exists(ts_match.msg) {
+        .message = string!(ts_match.msg)
+      }
+      .severity = if exists(.severity) { string!(.severity) } else { "info" }
+
+      # CRITICAL: Remove timestamp string - conflicts with greptime_timestamp
+      del(.timestamp)
+      del(.version)  # Also remove version if not needed
+
+sinks:
+  file_vector:
+    type: "file"
+    inputs:
+      - "vector_errors"
+    compression: "none"
+    path: "/logs/internal_vector.log"
+    encoding:
+      codec: "json"
+  greptime:
+    inputs:
+      - "remap_syslog"
+      - "remap_docker"
+      - "otlp.logs"
+      - "dockernuc_journald"
+    type: "greptimedb_logs"
+    endpoint: http://greptime:4000
+    dbname: public
+    compression: gzip
+    table: logs
+```
+# Optional
+
+# 2.0.7
+
+## 🐛 Bug fixes
+
+- When you flip "Home Assistant state changes" on while the other, mutually-exclusive "state changes (without attributes)" toggle is already on, the flow correctly rejects it (state_changes_exclusive error) — but then re-renders the form using the old stored config values instead of what you just submitted. Now fixed, to use the newly supplied values.
+
+## 📚 Documentation
+
+- Additional Home Assistant events doc now gets a screenshot of what the full dialog looks like, and text improved.
+
+# 2.0.6
+
+## ✨ Enhancements
+
+- OTLP validation now sends a single real log record, clearly marked as a configuration validation message, instead of an empty payload
+- Some backends reject empty payloads (Loki with 422, Snowflake Observe with 400), and treating those codes as success also hid genuine problems such as a wrong encoding
+- 400 and 422 responses are now reported as connection failures
+- The message text is shown in the OTLP setup, options and reauth forms
+
+# 2.0.5
+
+## ✨ Enhancements
+
+### Home Assistant Alignment
+
+- Counters now persist properly as stats
+- Diagnostic counter sensors (format errors, posting errors, events, postings) use the `total_increasing` state class instead of `measurement`
+- **Warning**: existing long-term statistics for these sensors were recorded as measurements (mean/min/max). After upgrading, Home Assistant may report a state class change under *Developer Tools → Statistics*; use *Fix issue* there to delete or keep the old statistics
+
+## 📝 Other changes
+
+### Internal
+
+- Added `ty` as additional type checker and tightened up some types
+- Migrated `hass.data` calls to use `entry.runtime_data`
+
+# 2.0.4
+
+## 🐛 Bug fixes
+
+- Ruff checks extended, tightened, and fixes applied
+- OTel formatting handles infinity correctly
+- Dependencies updated
+
+# 2.0.3
+
+## 🐛 Bug fixes
+
+- Prevent `state_changed` event handling mutating event data and interfering with subsequent handlers
+
+# 2.0.2
+
+## 🐛 Bug fixes
+
+- Fixed test issues on CI, and improve HA async compatibility for log event handler
+
+# 2.0.1
+
+## 🐛 Bug fixes
+
+- Validation could fail with a 422 because of the empty payload when used with Loki, this status code is now taken to reflect remote service is available and authenticated
+
+# 2.0.0
+
+## ✨ Enhancements
+
+### Root Log Handler
+
+- New way to capture logs at any level
+- `system_log_event` based logging is clean but limited to WARN and ERROR levels
+  - System Log Event usage requires a YAML change to fire event
+- Config now has a choice of using Python root logger
+  - Configurable to a minimum log level (default `INFO` can be `DEBUG` if needed) which captures all logging
+  - Reuses same logic as System Log to tie back exceptions to source code
+
+# 1.6.0
+
+## ✨ Enhancements
+
+### py3.13 and py3.14
+
+- Automated testing and linting is done for both Python 3.13 ( with the corresponding 2026.2 max Home Assistant version) and Python 3.14 with the latest Home Assistant public release
+
+### Home Assistant Event improvements
+
+- Corrected name of `repairs_issue_registry_updated`
+- Improved description of core changes and serializing JSON
+- Automation and script events generate title now only with entity_id for clarity and consistency with other events
+- Tidied up ConfigFlow UI for Home Assistant standard events
+- Defined message titles for all the device/entity/label/floor etc registries
+- `system_log_event` is usually suppressed as an event name, since its noisy in a purely logging context. It can now optionally be emitted like any other event name, helpful if remote_logger being used more as a HA event store
+
+# 1.5.5
+
+## ✨ Enhancements
+
+- Logging improvements - log each custom event subscribed, and more consistency for log prefix
+
+# 1.5.4
+
+## ✨ Enhancements
+
+- Switch event names to multi value rather than multi-line and remove comma separation
+- Use multi-value also for custom header configuration
+
+# 1.5.3
+
+## ✨ Enhancements
+
+- Accept comma separated custom event names
+
+# 1.5.2
+
+## ✨ Enhancements
+
+- Remote Logger devices can be renamed in the UI without being replaced by a new device with default identifier
+- Suppress error message when aiohttp session is force closed by HA at shutdown
+- Switch off buffer at shutdown so all logs captured
+
+# 1.5.1
+
+## ✨ Enhancements
+
+- For JSON, send integers as strings if they're not representable as signed 32 bit values, to meet limitations of JSON, and align with OTLP spec
+- For JSON, suppress empty attributes and NaaN float values
+
+# 1.5.0
+
+## ✨ Enhancements
+
+- Timeout for remote posting now configurable, defaults to old hard-coded value 10
+- OLTP JSON now in camel case, to suit strict interpretation by some log aggregators, and corrected handling of float/null values
+- Added action to manually trigger log flush
+- Added action to return the last posted submission to remote log service
+- Fix switch from protobuf to JSON for an existing logger
+
+# 1.4.9
+
+- Flush logs to remote back end on all 3 of the Home Assistant closing events
+
+# 1.4.8
+
+- Translations for Dutch, French, German, Hindi, Italian, Japanese, Polish, Portuguese, Simplified Chinese and Spanish
+- Vertalingen voor Nederlands, Traductions en français, Übersetzungen auf Deutsch, हिंदी में अनुवाद, Traduzioni in italiano, 日本語の翻訳, Tłumaczenia po polsku, Traduções em português, 简体中文翻译 en traducciones al español
+
+# 1.4.7
+
+- Prettify flattened HA event json
+- Rename component in manifest to match public naming
+
+# 1.4.6
+
+- HA event serialization tuning
+
+# 1.4.5
+
+- Retain `message` and `event` for simplified HA events
+
+# 1.4.4
+
+- Update to translation strings for new event serialization
+- French and Italian translations added
+- Don't double log events generated via system_log.event
+
+# 1.4.3
+
+- Option to serialize Home Assistant events into a single string, other than entity_id, component, domain to avoid schema pollution on log aggregators
+
+# 1.4.2
+
+- Event generation fixes and more tests
+
+# 1.4.1
+
+- HA event generation more flexible in generating human sensible messages
+
+# 1.4.0
+
+- New action (aka service) to generate events directly
+- Logs flushed on Home Assistant shutdown
+
+# 1.3.1
+
+- Improve eventName handling
+- Allow state changes to be sent without their attributes
+
+# 1.3.0
+
+- Add any HA event to logging, and use the OTEL `event_name` field for them
+  - Pre-bundled events for HA lifecycle and core changes
+  - Added float handling to protobuf for event attributes
+- Defaults now to expect Python 3.14, in line with Home Assistant from 2026.3 onwards
+
+# 1.2.0
+
+- Choice of Authorization headers for Basic, Basic already encoded and ApiKey
+
+# 1.1.0
+
+- More customization for OTLP, now able to use more platforms, including OpenObserve
+  - Custom HTTP headers
+  - Bearer token
+  - Alternative API endpoint or custom path prefix
+
+# 1.0.0
+
+- Dependencies and docs update for public release
+
+# 0.4.0
+
+- Add Device to bundle entities
+
+# 0.3.0
+
+- Unique names for exporters
+
+# 0.2.0
+
+- Add entities to track incoming events, outgoing postings, errors
+- Refactor to common exporter class
+
+# 0.0.5
+
+- Use the OpenTelemetry convention of prefixing Syslog structured data parameters with the non-IANA standard `opentelemetry`
+- Messages retried if connection down
