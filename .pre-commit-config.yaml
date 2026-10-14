@@ -10,7 +10,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.10
+    rev: v0.17.0
 
     hooks:
      # Run the linter.
@@ -54,7 +54,7 @@ repos:
           - pytest_mock
           - pytest-homeassistant-custom-component
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.84
+    rev: v0.0.87
     hooks:
       - id: ty
         args: [--isolated, --no-python-downloads]
