@@ -1,3 +1,8 @@
+# 2.0.8
+## 🚨 Breaking changes
+- Support for Python 3.13, and versions of Home Assistant from 2026.3 and earlier no longer supported/ They may continue to work, however there's no automated test assurance any longer, and newer features will start to be introduced
+- Tested range is Home Assistant 2026.4.0 to 2026.10.0
+
 # 2.0.7
 
 ## 🐛 Bug fixes
