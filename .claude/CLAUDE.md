@@ -70,7 +70,7 @@ For multi-step tasks, state a brief plan:
 The project uses Ruff for formatting and linting, uv for dependency management,
 mypy for type checking, pytest for unit and integration testing, and codespell for spell checking. It is anticipated that type checking will move to [ty](https://github.com/astral-sh/ty) when it is production ready.
 
-Documentation uses mkdocs with the Material theme, and will be published using Github Pages.
+Documentation uses properdocs with the MaterialX theme, and will be published using Github Pages.
 
 While this is a HACS component, it should be built wherever possible to adhere to the [Home Assistant Integration Quality Scale](https://developers.home-assistant.io/docs/core/integration-quality-scale/) at the highest level. This also means all dependencies must be consistent with the set of Home Assistant production dependencies, and test coverage maintained above 90%, with regression tests for bug fixes and new tests for all new features.
 
@@ -85,4 +85,4 @@ Common commands:
 - `uv run mypy custom_components/remote_logger` - type check
 - `uv run codespell` - spell check
 - `pre-commit run` - check all staged files
-- `mkdocs build` - build the documentation without starting a server
+- `properdocs build` - build the documentation without starting a server

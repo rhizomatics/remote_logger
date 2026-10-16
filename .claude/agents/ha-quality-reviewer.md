@@ -20,7 +20,7 @@ Review all recently changed code, tests, configuration, and documentation agains
    - **Code** (entity platforms, config flows, coordinators, services, etc.)
    - **Tests** (unit tests, integration tests, fixtures)
    - **Configuration** (manifest.json, strings.json, const.py, HACS metadata)
-   - **Documentation** (mkdocs content, README, inline docstrings)
+   - **Documentation** (properdocs content, README, inline docstrings)
 
 3. **Evaluate Against IQS Platinum Requirements**: For each category, check against the full IQS checklist. Key areas include:
 
@@ -90,7 +90,7 @@ Briefly note which Platinum requirements the changes satisfy correctly.
 - **Challenge firmly but constructively**: Explain *why* the Platinum standard matters, not just *what* to change.
 - **Don't nitpick style**: The project uses Ruff for formatting and linting. If Ruff doesn't flag it, don't flag style issues. Focus on substance.
 - **Respect existing patterns**: If the codebase has established patterns, note when changes deviate from them.
-- **Match project tooling**: Remember this project uses Ruff (formatting/linting), uv (dependencies), mypy (type checking), pytest (testing), codespell (spell checking), and mkdocs with Material theme.
+- **Match project tooling**: Remember this project uses Ruff (formatting/linting), uv (dependencies), mypy (type checking), pytest (testing), codespell (spell checking), and properdocs with MaterialX theme.
 - **Surgical focus**: Review only what changed. Don't audit the entire codebase unless explicitly asked.
 
 ## Edge Cases
