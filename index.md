@@ -1,0 +1,104 @@
+# Remote Logger for Home Assistant
+
+Use log aggregation and analysis tools to get a complete picture of your home automation. Remote Logger for Home Assistant listens to Home Assistant logging at source and sends structured log events to a remote Syslog or OpenTelemetry (OTLP) collector. Optionally forwards other Home Assistant events, such as lifecycle events, service calls, configuration updates, state changes.
+
+Unlike many logging solutions that scrape consoles logs, Remote Logger taps into either the root Python logger or the `system_log_event` Event fired by Home Assistant, preserving the **full structure so multi-line logs and stacktraces are preserved as single log entries**, utilizes the Home Assistant logic to **tie exceptions back to source code lines**, and will capture script names, line numbers and versions properly.
+
+Only Home Assistant server itself, with its custom components is supported. Logs from *apps* (previously known as 'add-ins'), HAOS or the HA Supervisor aren't provided as events to be captured, so require an alternative solution, like Bert Baron's [LogSpout Home Assistant App](https://github.com/bertbaron/hassio-addons/tree/main/logspout) will cover these. It can be used in combination with *Remote Logger* so that Home Assistant has good structured logs, and everything else is at least logged. Since it uses Syslog and OTLP it can also be easily integrated with practically everything else in your environment, including SIEM cybersecurity logs from firewalls, Unifi networking, Docker logs etc. See the section on [aggregators](https://remote-logger.rhizomatics.org.uk/aggregators/index.md) for suggestions if you're not familiar with these.
+
+Translations are available for Dutch, English, French, German, Hindi, Italian, Japanese, Polish, Portuguese, Simplified Mandarin and Spanish.
+
+## Installation
+
+**Remote Logger** is a HACS component, so that has to be installed first, using the instruction at [Getting Started with HACS](https://www.hacs.xyz/docs/use/).
+
+The integration installs using the Home Assistant integrations page, and has **no YAML configuration**.
+
+### Event Based Logging
+
+If choosing event based logging over the Python root logger, then a YAML change is required to the Home Assistant [System Log](https://www.home-assistant.io/integrations/system_log/) integration, to enable event forwarding for `system_log_event`. This is not required if using the default Python root logger approach.
+
+Home Assistant Configuration
+
+```yaml
+system_log:
+    fire_event: true
+```
+
+Choosing a Log Format
+
+If you're not sure about which log format to choose, Open Telemetry (*aka* **OTEL Logging**, *aka* **OTLP**) is the best if you have a modern logging service that can handle it. It has the richest format, for example knows how to hold a multi-line stacktrace attached to a log message, and generally requires minimal configuration. Syslog is the best choice if the back end logging is more primitive, since it has been around since the dawn of time, although is much more semantically limited.
+
+## Open Telemetry (OTEL)
+
+Logs are sent using Open Telemetry Logs specification over a [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/)(OTLP) connection, either as Protobuf or JSON, and currently only as HTTP (gRPC may be added in future).
+
+For more information, see [OpenTelemetry Logging](https://opentelemetry.io/docs/specs/otel/logs/).
+
+Log records are collected and sent in a bundle
+
+## Syslog
+
+Messages are sent using the more recent [RFC5424](https://datatracker.ietf.org/doc/html/rfc5424) format, with additional structured data using OTEL taxonomy (see [Additional Attributes](#additional-attributes)).
+
+Syslog can be sent as TCP or UDP.
+
+## Events
+
+### System Log Event
+
+Note the requirement at [Installation](#installation) to enable this event, which isn't fired by default. This is limited to *Warning* and *Error* events. Find out more at the [System Log](https://www.home-assistant.io/integrations/system_log/) integration documentation.
+
+*Remote Logger* will omit its own log events from the stream, to prevent the possibility of event loops. As an alternative, error stats and messages are available as diagnostic entities.
+
+#### Additional Attributes
+
+The following additional attributes, derived directly from the Home Assistant log event, are provided as Syslog `STRUCTURED-DATA` attributes, or OTEL attributes.
+
+- `code.file.path`
+- `code.line.number`
+- `code.function.name` (this is the `logger` value from Home Assistant)
+- `exception.count`
+- `exception.first_occurred`
+- `exception.stacktrace`
+
+OTEL taxonomy is used for both OTEL and Syslog since there's no standard taxonomy at this level of Syslog.
+
+### Other Events
+
+*Remote Logger* can log any Home Assistant event, and knows about the core ones, in order to create a more readable message. Find out more in the [Events](https://remote-logger.rhizomatics.org.uk/events/index.md) guidance.
+
+## Log Servers
+
+There are a zillion possible solutions for capturing, analyzing, aggregating and storing logs. Generally a log setup requires:
+
+- **Collector** - The thing that sits on the monitored service and sends out the logs. This *Remote Logger* is a collector for Home Assistant core, as is [LogSpout Home Assistant App](https://github.com/bertbaron/hassio-addons/tree/main/logspout) for HAOS.
+- **Aggregator** - Receives logs from collectors, enriches, filters, converts formats and forwards on. See [Log Aggregators](https://remote-logger.rhizomatics.org.uk/aggregators/index.md) for more information.
+- **Store** - Typically a database that holds the logs, and any column indexes or free text search indexes
+- **Analytics** - Query by SQL or similar, keyword search, graphing, counting etc
+
+These suggestions are for options that are open source and free, at least for home use, and will work in Docker.
+
+- [Vector](https://vector.dev) as the aggregator and [GreptimeDb](https://greptime.com) as the store and analytics - they are fast, lightweight, open source, customizable and run under Docker. Vector has support for OTEL logging, as well as Syslog, and has good remapping ability to fine tune each source. Its then easy to pull in logs from Docker servers, firewalls, Unifi switches or wherever else into one time-line, as well as server and network metrics. See the [examples](https://remote-logger.rhizomatics.org.uk/examples/vector_greptimedb/index.md) for a sample configuration.
+- [OpenObserve](https://openobserve.ai) can do all three jobs ( aggregator, store, analytics ) for many sources, although it now recommends using Vector for Syslog. It also has a more functional log query interface, especially for people used to Splunk, and reuses the *VRL* (Vector Remap Language) for its own pipelines.
+
+## Diagnostic Entities
+
+Home Assistant sensors are created and updated to monitor log activity, plus any errors either generating log messages or posting them to remote servers.
+
+## Diagnostic Actions
+
+Home Assistant actions are supported to send a test event, force flush the log buffers and show the last payload posted.
+
+## Rhizomatics Open Source for Home Assistant
+
+### HACS
+
+- [Auto Arm](https://autoarm.rhizomatics.org.uk) - Automatically arm and disarm Home Assistant alarm control panels using physical buttons, presence, calendars, sun and more
+- [Supernotify](https://supernotify.rhizomatics.org.uk) - Unified notification for easy multi-channel messaging, including powerful chime and security camera integration.
+
+### Python / Docker
+
+- [Anpr2MQTT](https://anpr2mqtt.rhizomatics.org.uk) - Integrate with ANPR/ALPR licence plate cameras via file system (NAS/FTP) to MQTT with optional image analysis and UK DVLA integration.
+- [Dev Shell](https://devshell.rhizomatics.org.uk) - Python REPL for Home Assistant development and data exploration.
+- [Updates2MQTT](https://updates2mqtt.rhizomatics.org.uk) - Automatically notify via MQTT on Docker image updates, with advanced handling to extract versions and release notes from images, and option to remotely pull and restart containers from Home Assistant. Also available on [PyPI](https://pypi.org/project/updates2mqtt/)
