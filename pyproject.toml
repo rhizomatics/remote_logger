@@ -121,8 +121,11 @@ quiet-level = 2
 
 [tool.uv]
 exclude-newer = "5 days"
-exclude-newer-package = { certifi=false }
+exclude-newer-package = { certifi=false, uv=false }
 add-bounds = "major"
+# Home Assistant pins uv exactly, and under `uv run` the venv's uv comes first on PATH,
+# shadowing the mise-managed one. Floor at the latest uv security fix (GHSA-hq85-5cpj-mr62).
+override-dependencies = ["uv>=0.13.4"]
 # Skip the 3.14.0-3.14.1 gap: HA 2026.3+ requires >=3.14.2, so those patch
 # versions are unusable regardless.
 environments = [
