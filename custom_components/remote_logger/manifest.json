@@ -1,7 +1,7 @@
 {
   "domain": "remote_logger",
   "name": "Remote Logger for OpenTelemetry and Syslog",
-  "codeowners": ["@jey"],
+  "codeowners": ["@jeyrb"],
   "config_flow": true,
   "dependencies": ["system_log"],
   "documentation": "https://remote-logger.rhizomatics.org.uk",
