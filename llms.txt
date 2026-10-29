@@ -1,0 +1,45 @@
+# Remote Logger for Home Assistant
+
+> Remote Logging for Home Assistant using Syslog or OTEL
+
+Remote Logger is a Home Assistant custom integration (installed via HACS) that forwards Home Assistant log records and selected events to a remote Syslog server or an OpenTelemetry (OTLP) collector, with structured multi-line entries and stack traces.
+
+
+## Getting started
+
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/index.md): Overview, installation, configuration and supported protocols
+
+## Guides
+
+- [Event Logging](https://remote-logger.rhizomatics.org.uk/events/index.md): Logging Home Assistant events as well as log records
+- [Log Aggregators](https://remote-logger.rhizomatics.org.uk/aggregators/index.md): Log aggregators known to work with Syslog and OTLP
+
+## Examples
+
+- [Example Configuration - OpenObserve with Vector](https://remote-logger.rhizomatics.org.uk/examples/vector_openobserve/index.md)
+- [Example Docker Compose](https://remote-logger.rhizomatics.org.uk/examples/vector_openobserve/docker-compose/index.md)
+- [Example Vector remap for Docker to OTLP](https://remote-logger.rhizomatics.org.uk/examples/vector_openobserve/docker_to_otlp/index.md)
+- [Example Vector remap for Syslog to OTLP](https://remote-logger.rhizomatics.org.uk/examples/vector_openobserve/syslog_to_otlp/index.md)
+- [Example Vector config](https://remote-logger.rhizomatics.org.uk/examples/vector_openobserve/vector.yaml/index.md)
+- [Example Configuration - GreptimeDb with Vector](https://remote-logger.rhizomatics.org.uk/examples/vector_greptimedb/index.md)
+- [Example Docker Compose](https://remote-logger.rhizomatics.org.uk/examples/vector_greptimedb/docker-compose/index.md)
+- [Example GreptimeDB config](https://remote-logger.rhizomatics.org.uk/examples/vector_greptimedb/greptime.toml/index.md)
+- [Example Vector config](https://remote-logger.rhizomatics.org.uk/examples/vector_greptimedb/vector.yaml/index.md)
+
+## Optional
+
+- [What's New](https://remote-logger.rhizomatics.org.uk/changelog/index.md): Release history
+
+## Translations
+
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/de/index.md): Overview in German
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/es/index.md): Overview in Spanish
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/fr/index.md): Overview in French
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/hi/index.md): Overview in Hindi
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/it/index.md): Overview in Italian
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/ja/index.md): Overview in Japanese
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/nl/index.md): Overview in Dutch
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/pl/index.md): Overview in Polish
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/pt/index.md): Overview in Portuguese
+- [HomeAssistant Remote Logger](https://remote-logger.rhizomatics.org.uk/zh/index.md): Overview in Simplified Chinese
+
