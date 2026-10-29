@@ -232,7 +232,7 @@ class TestSyslogExporter:
         import asyncio
         from unittest.mock import patch
 
-        with patch("asyncio.sleep", side_effect=asyncio.CancelledError), pytest.raises(asyncio.CancelledError):
+        with patch("custom_components.remote_logger.exporter.sleep", side_effect=asyncio.CancelledError), pytest.raises(asyncio.CancelledError):
             await exporter.flush_loop()
 
     async def test_flush_sends_via_udp(self, exporter: SyslogExporter, mock_event: MagicMock) -> None:

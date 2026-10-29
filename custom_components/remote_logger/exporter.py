@@ -3,6 +3,7 @@ import json
 import logging
 import threading
 from abc import abstractmethod
+from asyncio import sleep
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -221,7 +222,7 @@ class LogExporter:
         self.flushing.set()
         try:
             while self.flushing.is_set():
-                await asyncio.sleep(BATCH_FLUSH_INTERVAL_SECONDS)
+                await sleep(BATCH_FLUSH_INTERVAL_SECONDS)
                 await self.flush()
         except asyncio.CancelledError:
             _LOGGER.debug("AUTOARM log flush cancelled")
