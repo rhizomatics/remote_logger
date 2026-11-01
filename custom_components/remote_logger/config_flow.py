@@ -94,6 +94,8 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for OpenTelemetry Log Exporter."""
 
     VERSION = 2
+    # 2.2: sensor unique IDs keyed by entry_id instead of the entry title
+    MINOR_VERSION = 2
 
     def __init__(self) -> None:
         super().__init__()

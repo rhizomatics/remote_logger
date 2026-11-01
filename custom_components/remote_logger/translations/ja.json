@@ -223,5 +223,19 @@
         "name": "送信数"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "読み込まれている Remote Logger エントリがありません。"
+    },
+    "entry_not_loaded": {
+      "message": "id {config_entry_id} の読み込まれた Remote Logger エントリがありません。"
+    },
+    "setup_cannot_connect": {
+      "message": "{endpoint} に接続できません。再試行します。"
+    },
+    "setup_auth_failed": {
+      "message": "{endpoint} の認証に失敗しました。"
+    }
   }
 }

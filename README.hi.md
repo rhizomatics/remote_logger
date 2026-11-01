@@ -115,6 +115,12 @@ OTEL टैक्सोनॉमी OTEL और Syslog दोनों के �
 
 ![डायग्नोस्टिक एंटिटी](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 
+## हटाना
+
+1. Home Assistant में **Settings** > **Devices & services** > **Remote Logger** पर जाएँ। हर प्रविष्टि का मेनू (⋮) खोलें और **Delete** चुनें। लॉग निर्यात तुरंत बंद हो जाता है, और डायग्नोस्टिक सेंसर तथा उनका डिवाइस हटा दिए जाते हैं।
+2. इंटीग्रेशन की फ़ाइलें भी हटाने के लिए **HACS** खोलें, **Remote Logger** ढूँढें, **Remove** चुनें, फिर Home Assistant को पुनः आरंभ करें।
+3. यदि आपने `configuration.yaml` में `system_log:` के अंतर्गत `fire_event: true` केवल Remote Logger के लिए जोड़ा था, तो उसे हटा सकते हैं।
+
 ##  Home Assistant के लिए Rhizomatics ओपन सोर्स
 
 ### HACS

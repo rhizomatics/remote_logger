@@ -9,7 +9,6 @@ from homeassistant.components.sensor import SensorEntity, SensorEntityDescriptio
 from homeassistant.const import EntityCategory
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.util import slugify
 
 from .const import DOMAIN
 
@@ -89,11 +88,13 @@ class LoggerEntity(SensorEntity):
         exporter: LogExporter,
         description: RemoteLoggerDiagnosticEntityDescription,
         device_info: DeviceInfo,
+        entry_id: str,
     ) -> None:
         super().__init__()
         self._exporter: LogExporter = exporter
         self.entity_description = description  # pyright: ignore[reportIncompatibleVariableOverride]
-        self._attr_unique_id = slugify(f"{exporter.name}_{description.key}")
+        # entry_id, not the user-editable entry title, so renaming the entry keeps the same entities
+        self._attr_unique_id = f"{entry_id}_{description.key}"
         self._attr_device_info = device_info
 
     @property
@@ -120,7 +121,7 @@ async def async_setup_entry(
         manufacturer="Rhizomatics",
         name=f"{exporter.name} Remote Logger",
     )
-    async_add_entities(LoggerEntity(exporter, description, device_info) for description in SENSORS)
+    async_add_entities(LoggerEntity(exporter, description, device_info, entry.entry_id) for description in SENSORS)
 
     # Remove any disabled duplicate devices for this config entry that are not
     # the canonical one (identified by entry.entry_id). These can accumulate

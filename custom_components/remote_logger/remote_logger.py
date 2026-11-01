@@ -11,8 +11,12 @@ from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant.components.system_log import EVENT_SYSTEM_LOG
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import EVENT_HOMEASSISTANT_CLOSE, EVENT_HOMEASSISTANT_FINAL_WRITE, SupportsResponse, callback
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady, ServiceValidationError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_registry as er
 
 from custom_components.remote_logger.handler import ExportingLogHandler
 
@@ -37,7 +41,10 @@ from .const import (
     PLATFORMS,
 )
 from .otel.exporter import OtlpLogExporter
+from .sensor import SENSORS
 from .syslog.exporter import SyslogExporter
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 SERVICE_SEND_LOG = "send_log"
 SERVICE_SEND_LOG_SCHEMA = vol.Schema({
@@ -59,6 +66,7 @@ if TYPE_CHECKING:
 
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant, ServiceCall
+    from homeassistant.helpers.typing import ConfigType
 
     from custom_components.remote_logger.exporter import LogExporter, LogSubmission
 
@@ -78,6 +86,52 @@ class RemoteLoggerData:
 type RemoteLoggerConfigEntry = ConfigEntry[RemoteLoggerData]
 
 
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the integration's actions, whether or not an entry is loaded."""
+    hass.services.async_register(DOMAIN, SERVICE_SEND_LOG, handle_send_log, schema=SERVICE_SEND_LOG_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_FLUSH, handle_flush)
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_LAST_LOG,
+        handle_last_log,
+        schema=SERVICE_LAST_LOG_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> bool:
+    """Migrate an older config entry to the current version (HA itself refuses entries from a newer major version)."""
+    if entry.minor_version < 2:
+        await _async_migrate_unique_ids(hass, entry)
+        hass.config_entries.async_update_entry(entry, version=2, minor_version=2)
+    return True
+
+
+async def _async_migrate_unique_ids(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> None:
+    """Re-key sensors from the title-based unique ID (slugified "<title>_<key>") to "<entry_id>_<key>"."""
+    registry = er.async_get(hass)
+    # Longest key first so a key that's a suffix of another can't match the wrong sensor
+    keys = sorted((d.key for d in SENSORS), key=len, reverse=True)
+
+    @callback
+    def _new_unique_id(entity_entry: er.RegistryEntry) -> dict[str, Any] | None:
+        old: str = entity_entry.unique_id
+        if entity_entry.domain != "sensor" or old.startswith(f"{entry.entry_id}_"):
+            return None
+        key = next((k for k in keys if old.endswith(f"_{k}")), None)
+        if key is None:
+            return None
+        new = f"{entry.entry_id}_{key}"
+        if registry.async_get_entity_id("sensor", DOMAIN, new):
+            _LOGGER.warning("remote_logger: not migrating %s, unique ID %s already in use", entity_entry.entity_id, new)
+            return None
+        _LOGGER.info("remote_logger: migrating %s unique ID from %s to %s", entity_entry.entity_id, old, new)
+        return {"new_unique_id": new}
+
+    await er.async_migrate_entries(hass, entry.entry_id, _new_unique_id)
+
+
 async def _async_update_listener(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> None:
     """Reload the entry when options are updated."""
     await hass.config_entries.async_reload(entry.entry_id)
@@ -94,6 +148,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntry)
     else:
         exporter = OtlpLogExporter(hass, entry)
         label = exporter.endpoint_url
+
+    error: str | None = await exporter.async_check_connection()
+    if error == "invalid_auth":
+        raise ConfigEntryAuthFailed(
+            translation_domain=DOMAIN, translation_key="setup_auth_failed", translation_placeholders={"endpoint": label}
+        )
+    if error:
+        raise ConfigEntryNotReady(
+            translation_domain=DOMAIN, translation_key="setup_cannot_connect", translation_placeholders={"endpoint": label}
+        )
 
     # Options take precedence over initial data for the three event-subscription keys
     opts = {**entry.data, **entry.options}
@@ -169,33 +233,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntry)
         log_handler=log_handler,
     )
 
-    if not hass.services.has_service(DOMAIN, SERVICE_SEND_LOG):
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_SEND_LOG,
-            handle_send_log,
-            schema=SERVICE_SEND_LOG_SCHEMA,
-        )
-
-    if not hass.services.has_service(DOMAIN, SERVICE_FLUSH):
-        hass.services.async_register(DOMAIN, SERVICE_FLUSH, handle_flush)
-
-    if not hass.services.has_service(DOMAIN, SERVICE_LAST_LOG):
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_LAST_LOG,
-            handle_last_log,
-            schema=SERVICE_LAST_LOG_SCHEMA,
-            supports_response=SupportsResponse.ONLY,
-        )
-
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
 
 def _loaded_entries(hass: HomeAssistant) -> list[RemoteLoggerConfigEntry]:
-    return hass.config_entries.async_loaded_entries(DOMAIN)
+    entries: list[RemoteLoggerConfigEntry] = hass.config_entries.async_loaded_entries(DOMAIN)
+    if not entries:
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_loaded_entries")
+    return entries
 
 
 async def handle_flush(call: ServiceCall) -> None:
@@ -205,10 +252,14 @@ async def handle_flush(call: ServiceCall) -> None:
 
 @callback
 def handle_last_log(call: ServiceCall) -> dict[str, Any]:
-    entry_id: str | None = call.data.get("config_entry_id")
-    entry = next((e for e in _loaded_entries(call.hass) if e.entry_id == entry_id), None)
-    if entry is None:
-        return {}
+    entry_id: str = call.data["config_entry_id"]
+    entry: RemoteLoggerConfigEntry | None = call.hass.config_entries.async_get_entry(entry_id)
+    if entry is None or entry.domain != DOMAIN or entry.state is not ConfigEntryState.LOADED:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="entry_not_loaded",
+            translation_placeholders={"config_entry_id": entry_id},
+        )
     submission: LogSubmission | None = entry.runtime_data.exporter.last_sent_payload
     if submission is None:
         return {}

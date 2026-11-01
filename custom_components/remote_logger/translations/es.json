@@ -223,5 +223,19 @@
         "name": "Envíos"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "No hay ninguna entrada de Remote Logger cargada."
+    },
+    "entry_not_loaded": {
+      "message": "No hay ninguna entrada de Remote Logger cargada con el id {config_entry_id}."
+    },
+    "setup_cannot_connect": {
+      "message": "No se puede conectar con {endpoint}; se volverá a intentar."
+    },
+    "setup_auth_failed": {
+      "message": "La autenticación ha fallado para {endpoint}."
+    }
   }
 }

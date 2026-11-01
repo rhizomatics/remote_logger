@@ -223,5 +223,19 @@
         "name": "पोस्टिंग"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "कोई Remote Logger प्रविष्टि लोड नहीं है।"
+    },
+    "entry_not_loaded": {
+      "message": "id {config_entry_id} वाली कोई लोड की गई Remote Logger प्रविष्टि नहीं है।"
+    },
+    "setup_cannot_connect": {
+      "message": "{endpoint} से कनेक्ट नहीं हो सका; फिर से प्रयास किया जाएगा।"
+    },
+    "setup_auth_failed": {
+      "message": "{endpoint} के लिए प्रमाणीकरण विफल रहा।"
+    }
   }
 }

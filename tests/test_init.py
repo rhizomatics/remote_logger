@@ -8,7 +8,13 @@ import logging
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
+from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
 from custom_components.remote_logger import async_setup_entry, async_unload_entry
+from custom_components.remote_logger.config_flow import OtelLogsConfigFlow
 from custom_components.remote_logger.const import (
     CONF_CUSTOM_EVENTS,
     CONF_EVENT_BASED_LOGGING,
@@ -16,6 +22,7 @@ from custom_components.remote_logger.const import (
     CONF_LOG_HA_LIFECYCLE,
     CONF_LOG_LEVEL,
     CORE_CHANGE_EVENTS,
+    DOMAIN,
     LIFECYCLE_EVENTS,
 )
 from custom_components.remote_logger.remote_logger import RemoteLoggerData
@@ -225,3 +232,116 @@ class TestUpdateListener:
             await _async_update_listener(hass, mock_entry_otel)
 
         mock_reload.assert_awaited_once_with(mock_entry_otel.entry_id)
+
+
+class TestSetupConnectionCheck:
+    """async_setup_entry checks the endpoint before starting (test-before-setup)."""
+
+    @pytest.fixture(autouse=True)
+    def auto_enable_custom_integrations(self, enable_custom_integrations: None) -> None:
+        """Allow Home Assistant to load the integration from custom_components."""
+
+    async def _setup(self, hass: HomeAssistant, template: ConfigEntry) -> MockConfigEntry:
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=OtelLogsConfigFlow.VERSION,
+            minor_version=OtelLogsConfigFlow.MINOR_VERSION,
+            entry_id=template.entry_id,
+            title=template.title,
+            data={**template.data, CONF_EVENT_BASED_LOGGING: True},
+        )
+        entry.add_to_hass(hass)
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        return entry
+
+    async def test_unreachable_endpoint_retries_setup(
+        self, hass: HomeAssistant, mock_entry_otel: MagicMock, mock_connection_check: AsyncMock
+    ) -> None:
+        mock_connection_check.return_value = "cannot_connect"
+        entry = await self._setup(hass, mock_entry_otel)
+        assert entry.state is ConfigEntryState.SETUP_RETRY
+
+    async def test_unreachable_syslog_retries_setup(
+        self, hass: HomeAssistant, mock_entry_syslog: MagicMock, mock_connection_check: AsyncMock
+    ) -> None:
+        mock_connection_check.return_value = "cannot_connect"
+        entry = await self._setup(hass, mock_entry_syslog)
+        assert entry.state is ConfigEntryState.SETUP_RETRY
+
+    async def test_rejected_token_starts_reauth(
+        self, hass: HomeAssistant, mock_entry_otel: MagicMock, mock_connection_check: AsyncMock
+    ) -> None:
+        mock_connection_check.return_value = "invalid_auth"
+        entry = await self._setup(hass, mock_entry_otel)
+        assert entry.state is ConfigEntryState.SETUP_ERROR
+        flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+        assert [f["context"]["source"] for f in flows] == [SOURCE_REAUTH]
+
+    async def test_reachable_endpoint_loads(
+        self, hass: HomeAssistant, mock_entry_otel: MagicMock, mock_connection_check: AsyncMock
+    ) -> None:
+        entry = await self._setup(hass, mock_entry_otel)
+        assert entry.state is ConfigEntryState.LOADED
+        mock_connection_check.assert_awaited_once()
+        await hass.config_entries.async_unload(entry.entry_id)
+
+
+class TestUniqueIdMigration:
+    """Entries from before 2.2 have sensors keyed by the entry title; migration re-keys them by entry_id."""
+
+    @pytest.fixture(autouse=True)
+    def auto_enable_custom_integrations(self, enable_custom_integrations: None) -> None:
+        """Allow Home Assistant to load the integration from custom_components."""
+
+    async def test_title_based_unique_ids_migrated(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=2,
+            minor_version=1,
+            entry_id="abc123",
+            title="Renamed collector",
+            data={**mock_entry_otel.data, CONF_EVENT_BASED_LOGGING: True},
+        )
+        entry.add_to_hass(hass)
+        registry = er.async_get(hass)
+        # Created when the entry had its original title, "OTLP @ localhost:4318"
+        old = {
+            key: registry.async_get_or_create("sensor", DOMAIN, f"otlp_localhost_4318_{key}", config_entry=entry)
+            for key in ("format_errors", "posting_errors", "events", "postings")
+        }
+
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        assert entry.minor_version == 2
+        for key, reg_entry in old.items():
+            migrated = registry.async_get(reg_entry.entity_id)
+            assert migrated is not None
+            assert migrated.unique_id == f"abc123_{key}"
+        # No new, orphaning duplicates were created
+        assert len(er.async_entries_for_config_entry(registry, entry.entry_id)) == 4
+        await hass.config_entries.async_unload(entry.entry_id)
+
+    async def test_conflicting_and_unknown_unique_ids_left_alone(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=2,
+            minor_version=1,
+            entry_id="abc123",
+            title="x",
+            data={**mock_entry_otel.data, CONF_EVENT_BASED_LOGGING: True},
+        )
+        entry.add_to_hass(hass)
+        registry = er.async_get(hass)
+        current = registry.async_get_or_create("sensor", DOMAIN, "abc123_events", config_entry=entry)
+        stale = registry.async_get_or_create("sensor", DOMAIN, "old_title_events", config_entry=entry)
+        unknown = registry.async_get_or_create("sensor", DOMAIN, "something_else", config_entry=entry)
+
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        assert registry.async_get(current.entity_id).unique_id == "abc123_events"  # type: ignore[union-attr]
+        assert registry.async_get(stale.entity_id).unique_id == "old_title_events"  # type: ignore[union-attr]
+        assert registry.async_get(unknown.entity_id).unique_id == "something_else"  # type: ignore[union-attr]
+        await hass.config_entries.async_unload(entry.entry_id)

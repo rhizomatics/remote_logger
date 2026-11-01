@@ -223,5 +223,19 @@
         "name": "Sendungen"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "Es ist kein Remote Logger-Eintrag geladen."
+    },
+    "entry_not_loaded": {
+      "message": "Kein geladener Remote Logger-Eintrag mit der ID {config_entry_id}."
+    },
+    "setup_cannot_connect": {
+      "message": "Keine Verbindung zu {endpoint}; neuer Versuch folgt."
+    },
+    "setup_auth_failed": {
+      "message": "Authentifizierung bei {endpoint} fehlgeschlagen."
+    }
   }
 }

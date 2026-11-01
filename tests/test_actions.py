@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from homeassistant.exceptions import ServiceValidationError
+from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.remote_logger.config_flow import OtelLogsConfigFlow
@@ -347,16 +349,68 @@ class TestLastLogService:
 
         assert result["headers"]["Authorization"] == "Bearer *************"
 
-    async def test_last_log_returns_empty_dict_for_unknown_entry(
+    async def test_last_log_raises_for_unknown_entry(
         self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
     ) -> None:
         await setup_entry(mock_entry_otel)
 
-        result: dict[str, Any] = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": "nonexistent"},
-            blocking=True,
-            return_response=True,
-        )
-        assert result == {}
+        with pytest.raises(ServiceValidationError) as exc:
+            await hass.services.async_call(
+                "remote_logger",
+                "last_log",
+                {"config_entry_id": "nonexistent"},
+                blocking=True,
+                return_response=True,
+            )
+        assert exc.value.translation_key == "entry_not_loaded"
+        assert exc.value.translation_placeholders == {"config_entry_id": "nonexistent"}
+
+    async def test_last_log_raises_for_unloaded_entry(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        entry = await setup_entry(mock_entry_otel)
+        await hass.config_entries.async_unload(entry.entry_id)
+
+        with pytest.raises(ServiceValidationError) as exc:
+            await hass.services.async_call(
+                "remote_logger",
+                "last_log",
+                {"config_entry_id": entry.entry_id},
+                blocking=True,
+                return_response=True,
+            )
+        assert exc.value.translation_key == "entry_not_loaded"
+
+
+class TestActionSetup:
+    """Actions exist from integration setup, before and after any entry is loaded (action-setup)."""
+
+    @pytest.fixture
+    async def setup_integration(self, hass: HomeAssistant) -> None:
+        assert await async_setup_component(hass, DOMAIN, {})
+        await hass.async_block_till_done()
+
+    @pytest.mark.parametrize("service", ["send_log", "flush", "last_log"])
+    async def test_registered_without_entries(self, hass: HomeAssistant, setup_integration: None, service: str) -> None:
+        assert hass.services.has_service(DOMAIN, service)
+
+    @pytest.mark.parametrize(
+        ("service", "data"),
+        [("send_log", {"event": "unit_test", "message": "hello"}), ("flush", {})],
+    )
+    async def test_raises_when_no_entry_loaded(
+        self, hass: HomeAssistant, setup_integration: None, service: str, data: dict[str, Any]
+    ) -> None:
+        with pytest.raises(ServiceValidationError) as exc:
+            await hass.services.async_call(DOMAIN, service, data, blocking=True)
+        assert exc.value.translation_key == "no_loaded_entries"
+
+    async def test_still_registered_after_last_entry_unloaded(
+        self, hass: HomeAssistant, setup_entry: SetupEntry, mock_entry_otel: MagicMock
+    ) -> None:
+        entry = await setup_entry(mock_entry_otel)
+        await hass.config_entries.async_unload(entry.entry_id)
+
+        assert hass.services.has_service(DOMAIN, "send_log")
+        with pytest.raises(ServiceValidationError):
+            await hass.services.async_call(DOMAIN, "flush", {}, blocking=True)

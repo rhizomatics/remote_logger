@@ -119,6 +119,12 @@ Vengono create e aggiornate delle sensor di Home Assistant per monitorare l'atti
 
 ![Entità diagnostiche](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 
+## Rimozione
+
+1. In Home Assistant, vai in **Impostazioni** > **Dispositivi e servizi** > **Remote Logger**. Per ogni voce, apri il suo menu (⋮) e scegli **Elimina**. L'esportazione dei log si interrompe subito e i sensori diagnostici con il relativo dispositivo vengono rimossi.
+2. Per rimuovere anche i file dell'integrazione, apri **HACS**, cerca **Remote Logger**, scegli **Rimuovi** e riavvia Home Assistant.
+3. Se avevi aggiunto `fire_event: true` sotto `system_log:` in `configuration.yaml` solo per Remote Logger, puoi toglierlo.
+
 ##  Rhizomatics Open Source per Home Assistant
 
 ### HACS

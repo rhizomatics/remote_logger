@@ -2,13 +2,34 @@
 
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line("markers", "real_connection_check: don't stub the exporters' setup connection check")
+
+
+@pytest.fixture(autouse=True)
+def mock_connection_check(request: pytest.FixtureRequest) -> Iterator[AsyncMock | None]:
+    """Stub the connection check async_setup_entry runs, so setup doesn't reach the network."""
+    if request.node.get_closest_marker("real_connection_check"):
+        yield None
+        return
+    check = AsyncMock(return_value=None)
+    with (
+        patch("custom_components.remote_logger.otel.exporter.OtlpLogExporter.async_check_connection", check),
+        patch("custom_components.remote_logger.syslog.exporter.SyslogExporter.async_check_connection", check),
+    ):
+        yield check
 
 
 @pytest.fixture

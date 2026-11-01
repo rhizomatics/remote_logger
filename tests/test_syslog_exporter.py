@@ -534,3 +534,16 @@ class TestSyslogValidate:
             result = await validate(hass, "localhost", 514, "udp", False)
 
         assert result == "unknown"
+
+
+@pytest.mark.real_connection_check
+class TestSyslogCheckConnection:
+    async def test_passes_entry_settings_to_validate(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        exporter = SyslogExporter(hass, mock_entry_syslog)
+        with patch(
+            "custom_components.remote_logger.syslog.exporter.validate", AsyncMock(return_value="cannot_connect")
+        ) as mock_validate:
+            assert await exporter.async_check_connection() == "cannot_connect"
+        mock_validate.assert_awaited_once_with(hass, "syslog.example.com", 514, "udp", False)

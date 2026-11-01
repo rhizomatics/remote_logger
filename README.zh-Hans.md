@@ -111,6 +111,12 @@ OTEL 分类法同时用于 OTEL 和 Syslog，因为在此级别的 Syslog 中没
 
 ![诊断实体](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 
+## 移除
+
+1. 在 Home Assistant 中打开 **设置** > **设备与服务** > **Remote Logger**。对每个条目，打开其菜单 (⋮) 并选择 **删除**。日志导出会立即停止，诊断传感器及其设备也会被移除。
+2. 如需同时移除集成文件，打开 **HACS**，找到 **Remote Logger**，选择 **移除**，然后重启 Home Assistant。
+3. 如果你只是为了 Remote Logger 才在 `configuration.yaml` 的 `system_log:` 下添加了 `fire_event: true`，可以将其删除。
+
 ##  Rhizomatics Home Assistant 开源项目
 
 ### HACS

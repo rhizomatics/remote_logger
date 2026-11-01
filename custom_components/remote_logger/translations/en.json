@@ -223,5 +223,19 @@
         "name": "Postings"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "No Remote Logger entry is loaded."
+    },
+    "entry_not_loaded": {
+      "message": "No loaded Remote Logger entry with id {config_entry_id}."
+    },
+    "setup_cannot_connect": {
+      "message": "Cannot connect to {endpoint}; will retry."
+    },
+    "setup_auth_failed": {
+      "message": "Authentication failed for {endpoint}."
+    }
   }
 }

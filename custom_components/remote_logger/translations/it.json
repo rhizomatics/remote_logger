@@ -223,5 +223,19 @@
         "name": "Invii"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "Nessuna voce di Remote Logger è caricata."
+    },
+    "entry_not_loaded": {
+      "message": "Nessuna voce di Remote Logger caricata con id {config_entry_id}."
+    },
+    "setup_cannot_connect": {
+      "message": "Impossibile connettersi a {endpoint}; verrà effettuato un nuovo tentativo."
+    },
+    "setup_auth_failed": {
+      "message": "Autenticazione non riuscita per {endpoint}."
+    }
   }
 }
