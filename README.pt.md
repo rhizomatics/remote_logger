@@ -43,6 +43,10 @@ system_log:
     fire_event: true
 ```
 
+### Alterar definições
+
+Para alterar para onde os registos são enviados (anfitrião, porta, TLS, token, cabeçalhos e as restantes definições de ligação), abra a entrada na página da integração e escolha **Reconfigurar**. O botão **Configurar** abrange o nível de registo e quais os eventos do Home Assistant que são reencaminhados.
+
 ## Open Telemetry (OTEL)
 
 Os registos são enviados utilizando a especificação Open Telemetry Logs através de uma ligação [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/) (OTLP), em Protobuf ou JSON, atualmente apenas por HTTP (gRPC poderá ser adicionado no futuro).

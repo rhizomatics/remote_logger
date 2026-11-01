@@ -42,6 +42,10 @@ system_log:
     fire_event: true
 ```
 
+### 設定の変更
+
+ログの送信先 (ホスト、ポート、TLS、トークン、ヘッダーなどの接続設定) を変更するには、統合のページでエントリを開き **再設定** を選びます。**設定** ボタンでは、ログレベルと転送する Home Assistant イベントを変更できます。
+
 ## Open Telemetry（OTEL）
 
 ログはOpen Telemetry Logs仕様に従い、[Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/)（OTLP）接続を通じてProtobufまたはJSON形式で送信されます。現在はHTTPのみ対応です（将来的にgRPCが追加される可能性があります）。

@@ -69,6 +69,54 @@
           "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user)."
         }
       },
+      "reconfigure_otel": {
+        "title": "OTLP-eindpunt configureren",
+        "description": "Werk de verbindingsgegevens bij voor uw OpenTelemetry-collector. Er wordt een testlogrecord verzonden om de verbinding te controleren: \"{validation_message}\".",
+        "data": {
+          "host": "Collector-host",
+          "port": "Collector-poort",
+          "use_tls": "TLS gebruiken (HTTPS)",
+          "encoding": "Payload-codering",
+          "batch_max_size": "Maximale batchgrootte",
+          "resource_attributes": "Aangepaste resourceattributen",
+          "token_type": "Tokentype",
+          "token": "Toegangstoken voor de Authorization-header",
+          "headers": "Aanvullende headers",
+          "path": "Pad van het logboekeindpunt"
+        },
+        "data_description": {
+          "host": "Hostnaam of IP-adres van de OTLP-collector.",
+          "port": "HTTP-poort van de OTLP-collector (standaard: 4318).",
+          "use_tls": "HTTPS inschakelen voor de verbinding met de collector.",
+          "encoding": "Coderingsformaat voor de OTLP-payload: json of protobuf.",
+          "batch_max_size": "Maximum aantal logrecords in de buffer voor het doorsturen (1-10000, standaard: 100).",
+          "resource_attributes": "Optionele door komma's gescheiden sleutel=waarde-paren die aan elk logrecord worden toegevoegd (bijv. deployment.environment=production,service.namespace=home).",
+          "token_type": "Verificatieschema: Bearer stuurt het token ongewijzigd; Basic codeert het als 'gebruiker:wachtwoord' in base64.",
+          "token": "Optioneel token. Verstuurd in de 'Authorization'-header.",
+          "headers": "Optionele extra HTTP-headers in het formaat 'Naam: waarde' (bijv. stream-name: my-stream). Voer één header per invoer in.",
+          "path": "Pad dat wordt toegevoegd aan host:poort voor het logboekeindpunt (standaard: /v1/logs). Voeg een API-specifiek pad toe als voorvoegsel (bijv. /api/otlp/v1/logs)."
+        }
+      },
+      "reconfigure_syslog": {
+        "title": "Syslog-eindpunt configureren",
+        "description": "Werk de verbindingsgegevens bij voor uw RFC 5424-syslogserver.",
+        "data": {
+          "host": "Syslogserver-host",
+          "port": "Syslogserver-poort",
+          "protocol": "Transportprotocol",
+          "use_tls": "TLS gebruiken (alleen TCP)",
+          "app_name": "Applicatienaam",
+          "facility": "Syslog-facility"
+        },
+        "data_description": {
+          "host": "Hostnaam of IP-adres van de syslogserver.",
+          "port": "Poort van de syslogserver (standaard: 514).",
+          "protocol": "Transportprotocol: UDP (fire-and-forget) of TCP (betrouwbare bezorging).",
+          "use_tls": "TLS-versleuteling inschakelen voor TCP-verbindingen. Wordt genegeerd voor UDP.",
+          "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
+          "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user)."
+        }
+      },
       "common": {
         "title": "Aanvullende Home Assistant-gebeurtenissen",
         "description": "Abonneer u optioneel op Home Assistant-gebeurtenissen buiten de systeemlogberichten.",
@@ -116,59 +164,12 @@
       "unknown": "Er is een onverwachte fout opgetreden."
     },
     "abort": {
-      "already_configured": "Dit eindpunt is al geconfigureerd."
+      "already_configured": "Dit eindpunt is al geconfigureerd.",
+      "reconfigure_successful": "Verbindingsinstellingen bijgewerkt."
     }
   },
   "options": {
     "step": {
-      "otel": {
-        "title": "OTLP-eindpunt configureren",
-        "description": "Werk de verbindingsgegevens bij voor uw OpenTelemetry-collector. Er wordt een testlogrecord verzonden om de verbinding te controleren: \"{validation_message}\".",
-        "data": {
-          "host": "Collector-host",
-          "port": "Collector-poort",
-          "use_tls": "TLS gebruiken (HTTPS)",
-          "encoding": "Payload-codering",
-          "batch_max_size": "Maximale batchgrootte",
-          "resource_attributes": "Aangepaste resourceattributen",
-          "token_type": "Tokentype",
-          "token": "Toegangstoken voor de Authorization-header",
-          "headers": "Aanvullende headers",
-          "path": "Pad van het logboekeindpunt"
-        },
-        "data_description": {
-          "host": "Hostnaam of IP-adres van de OTLP-collector.",
-          "port": "HTTP-poort van de OTLP-collector (standaard: 4318).",
-          "use_tls": "HTTPS inschakelen voor de verbinding met de collector.",
-          "encoding": "Coderingsformaat voor de OTLP-payload: json of protobuf.",
-          "batch_max_size": "Maximum aantal logrecords in de buffer voor het doorsturen (1-10000, standaard: 100).",
-          "resource_attributes": "Optionele door komma's gescheiden sleutel=waarde-paren die aan elk logrecord worden toegevoegd (bijv. deployment.environment=production,service.namespace=home).",
-          "token_type": "Verificatieschema: Bearer stuurt het token ongewijzigd; Basic codeert het als 'gebruiker:wachtwoord' in base64.",
-          "token": "Optioneel token. Verstuurd in de 'Authorization'-header.",
-          "headers": "Optionele extra HTTP-headers in het formaat 'Naam: waarde' (bijv. stream-name: my-stream). Voer één header per invoer in.",
-          "path": "Pad dat wordt toegevoegd aan host:poort voor het logboekeindpunt (standaard: /v1/logs). Voeg een API-specifiek pad toe als voorvoegsel (bijv. /api/otlp/v1/logs)."
-        }
-      },
-      "syslog": {
-        "title": "Syslog-eindpunt configureren",
-        "description": "Werk de verbindingsgegevens bij voor uw RFC 5424-syslogserver.",
-        "data": {
-          "host": "Syslogserver-host",
-          "port": "Syslogserver-poort",
-          "protocol": "Transportprotocol",
-          "use_tls": "TLS gebruiken (alleen TCP)",
-          "app_name": "Applicatienaam",
-          "facility": "Syslog-facility"
-        },
-        "data_description": {
-          "host": "Hostnaam of IP-adres van de syslogserver.",
-          "port": "Poort van de syslogserver (standaard: 514).",
-          "protocol": "Transportprotocol: UDP (fire-and-forget) of TCP (betrouwbare bezorging).",
-          "use_tls": "TLS-versleuteling inschakelen voor TCP-verbindingen. Wordt genegeerd voor UDP.",
-          "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
-          "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user)."
-        }
-      },
       "events": {
         "title": "Aanvullende Home Assistant-gebeurtenissen",
         "description": "Abonneer u optioneel op Home Assistant-gebeurtenissen buiten de systeemlogberichten.",
@@ -206,6 +207,9 @@
           }
         }
       }
+    },
+    "error": {
+      "state_changes_exclusive": "Selecteer slechts één optie voor statuswijzigingen."
     }
   },
   "entity": {

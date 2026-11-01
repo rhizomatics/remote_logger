@@ -43,6 +43,10 @@ system_log:
     fire_event: true
 ```
 
+### Einstellungen ändern
+
+Um zu ändern, wohin Protokolle gesendet werden (Host, Port, TLS, Token, Header und die übrigen Verbindungseinstellungen), den Eintrag auf der Seite der Integration öffnen und **Neu konfigurieren** wählen. Über **Konfigurieren** werden das Protokoll-Level und die weitergeleiteten Home Assistant-Ereignisse eingestellt.
+
 ## Open Telemetry (OTEL)
 
 Protokolle werden gemäß der Open Telemetry Logs-Spezifikation über eine [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/)-Verbindung (OTLP) gesendet, entweder als Protobuf oder JSON, derzeit ausschließlich über HTTP (gRPC könnte in Zukunft hinzugefügt werden).

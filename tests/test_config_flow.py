@@ -261,7 +261,8 @@ class TestOptionsFlow:
         entry.options = {}
         return entry
 
-    async def test_options_flow_shows_otel_form(self, hass: HomeAssistant) -> None:
+    async def test_options_flow_shows_only_event_settings(self, hass: HomeAssistant) -> None:
+        """Connection settings moved to the reconfigure step; options are the event subscriptions only."""
         from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
 
         entry = self._make_otel_entry()
@@ -269,38 +270,26 @@ class TestOptionsFlow:
         flow.hass = hass
         result = await flow.async_step_init(None)
         assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["step_id"] == "otel"  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["description_placeholders"] == {"validation_message": VALIDATION_MESSAGE}  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["step_id"] == "events"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        fields = {str(k) for k in result["data_schema"].schema}  # type: ignore
+        assert not fields & {CONF_HOST, CONF_PORT, CONF_USE_TLS, "token", "encoding"}
 
-    async def test_options_flow_saves_values(self, hass: HomeAssistant) -> None:
+    async def test_options_flow_saves_only_event_settings(self, hass: HomeAssistant) -> None:
         from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
 
         entry = self._make_otel_entry()
         flow = RemoteLoggerOptionsFlow(entry)
         flow.hass = hass
-        with patch(
-            "custom_components.remote_logger.config_flow.otel_validate",
-            new=AsyncMock(return_value={}),
-        ):
-            result: ConfigFlowResult = await flow.async_step_otel({
-                CONF_HOST: "newhost",
-                CONF_PORT: 4318,
-                CONF_USE_TLS: False,
-                "encoding": ENCODING_JSON,
-                "batch_max_size": 50,
-                "resource_attributes": "",
-            })
-        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["step_id"] == "events"  # pyright: ignore[reportTypedDictNotRequiredAccess]
         result = await flow.async_step_events({
-            CONF_LOG_HA_LIFECYCLE: True,
-            CONF_LOG_HA_CORE_CHANGES: False,
+            "ha_standard_events": {CONF_LOG_HA_LIFECYCLE: True, CONF_LOG_HA_CORE_CHANGES: False},
             CONF_CUSTOM_EVENTS: ["my_event"],
         })
         assert result["type"] == FlowResultType.CREATE_ENTRY  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["data"][CONF_HOST] == "newhost"  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["data"][CONF_LOG_HA_LIFECYCLE] is True  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["data"][CONF_CUSTOM_EVENTS] == ["my_event"]  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        assert result["data"] == {  # pyright: ignore[reportTypedDictNotRequiredAccess]
+            CONF_LOG_HA_LIFECYCLE: True,
+            CONF_LOG_HA_CORE_CHANGES: False,
+            CONF_CUSTOM_EVENTS: ["my_event"],
+        }
 
     async def test_options_flow_prefers_existing_options(self, hass: HomeAssistant) -> None:
         from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
@@ -311,8 +300,9 @@ class TestOptionsFlow:
         flow = RemoteLoggerOptionsFlow(entry)
         flow.hass = hass
         result = await flow.async_step_init(None)
-        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["step_id"] == "otel"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+        data_schema = result["data_schema"].schema  # type: ignore
+        custom_key = next(k for k in data_schema if k.schema == CONF_CUSTOM_EVENTS)
+        assert custom_key.description["suggested_value"] == ["zha_event"]
 
     async def test_options_flow_events_error_keeps_attempted_toggle(self, hass: HomeAssistant) -> None:
         """On a validation error, the re-shown form must reflect the just-submitted toggles, not stored options."""
@@ -321,7 +311,6 @@ class TestOptionsFlow:
         entry = self._make_otel_entry({CONF_LOG_HA_STATE_CHANGES: True})
         flow = RemoteLoggerOptionsFlow(entry)
         flow.hass = hass
-        flow._pending_options = {}
 
         result = await flow.async_step_events({
             "ha_standard_events": {
@@ -344,62 +333,6 @@ class TestOptionsFlow:
             if hasattr(key, "description") and key.description
         }
         assert suggested[CONF_LOG_HA_FULL_STATE_CHANGES] is True
-
-    def _make_syslog_entry(self) -> ConfigEntry:
-        entry = MagicMock(spec=ConfigEntry)
-        entry.entry_id = "opt_syslog"
-        entry.domain = DOMAIN
-        entry.data = {
-            "backend": "syslog",
-            CONF_HOST: "syslog.example.com",
-            CONF_PORT: 514,
-            "protocol": "udp",
-            CONF_USE_TLS: False,
-            "app_name": "homeassistant",
-            "facility": "local0",
-            CONF_LOG_HA_LIFECYCLE: False,
-            CONF_LOG_HA_CORE_CHANGES: False,
-            CONF_CUSTOM_EVENTS: [],
-        }
-        entry.options = {}
-        return entry
-
-    async def test_options_flow_syslog_shows_syslog_form(self, hass: HomeAssistant) -> None:
-        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
-
-        flow = RemoteLoggerOptionsFlow(self._make_syslog_entry())
-        flow.hass = hass
-        result = await flow.async_step_init(None)
-        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["step_id"] == "syslog"  # pyright: ignore[reportTypedDictNotRequiredAccess]
-
-    async def test_options_flow_syslog_saves_values(self, hass: HomeAssistant) -> None:
-        from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
-
-        flow = RemoteLoggerOptionsFlow(self._make_syslog_entry())
-        flow.hass = hass
-        with patch(
-            "custom_components.remote_logger.config_flow.syslog_validate",
-            new=AsyncMock(return_value=None),
-        ):
-            result = await flow.async_step_syslog({
-                CONF_HOST: "newhost",
-                CONF_PORT: 514,
-                "protocol": "udp",
-                CONF_USE_TLS: False,
-                "app_name": "homeassistant",
-                "facility": "local0",
-                "batch_max_size": 10,
-            })
-        assert result["type"] == FlowResultType.FORM  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["step_id"] == "events"  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        result = await flow.async_step_events({
-            CONF_LOG_HA_LIFECYCLE: False,
-            CONF_LOG_HA_CORE_CHANGES: False,
-            CONF_CUSTOM_EVENTS: [],
-        })
-        assert result["type"] == FlowResultType.CREATE_ENTRY  # pyright: ignore[reportTypedDictNotRequiredAccess]
-        assert result["data"][CONF_HOST] == "newhost"  # pyright: ignore[reportTypedDictNotRequiredAccess]
 
 
 @pytest.mark.usefixtures("enable_custom_integrations")
@@ -450,9 +383,149 @@ class TestReauthFlow:
         assert entry.data["token"] == "new-token"
         assert "should use it for scheduling a reload" not in caplog.text
 
-    async def test_reauth_token_not_hidden_by_options_token(self, hass: HomeAssistant) -> None:
-        entry = self._make_entry(hass, options={CONF_HOST: "localhost", "token": "old-token", "token_type": "bearer"})
-        await self._reauth(hass, entry)
-        merged = {**entry.data, **entry.options}
-        assert merged["token"] == "new-token"
-        assert entry.options[CONF_HOST] == "localhost"
+
+@pytest.mark.usefixtures("enable_custom_integrations")
+class TestReconfigureFlow:
+    """Connection settings are entry data, changed by a reconfigure step (config-flow, reconfiguration-flow)."""
+
+    def _otel_entry(self, hass: HomeAssistant, title: str = "OTLP @ localhost:4318", **data: Any) -> Any:
+        from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=2,
+            minor_version=3,
+            title=title,
+            unique_id=f"{DOMAIN}_otel_localhost_4318",
+            data={
+                "backend": "otel",
+                CONF_HOST: "localhost",
+                CONF_PORT: 4318,
+                CONF_USE_TLS: False,
+                "encoding": ENCODING_JSON,
+                "token": "old-token",
+                "token_type": "bearer",
+                CONF_LOG_HA_LIFECYCLE: True,
+                **data,
+            },
+        )
+        entry.add_to_hass(hass)
+        return entry
+
+    async def _submit(self, hass: HomeAssistant, entry: Any, user_input: dict[str, Any], errors: dict | None = None) -> Any:
+        result = await entry.start_reconfigure_flow(hass)
+        with (
+            patch("custom_components.remote_logger.config_flow.otel_validate", new=AsyncMock(return_value=errors or {})),
+            patch("custom_components.remote_logger.config_flow.syslog_validate", new=AsyncMock(return_value=None)),
+            patch.object(hass.config_entries, "async_schedule_reload"),
+        ):
+            return await hass.config_entries.flow.async_configure(result["flow_id"], user_input)
+
+    async def test_otel_form_prefilled_from_data(self, hass: HomeAssistant) -> None:
+        entry = self._otel_entry(hass, headers="a: 1\nb: 2")
+        result = await entry.start_reconfigure_flow(hass)
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "reconfigure_otel"
+        suggested = {k.schema: k.description["suggested_value"] for k in result["data_schema"].schema if k.description}
+        assert suggested[CONF_HOST] == "localhost"
+        assert suggested["headers"] == ["a: 1", "b: 2"]
+
+    async def test_otel_updates_data_unique_id_and_generated_title(self, hass: HomeAssistant) -> None:
+        entry = self._otel_entry(hass)
+        result = await self._submit(
+            hass, entry, {CONF_HOST: "newhost", CONF_PORT: 4319, CONF_USE_TLS: True, "encoding": ENCODING_JSON}
+        )
+        assert result["type"] == FlowResultType.ABORT
+        assert result["reason"] == "reconfigure_successful"
+        assert entry.data[CONF_HOST] == "newhost"
+        assert entry.data[CONF_USE_TLS] is True
+        # A token cleared in the form is removed, not kept from before
+        assert not entry.data["token"]
+        # Event settings in data are untouched; nothing goes to options
+        assert entry.data[CONF_LOG_HA_LIFECYCLE] is True
+        assert entry.options == {}
+        assert entry.unique_id == f"{DOMAIN}_otel_newhost_4319"
+        assert entry.title == "OTLP @ newhost:4319"
+
+    async def test_otel_keeps_user_title(self, hass: HomeAssistant) -> None:
+        entry = self._otel_entry(hass, title="My collector")
+        await self._submit(hass, entry, {CONF_HOST: "newhost", CONF_PORT: 4318, CONF_USE_TLS: False, "encoding": ENCODING_JSON})
+        assert entry.title == "My collector"
+
+    async def test_otel_validation_error_shown(self, hass: HomeAssistant) -> None:
+        entry = self._otel_entry(hass)
+        result = await self._submit(
+            hass,
+            entry,
+            {CONF_HOST: "newhost", CONF_PORT: 4318, CONF_USE_TLS: False, "encoding": ENCODING_JSON},
+            errors={"base": "cannot_connect"},
+        )
+        assert result["type"] == FlowResultType.FORM
+        assert result["errors"] == {"base": "cannot_connect"}
+        assert entry.data[CONF_HOST] == "localhost"
+
+    async def test_otel_aborts_if_other_entry_has_endpoint(self, hass: HomeAssistant) -> None:
+        from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+        MockConfigEntry(domain=DOMAIN, unique_id=f"{DOMAIN}_otel_other_4318", data={"backend": "otel"}).add_to_hass(hass)
+        entry = self._otel_entry(hass)
+        result = await self._submit(
+            hass, entry, {CONF_HOST: "other", CONF_PORT: 4318, CONF_USE_TLS: False, "encoding": ENCODING_JSON}
+        )
+        assert result["type"] == FlowResultType.ABORT
+        assert result["reason"] == "already_configured"
+        assert entry.data[CONF_HOST] == "localhost"
+
+    async def test_syslog(self, hass: HomeAssistant) -> None:
+        from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=2,
+            minor_version=3,
+            title="Syslog @ old:514 (UDP)",
+            unique_id=f"{DOMAIN}_syslog",
+            data={"backend": "syslog", CONF_HOST: "old", CONF_PORT: 514, CONF_PROTOCOL: "udp", CONF_USE_TLS: False},
+        )
+        entry.add_to_hass(hass)
+        result = await entry.start_reconfigure_flow(hass)
+        assert result["step_id"] == "reconfigure_syslog"
+        result = await self._submit(hass, entry, {CONF_HOST: "new", CONF_PORT: 6514, CONF_PROTOCOL: "tcp", CONF_USE_TLS: True})
+        assert result["reason"] == "reconfigure_successful"
+        assert entry.data[CONF_HOST] == "new"
+        assert entry.data[CONF_PROTOCOL] == "tcp"
+        assert entry.unique_id == f"{DOMAIN}_syslog"
+        assert entry.title == "Syslog @ new:6514 (TCP)"
+
+    async def test_syslog_validation_error_shown(self, hass: HomeAssistant) -> None:
+        from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=2,
+            minor_version=3,
+            unique_id=f"{DOMAIN}_syslog",
+            data={"backend": "syslog", CONF_HOST: "old", CONF_PORT: 514, CONF_PROTOCOL: "udp", CONF_USE_TLS: False},
+        )
+        entry.add_to_hass(hass)
+        result = await entry.start_reconfigure_flow(hass)
+        with patch("custom_components.remote_logger.config_flow.syslog_validate", new=AsyncMock(return_value="cannot_connect")):
+            result = await hass.config_entries.flow.async_configure(
+                result["flow_id"], {CONF_HOST: "new", CONF_PORT: 514, CONF_PROTOCOL: "udp", CONF_USE_TLS: False}
+            )
+        assert result["errors"] == {"base": "cannot_connect"}
+        assert entry.data[CONF_HOST] == "old"
+
+    @pytest.mark.parametrize(("headers", "error"), [(["stream: a"], None), (["no-colon"], "invalid_headers")])
+    async def test_otel_headers_checked(self, hass: HomeAssistant, headers: list[str], error: str | None) -> None:
+        entry = self._otel_entry(hass)
+        result = await self._submit(
+            hass,
+            entry,
+            {CONF_HOST: "localhost", CONF_PORT: 4318, CONF_USE_TLS: False, "encoding": ENCODING_JSON, "headers": headers},
+        )
+        if error:
+            assert result["errors"] == {"headers": error}
+        else:
+            assert result["reason"] == "reconfigure_successful"
+            assert entry.data["headers"] == headers

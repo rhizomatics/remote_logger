@@ -43,6 +43,10 @@ system_log:
     fire_event: true
 ```
 
+### सेटिंग्स बदलना
+
+लॉग कहाँ भेजे जाएँ (होस्ट, पोर्ट, TLS, टोकन, हेडर और अन्य कनेक्शन सेटिंग्स) बदलने के लिए, इंटीग्रेशन पेज पर प्रविष्टि खोलें और **Reconfigure** चुनें। **Configure** बटन से लॉग स्तर और कौन-से Home Assistant इवेंट भेजे जाएँ, यह तय होता है।
+
 ## Open Telemetry (OTEL)
 
 लॉग Open Telemetry Logs स्पेसिफिकेशन के अनुसार एक [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/) (OTLP) कनेक्शन के माध्यम से Protobuf या JSON के रूप में भेजे जाते हैं, वर्तमान में केवल HTTP के माध्यम से (भविष्य में gRPC जोड़ा जा सकता है)।
