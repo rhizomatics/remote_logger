@@ -4,7 +4,7 @@
 # Rule set verified against https://contributors.home-assistant.io/core/quality-scale/rules/#checklist
 # (HA 2026.10.3 / 2026.11 beta; formerly developers.home-assistant.io). 54 rules, same set as
 # supernotify's 2026-08-06 verification: no rules added, removed, renamed or moved since.
-# Level: none yet. All Bronze rules are done or exempt; manifest.json can declare bronze.
+# Level: bronze (manifest.json). Silver next: see the todo rules under SILVER TIER.
 
 rules:
   # ==================
