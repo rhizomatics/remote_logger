@@ -1,7 +1,41 @@
 # 2.1.0
 ## 🚨 Breaking changes
-- Support for Python 3.13, and versions of Home Assistant from 2026.3 and earlier no longer supported/ They may continue to work, however there's no automated test assurance any longer, and newer features will start to be introduced
-- Tested range is Home Assistant 2026.4.0 to 2026.10.0
+- Support for Python 3.13, and versions of Home Assistant from 2026.4 and earlier no longer supported. They may continue to work, however there's no automated test assurance any longer, and newer features will start to be introduced
+- Tested range is Home Assistant 2026.5.0 to 2026.10.x
+
+
+## ✨ Enhancements
+### Home Assistant Alignment
+- Now declared as Bronze on the Home Assistant Integration Quality Scale, with a `quality_scale.yaml` tracking all the rules
+- The `send_log`, `flush` and `last_log` actions are available before any entry has loaded, and give a clear error when no suitable entry is loaded
+  - Previously `send_log` and `flush` silently did nothing, and `last_log` returned an empty result
+- Sensor unique IDs are now based on the config entry ID, so renaming an entry doesn't orphan its sensors
+  - Existing sensors are migrated automatically, keeping their entity IDs, history and customizations
+- Integration category declared in the manifest, as `computers_network.monitoring`
+
+## 🐛 Bug fixes
+- Re-authentication would have failed from Home Assistant 2026.12, leaving no way to replace an expired token
+- Re-authentication could report success while the old token stayed in use
+- Syslog over TLS and the configuration check no longer load the CA store in the event loop, which Home Assistant reported as a blocking call
+- Authentication failures (401 or 403) now show "Authentication failed" on the configuration and re-authentication forms, rather than a connection failure
+- Added the missing message for the mutually-exclusive state changes error in the options form
+
+## 📚 Documentation
+- Added removal instructions and an explanation of **Reconfigure** and **Configure** to the README and all its translations
+- `quality_scale.yaml` added to document how this meets the Home Assistant standards
+
+## 📝 Other changes
+### Configuration UI
+- Connection settings, such as host and token, have moved from **Configure** to **Reconfigure** in the integration entry's ⋮ menu. **Configure** now only covers the log level and event settings
+  - Existing settings are migrated automatically on upgrade
+- Setup now checks the connection, so if the remote service is down when Home Assistant starts, the entry goes to "retrying setup" rather than loading and buffering. Logs from that period are not captured
+  - An OTLP 401 or 403 response starts re-authentication
+  - Each start or reload of an OTLP entry posts one validation log record to the remote service
+### Internal
+- CI tests against both the oldest and newest supported Home Assistant versions
+- `certifi` and `uv` updated in the development and CI environment, to pick up fixes for the eMudhra CA compromise
+- `ty` configuration aligned with other projects and skipped on pre-commit.ci, though it still runs in the local hook
+- Shared admin workflows pinned to a commit SHA
 
 # 2.0.7
 
