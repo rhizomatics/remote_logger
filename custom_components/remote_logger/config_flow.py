@@ -13,6 +13,7 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import UNDEFINED
 
 from .const import (
     BACKEND_OTEL,
@@ -194,12 +195,20 @@ class OtelLogsConfigFlow(ConfigFlow, domain=DOMAIN):
             session = async_get_clientsession(self.hass, verify_ssl=reauth_entry.data[CONF_USE_TLS])
             errors = await otel_validate(session, url, reauth_entry.data[CONF_ENCODING], extra_headers or None)
             if not errors:
-                return self.async_update_reload_and_abort(
+                token_updates = {
+                    CONF_TOKEN: user_input[CONF_TOKEN],
+                    CONF_TOKEN_TYPE: user_input.get(CONF_TOKEN_TYPE, TOKEN_TYPE_BEARER),
+                }
+                # The options flow also stores the token, and options take precedence over data
+                # when the exporter starts, so an options copy would hide the new token.
+                options_updates = {k: v for k, v in token_updates.items() if k in reauth_entry.options}
+                # async_update_and_abort, not async_update_reload_and_abort: async_setup_entry
+                # registers an update listener that already reloads on any entry change. Using the
+                # "_reload" variant as well is deprecated, and raises from HA 2026.12.
+                return self.async_update_and_abort(
                     reauth_entry,
-                    data_updates={
-                        CONF_TOKEN: user_input[CONF_TOKEN],
-                        CONF_TOKEN_TYPE: user_input.get(CONF_TOKEN_TYPE, TOKEN_TYPE_BEARER),
-                    },
+                    data_updates=token_updates,
+                    options={**reauth_entry.options, **options_updates} if options_updates else UNDEFINED,
                 )
 
         return self.async_show_form(
