@@ -33,9 +33,10 @@
   - Each start or reload of an OTLP entry posts one validation log record to the remote service
 ### Internal
 - CI tests against both the oldest and newest supported Home Assistant versions
-- `certifi` and `uv` updated in the development and CI environment, to pick up fixes for the eMudhra CA compromise
-- `ty` configuration aligned with other projects and skipped on pre-commit.ci, though it still runs in the local hook
+- `ty` configuration aligned with other projects and skipped on pre-commit.ci, though it still runs in the local hook### Internalz
+### Build Process Security
 - Shared admin workflows pinned to a commit SHA
+- `certifi` and `uv` updated in the development and CI environment, to pick up fixes for the eMudhra CA compromise
 
 # 2.0.7
 
