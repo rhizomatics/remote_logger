@@ -1,0 +1,301 @@
+---
+# Quality Scale tracking for Remote Logger integration
+# Created: 2026-11-01 (first assessment, quarterly architecture review 2026-Q4)
+# Rule set verified against https://contributors.home-assistant.io/core/quality-scale/rules/#checklist
+# (HA 2026.10.3 / 2026.11 beta; formerly developers.home-assistant.io). 54 rules, same set as
+# supernotify's 2026-08-06 verification: no rules added, removed, renamed or moved since.
+# Level: none yet. Bronze is blocked by action-setup, config-flow (data/options split),
+# docs-removal-instructions, entity-unique-id and test-before-setup.
+
+rules:
+  # ==================
+  # BRONZE TIER
+  # ==================
+
+  action-setup:
+    status: todo
+    comment: |
+      send_log, flush and last_log are registered in async_setup_entry (remote_logger.py,
+      guarded by has_service) and never in async_setup, so they don't exist until an entry
+      loads. Move to async_setup and raise ServiceValidationError when no entry is loaded.
+
+  appropriate-polling:
+    status: done
+    comment: |
+      Sensors poll in-memory exporter counters at the default 30s interval (sensor.py
+      _attr_should_poll); no I/O. Log shipping is push (iot_class local_push).
+
+  brands:
+    status: done
+    comment: Brand images shipped in custom_components/remote_logger/brand/.
+
+  common-modules:
+    status: done
+    comment: |
+      Shared LogExporter base in exporter.py, one package per backend (otel/, syslog/),
+      handler.py and helpers.py.
+
+  config-flow:
+    status: todo
+    comment: |
+      UI-only setup with a backend menu, and data_description on every form step. Not met:
+      "Uses ConfigEntry.data and ConfigEntry.options correctly". The options flow re-edits
+      the connection settings (host, port, TLS, token, headers) and stores them in options,
+      which then override data ({**entry.data, **entry.options} in both exporters).
+      Connection settings belong in data, changed through a reconfigure step (see
+      reconfiguration-flow); the options flow should keep only the event subscriptions.
+
+  config-flow-test-coverage:
+    status: done
+    comment: |
+      tests/test_config_flow.py covers the user menu, OTLP and syslog steps with errors,
+      the common step and the options flow. The reauth flow had no tests until the HA
+      2026.12 reauth fix PR.
+
+  dependency-transparency:
+    status: done
+    comment: No requirements in manifest.json; uses aiohttp and the standard library.
+
+  docs-actions:
+    status: done
+    comment: README.md "Diagnostic Actions" (included in the docs site index).
+
+  docs-conditions:
+    status: exempt
+    comment: Integration provides no conditions.
+
+  docs-high-level-description:
+    status: done
+
+  docs-installation-instructions:
+    status: done
+    comment: README.md "Installation" (HACS, then the integrations page).
+
+  docs-removal-instructions:
+    status: todo
+    comment: No removal section in README.md or docs/.
+
+  docs-triggers:
+    status: exempt
+    comment: Integration provides no triggers.
+
+  entity-event-setup:
+    status: exempt
+    comment: |
+      Entities don't subscribe to events; they poll the exporter's counters. The
+      integration's event-bus listeners belong to the config entry and are removed in
+      async_unload_entry.
+
+  entity-unique-id:
+    status: todo
+    comment: |
+      Unique IDs are slugify(f"{exporter.name}_{key}") (sensor.py), and exporter.name is
+      entry.title (otel/exporter.py, syslog/exporter.py). Titles can be renamed by the user,
+      so after a rename and restart every sensor gets a new unique ID and the old entities
+      are orphaned. Use entry.entry_id, with an entity-registry migration for existing IDs.
+
+  has-entity-name:
+    status: done
+
+  runtime-data:
+    status: done
+    comment: RemoteLoggerData in entry.runtime_data (remote_logger.py).
+
+  test-before-configure:
+    status: done
+    comment: otel validate() and syslog validate() run before the entry is created.
+
+  test-before-setup:
+    status: todo
+    comment: |
+      async_setup_entry starts the exporter without checking that the endpoint is
+      reachable. Raise ConfigEntryNotReady (or ConfigEntryAuthFailed for 401/403) on
+      failure, reusing the config flow's validate().
+
+  unique-config-entry:
+    status: done
+    comment: |
+      unique_id is remote_logger_otel_<host>_<port> or remote_logger_syslog (one syslog
+      entry only).
+
+  # ==================
+  # SILVER TIER
+  # ==================
+
+  action-exceptions:
+    status: todo
+    comment: |
+      last_log returns {} for an unknown or unloaded config_entry_id, and send_log/flush
+      silently do nothing when no entry is loaded. Raise ServiceValidationError.
+
+  config-entry-unloading:
+    status: done
+    comment: |
+      async_unload_entry cancels listeners, removes the log handler, stops the flush task
+      and flushes. It unloads ["sensor"] rather than PLATFORMS and ignores the result.
+
+  docs-configuration-parameters:
+    status: todo
+    comment: |
+      README describes event-based logging and the backends, but not each options field
+      (log level, standard event groups, event body, custom events, suppress event name).
+
+  docs-installation-parameters:
+    status: todo
+    comment: |
+      Setup forms are shown as screenshots only; host/port/TLS/encoding/token
+      type/headers/resource attributes and syslog fields aren't described in text.
+
+  entity-unavailable:
+    status: exempt
+    comment: |
+      Sensors report the integration's own counters, which are always valid. Endpoint
+      failures show in posting_errors rather than as unavailability.
+
+  integration-owner:
+    status: done
+    comment: codeowners @jeyrb.
+
+  log-when-unavailable:
+    status: todo
+    comment: |
+      Every failed send logs a warning (otel/exporter.py "failed to send logs",
+      syslog/exporter.py "failed to send syslog via UDP/TCP"), so a down collector logs
+      once per flush. Log once when it becomes unreachable and once when it recovers.
+
+  parallel-updates:
+    status: todo
+    comment: sensor.py has no PARALLEL_UPDATES; set PARALLEL_UPDATES = 0 (no I/O on update).
+
+  reauthentication-flow:
+    status: done
+    comment: |
+      OTLP 401/403 starts reauth (otel/exporter.py); reauth_otel re-validates the token.
+      Syslog has no credentials. Needs the HA 2026.12 fix (async_update_and_abort, options
+      token) to keep holding.
+
+  test-coverage:
+    status: todo
+    comment: |
+      91.7% on 2026-11-01 (pyproject fail-under 90). Silver needs above 95%. Gaps:
+      exporter.py, otel/exporter.py, remote_logger.py event-group branches.
+
+  # ==================
+  # GOLD TIER
+  # ==================
+
+  devices:
+    status: done
+    comment: One service device per config entry (DeviceEntryType.SERVICE).
+
+  diagnostics:
+    status: todo
+    comment: |
+      No diagnostics.py. Useful content: backend, redacted connection settings, counters,
+      last_sent_payload (already exposed by the last_log action).
+
+  discovery:
+    status: exempt
+    comment: Remote collectors can't be discovered.
+
+  discovery-update-info:
+    status: exempt
+    comment: No discovery.
+
+  docs-data-update:
+    status: todo
+    comment: |
+      Batching and flush behaviour (batch size, flush interval, flush on stop) isn't
+      described for users.
+
+  docs-examples:
+    status: done
+    comment: docs/examples (Vector with GreptimeDB and OpenObserve) and docs/aggregators.md.
+
+  docs-known-limitations:
+    status: todo
+    comment: |
+      No section. Candidates: OTLP over HTTP only (no gRPC), one syslog entry, records
+      from remote_logger itself are not shipped.
+
+  docs-supported-devices:
+    status: done
+    comment: README "Log Servers" and docs/aggregators.md list the tested collectors.
+
+  docs-supported-functions:
+    status: done
+    comment: README "Events", "Diagnostic Entities" and "Diagnostic Actions".
+
+  docs-troubleshooting:
+    status: todo
+    comment: No troubleshooting section.
+
+  docs-use-cases:
+    status: done
+    comment: README introduction and docs/aggregators.md.
+
+  dynamic-devices:
+    status: exempt
+    comment: One fixed service device per config entry.
+
+  entity-category:
+    status: done
+    comment: All sensors are EntityCategory.DIAGNOSTIC.
+
+  entity-device-class:
+    status: exempt
+    comment: Counters of errors, events and postings; no sensor device class applies.
+
+  entity-disabled-by-default:
+    status: todo
+    comment: |
+      "Log Events" and "Postings" change on most polls and are recorded with long-term
+      statistics (TOTAL_INCREASING). Consider disabling them by default and keeping the
+      two error counters enabled.
+
+  entity-translations:
+    status: done
+    comment: Sensor names translated in translations/*.json (11 languages).
+
+  exception-translations:
+    status: todo
+    comment: No exceptions section in translations; depends on action-exceptions.
+
+  icon-translations:
+    status: todo
+    comment: No icons.json (sensor and action icons).
+
+  reconfiguration-flow:
+    status: todo
+    comment: |
+      Connection settings are changed through the options flow instead. Add
+      async_step_reconfigure (supernotify's reconfigure step is the house pattern) and
+      drop the connection forms from the options flow; see config-flow.
+
+  repair-issues:
+    status: todo
+    comment: |
+      Candidate: a token configured without TLS only logs a warning (config_flow.py);
+      a repair issue would make it visible. Low priority.
+
+  stale-devices:
+    status: done
+    comment: sensor.py removes disabled duplicate devices left by older identifiers.
+
+  # ==================
+  # PLATINUM TIER
+  # ==================
+
+  async-dependency:
+    status: done
+    comment: No third-party dependencies; aiohttp and asyncio only.
+
+  inject-websession:
+    status: done
+    comment: Uses async_get_clientsession for OTLP posts and validation.
+
+  strict-typing:
+    status: todo
+    comment: |
+      py.typed is present, but mypy isn't strict and has 14 errors on main
+      (hq-private#64).
