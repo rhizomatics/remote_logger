@@ -68,7 +68,7 @@ For multi-step tasks, state a brief plan:
 ## Project Context
 
 The project uses Ruff for formatting and linting, uv for dependency management,
-mypy for type checking, pytest for unit and integration testing, and codespell for spell checking. It is anticipated that type checking will move to [ty](https://github.com/astral-sh/ty) when it is production ready.
+mypy for type checking (with experimental use of [ty](https://github.com/astral-sh/ty), which runs in the local pre-commit hook but not on pre-commit.ci), pytest for unit and integration testing, and codespell for spell checking.
 
 Documentation uses properdocs with the MaterialX theme, and will be published using Github Pages.
 

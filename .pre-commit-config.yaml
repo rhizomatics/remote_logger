@@ -72,4 +72,6 @@ ci:
     skip:
       - bandit
       - mypy
+      # ty resolves the project environment, which pre-commit.ci can't build; it still runs locally
+      - ty
     submodules: false
