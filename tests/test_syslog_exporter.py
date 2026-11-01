@@ -354,8 +354,9 @@ class TestSyslogExporter:
         assert exporter._tcp_writer is mock_writer
 
     async def test_connect_tcp_with_tls(self, hass: HomeAssistant) -> None:
-        import ssl
         from unittest.mock import AsyncMock, patch
+
+        from homeassistant.util.ssl import client_context
 
         entry = MagicMock()
         entry.data = {
@@ -371,11 +372,15 @@ class TestSyslogExporter:
         mock_reader = MagicMock()
         mock_writer = MagicMock()
 
-        with patch("asyncio.wait_for", new=AsyncMock(return_value=(mock_reader, mock_writer))):
-            with patch("ssl.create_default_context", return_value=MagicMock(spec=ssl.SSLContext)):
-                await exporter._connect_tcp()
+        with (
+            patch("asyncio.wait_for", new=AsyncMock(return_value=(mock_reader, mock_writer))),
+            patch("asyncio.open_connection") as open_connection,
+        ):
+            await exporter._connect_tcp()
 
         assert exporter._tcp_writer is mock_writer
+        # HA's shared, preloaded client context - not a fresh one loading the CA store in the loop
+        assert open_connection.call_args.kwargs["ssl"] is client_context()
 
     async def test_close_tcp_with_writer(self, exporter: SyslogExporter) -> None:
         from unittest.mock import AsyncMock

@@ -400,3 +400,59 @@ class TestOptionsFlow:
         })
         assert result["type"] == FlowResultType.CREATE_ENTRY  # pyright: ignore[reportTypedDictNotRequiredAccess]
         assert result["data"][CONF_HOST] == "newhost"  # pyright: ignore[reportTypedDictNotRequiredAccess]
+
+
+@pytest.mark.usefixtures("enable_custom_integrations")
+class TestReauthFlow:
+    """Reauth must not combine an update listener with async_update_reload_and_abort (raises from HA 2026.12)."""
+
+    def _make_entry(self, hass: HomeAssistant, options: dict[str, Any] | None = None) -> Any:
+        from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=2,
+            unique_id=f"{DOMAIN}_otel_localhost_4318",
+            data={
+                "backend": "otel",
+                CONF_HOST: "localhost",
+                CONF_PORT: 4318,
+                CONF_USE_TLS: False,
+                "encoding": ENCODING_JSON,
+                "token": "old-token",
+                "token_type": "bearer",
+            },
+            options=options or {},
+        )
+        entry.add_to_hass(hass)
+        # async_setup_entry registers one; reproduced here without starting an exporter
+        entry.add_update_listener(AsyncMock())
+        return entry
+
+    async def _reauth(self, hass: HomeAssistant, entry: Any) -> ConfigFlowResult:
+        result = await entry.start_reauth_flow(hass)
+        assert result["step_id"] == "reauth_otel"
+        with (
+            patch("custom_components.remote_logger.config_flow.otel_validate", new=AsyncMock(return_value={})),
+            patch.object(hass.config_entries, "async_schedule_reload"),
+        ):
+            return await hass.config_entries.flow.async_configure(
+                result["flow_id"], {"token": "new-token", "token_type": "bearer"}
+            )
+
+    async def test_reauth_does_not_reload_alongside_update_listener(
+        self, hass: HomeAssistant, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        entry = self._make_entry(hass)
+        result = await self._reauth(hass, entry)
+        assert result["type"] == FlowResultType.ABORT
+        assert result["reason"] == "reauth_successful"
+        assert entry.data["token"] == "new-token"
+        assert "should use it for scheduling a reload" not in caplog.text
+
+    async def test_reauth_token_not_hidden_by_options_token(self, hass: HomeAssistant) -> None:
+        entry = self._make_entry(hass, options={CONF_HOST: "localhost", "token": "old-token", "token_type": "bearer"})
+        await self._reauth(hass, entry)
+        merged = {**entry.data, **entry.options}
+        assert merged["token"] == "new-token"
+        assert entry.options[CONF_HOST] == "localhost"

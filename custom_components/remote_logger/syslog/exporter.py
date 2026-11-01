@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from homeassistant.components.system_log import EVENT_SYSTEM_LOG
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_PROTOCOL
+from homeassistant.util.ssl import client_context
 
 from custom_components.remote_logger.const import (
     CONF_APP_NAME,
@@ -259,9 +260,9 @@ class SyslogExporter(LogExporter):
 
     async def _connect_tcp(self) -> None:
         """Establish a TCP connection to the syslog server."""
-        ssl_ctx: ssl.SSLContext | None = None
-        if self._use_tls:
-            ssl_ctx = ssl.create_default_context()
+        # HA's shared client context is built once at startup; ssl.create_default_context() loads
+        # the CA store on every call, which HA reports as blocking I/O in the event loop.
+        ssl_ctx: ssl.SSLContext | None = client_context() if self._use_tls else None
 
         self._tcp_reader, self._tcp_writer = await asyncio.wait_for(
             asyncio.open_connection(self._host, self._port, ssl=ssl_ctx),
@@ -304,7 +305,7 @@ async def validate(hass: Any, host: str, port: int, protocol: str, use_tls: bool
                 sock.close()
         else:
             # TCP: actually connect
-            ssl_ctx = True if use_tls else None
+            ssl_ctx = client_context() if use_tls else None
             _, writer = await asyncio.wait_for(
                 asyncio.open_connection(host, port, ssl=ssl_ctx),
                 timeout=10,
