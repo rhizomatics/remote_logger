@@ -41,6 +41,10 @@ system_log:
     fire_event: true
 ```
 
+### 更改设置
+
+要更改日志的发送目标（主机、端口、TLS、令牌、请求头及其他连接设置），请在集成页面打开该条目并选择 **重新配置**。**配置** 按钮用于设置日志级别以及转发哪些 Home Assistant 事件。
+
 ## Open Telemetry（OTEL）
 
 日志通过 [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/)（OTLP）连接，按照 Open Telemetry Logs 规范发送，支持 Protobuf 或 JSON 格式，目前仅支持 HTTP（未来可能添加 gRPC）。

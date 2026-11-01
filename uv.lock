@@ -3818,7 +3818,7 @@ docs = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "homeassistant", specifier = ">=2026.4.0" }]
+requires-dist = [{ name = "homeassistant", specifier = ">=2026.5.0" }]
 
 [package.metadata.requires-dev]
 dev = [

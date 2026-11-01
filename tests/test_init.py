@@ -314,7 +314,7 @@ class TestUniqueIdMigration:
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-        assert entry.minor_version == 2
+        assert entry.minor_version == 3
         for key, reg_entry in old.items():
             migrated = registry.async_get(reg_entry.entity_id)
             assert migrated is not None
@@ -344,4 +344,43 @@ class TestUniqueIdMigration:
         assert registry.async_get(current.entity_id).unique_id == "abc123_events"  # type: ignore[union-attr]
         assert registry.async_get(stale.entity_id).unique_id == "old_title_events"  # type: ignore[union-attr]
         assert registry.async_get(unknown.entity_id).unique_id == "something_else"  # type: ignore[union-attr]
+        await hass.config_entries.async_unload(entry.entry_id)
+
+
+class TestConnectionOptionsMigration:
+    """Connection settings saved by the old options flow move to data (2.3), so reconfigure changes aren't hidden."""
+
+    @pytest.fixture(autouse=True)
+    def auto_enable_custom_integrations(self, enable_custom_integrations: None) -> None:
+        """Allow Home Assistant to load the integration from custom_components."""
+
+    async def _migrate(self, hass: HomeAssistant, data: dict, options: dict) -> MockConfigEntry:
+        entry = MockConfigEntry(domain=DOMAIN, version=2, minor_version=2, title="x", data=data, options=options)
+        entry.add_to_hass(hass)
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        assert entry.minor_version == 3
+        return entry
+
+    async def test_otel_options_connection_moved_to_data(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        entry = await self._migrate(
+            hass,
+            {**mock_entry_otel.data, CONF_EVENT_BASED_LOGGING: True, "token": "data-token"},
+            {"host": "optshost", "token": "opts-token", CONF_LOG_HA_LIFECYCLE: True},
+        )
+        assert entry.data["host"] == "optshost"
+        assert entry.data["token"] == "opts-token"
+        assert entry.options == {CONF_LOG_HA_LIFECYCLE: True}
+        assert entry.runtime_data.exporter.endpoint_url == "http://optshost:4318/v1/logs"
+        await hass.config_entries.async_unload(entry.entry_id)
+
+    async def test_syslog_options_connection_moved_to_data(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        entry = await self._migrate(
+            hass,
+            {**mock_entry_syslog.data, CONF_EVENT_BASED_LOGGING: True},
+            {"host": "optshost", "facility": "local7", CONF_LOG_HA_LIFECYCLE: False},
+        )
+        assert entry.data["host"] == "optshost"
+        assert entry.data["facility"] == "local7"
+        assert entry.options == {CONF_LOG_HA_LIFECYCLE: False}
         await hass.config_entries.async_unload(entry.entry_id)

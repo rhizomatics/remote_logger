@@ -20,6 +20,7 @@ from homeassistant.helpers import entity_registry as er
 
 from custom_components.remote_logger.handler import ExportingLogHandler
 
+from .config_flow import OTEL_CONNECTION_KEYS, SYSLOG_CONNECTION_KEYS
 from .const import (
     BACKEND_SYSLOG,
     CONF_BACKEND,
@@ -105,7 +106,25 @@ async def async_migrate_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntr
     if entry.minor_version < 2:
         await _async_migrate_unique_ids(hass, entry)
         hass.config_entries.async_update_entry(entry, version=2, minor_version=2)
+    if entry.minor_version < 3:
+        _migrate_connection_options(hass, entry)
     return True
+
+
+def _migrate_connection_options(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> None:
+    """Move connection settings saved by the old options flow into data, where reconfigure keeps them.
+
+    Options used to override data for every key, so the options copy is the one in effect.
+    """
+    keys = SYSLOG_CONNECTION_KEYS if entry.data.get(CONF_BACKEND) == BACKEND_SYSLOG else OTEL_CONNECTION_KEYS
+    moved = {k: v for k, v in entry.options.items() if k in keys}
+    hass.config_entries.async_update_entry(
+        entry,
+        data={**entry.data, **moved},
+        options={k: v for k, v in entry.options.items() if k not in keys},
+        version=2,
+        minor_version=3,
+    )
 
 
 async def _async_migrate_unique_ids(hass: HomeAssistant, entry: RemoteLoggerConfigEntry) -> None:

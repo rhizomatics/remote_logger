@@ -43,6 +43,10 @@ system_log:
     fire_event: true
 ```
 
+### Cambiar la configuración
+
+Para cambiar a dónde se envían los registros (host, puerto, TLS, token, cabeceras y el resto de ajustes de conexión), abre la entrada en la página de la integración y elige **Reconfigurar**. El botón **Configurar** cubre el nivel de registro y qué eventos de Home Assistant se reenvían.
+
 ## Open Telemetry (OTEL)
 
 Los registros se envían usando la especificación Open Telemetry Logs a través de una conexión [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/) (OTLP), como Protobuf o JSON, actualmente solo por HTTP (gRPC podría añadirse en el futuro).

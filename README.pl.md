@@ -43,6 +43,10 @@ system_log:
     fire_event: true
 ```
 
+### Zmiana ustawień
+
+Aby zmienić miejsce wysyłania logów (host, port, TLS, token, nagłówki i pozostałe ustawienia połączenia), otwórz wpis na stronie integracji i wybierz **Zmień konfigurację**. Przycisk **Konfiguruj** obejmuje poziom logowania i to, które zdarzenia Home Assistant są przekazywane.
+
 ## Open Telemetry (OTEL)
 
 Dzienniki są wysyłane zgodnie ze specyfikacją Open Telemetry Logs przez połączenie [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/) (OTLP), jako Protobuf lub JSON, obecnie wyłącznie przez HTTP (gRPC może zostać dodane w przyszłości).

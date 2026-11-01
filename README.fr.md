@@ -43,6 +43,10 @@ system_log:
     fire_event: true
 ```
 
+### Modifier les paramètres
+
+Pour changer la destination des journaux (hôte, port, TLS, jeton, en-têtes et les autres paramètres de connexion), ouvrez l'entrée sur la page de l'intégration et choisissez **Reconfigurer**. Le bouton **Configurer** couvre le niveau de journalisation et les événements Home Assistant transmis.
+
 ## Open Telemetry (OTEL)
 
 Les journaux sont envoyés selon la spécification Open Telemetry Logs via une connexion [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/) (OTLP), en Protobuf ou JSON, et actuellement uniquement en HTTP (gRPC pourra être ajouté à l'avenir).

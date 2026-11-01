@@ -69,6 +69,54 @@
           "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : user)."
         }
       },
+      "reconfigure_otel": {
+        "title": "Configurer le point de terminaison OTLP",
+        "description": "Mettez à jour les informations de connexion de votre collecteur OpenTelemetry. Un enregistrement de journal de test sera envoyé pour vérifier la connexion : « {validation_message} ».",
+        "data": {
+          "host": "Hôte du collecteur",
+          "port": "Port du collecteur",
+          "use_tls": "Utiliser TLS (HTTPS)",
+          "encoding": "Encodage de la charge utile",
+          "batch_max_size": "Taille maximale du lot",
+          "resource_attributes": "Attributs de ressource personnalisés",
+          "token_type": "Type de jeton",
+          "token": "Jeton d'accès pour l'en-tête Authorization",
+          "headers": "En-têtes supplémentaires",
+          "path": "Chemin du point de terminaison des journaux"
+        },
+        "data_description": {
+          "host": "Nom d'hôte ou adresse IP du collecteur OTLP.",
+          "port": "Port HTTP du collecteur OTLP (par défaut : 4318).",
+          "use_tls": "Activer HTTPS pour la connexion au collecteur.",
+          "encoding": "Format d'encodage de la charge utile OTLP : json ou protobuf.",
+          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 100).",
+          "resource_attributes": "Paires clé=valeur séparées par des virgules ajoutées à chaque entrée de journal (ex. deployment.environment=production,service.namespace=home).",
+          "token_type": "Schéma d'authentification : Bearer envoie le jeton tel quel ; Basic l'encode en base64 comme 'utilisateur:motdepasse'.",
+          "token": "Jeton optionnel. Envoyé dans l'en-tête 'Authorization'.",
+          "headers": "En-têtes HTTP supplémentaires optionnels au format 'Nom: valeur' (ex. stream-name: mon-stream). Saisir un en-tête par entrée.",
+          "path": "Chemin ajouté à hôte:port pour le point de terminaison des journaux (par défaut : /v1/logs). Préfixer avec tout chemin spécifique à l'API (ex. /api/otlp/v1/logs)."
+        }
+      },
+      "reconfigure_syslog": {
+        "title": "Configurer le point de terminaison Syslog",
+        "description": "Mettez à jour les informations de connexion de votre serveur syslog RFC 5424.",
+        "data": {
+          "host": "Hôte du serveur syslog",
+          "port": "Port du serveur syslog",
+          "protocol": "Protocole de transport",
+          "use_tls": "Utiliser TLS (TCP uniquement)",
+          "app_name": "Nom de l'application",
+          "facility": "Facility syslog"
+        },
+        "data_description": {
+          "host": "Nom d'hôte ou adresse IP du serveur syslog.",
+          "port": "Port du serveur syslog (par défaut : 514).",
+          "protocol": "Protocole de transport : UDP (sans confirmation) ou TCP (livraison fiable).",
+          "use_tls": "Activer le chiffrement TLS pour les connexions TCP. Ignoré pour UDP.",
+          "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
+          "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : user)."
+        }
+      },
       "common": {
         "title": "Événements Home Assistant supplémentaires",
         "description": "Abonnez-vous optionnellement aux événements Home Assistant au-delà des journaux système.",
@@ -116,59 +164,12 @@
       "unknown": "Une erreur inattendue s'est produite."
     },
     "abort": {
-      "already_configured": "Ce point de terminaison est déjà configuré."
+      "already_configured": "Ce point de terminaison est déjà configuré.",
+      "reconfigure_successful": "Paramètres de connexion mis à jour."
     }
   },
   "options": {
     "step": {
-      "otel": {
-        "title": "Configurer le point de terminaison OTLP",
-        "description": "Mettez à jour les informations de connexion de votre collecteur OpenTelemetry. Un enregistrement de journal de test sera envoyé pour vérifier la connexion : « {validation_message} ».",
-        "data": {
-          "host": "Hôte du collecteur",
-          "port": "Port du collecteur",
-          "use_tls": "Utiliser TLS (HTTPS)",
-          "encoding": "Encodage de la charge utile",
-          "batch_max_size": "Taille maximale du lot",
-          "resource_attributes": "Attributs de ressource personnalisés",
-          "token_type": "Type de jeton",
-          "token": "Jeton d'accès pour l'en-tête Authorization",
-          "headers": "En-têtes supplémentaires",
-          "path": "Chemin du point de terminaison des journaux"
-        },
-        "data_description": {
-          "host": "Nom d'hôte ou adresse IP du collecteur OTLP.",
-          "port": "Port HTTP du collecteur OTLP (par défaut : 4318).",
-          "use_tls": "Activer HTTPS pour la connexion au collecteur.",
-          "encoding": "Format d'encodage de la charge utile OTLP : json ou protobuf.",
-          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 100).",
-          "resource_attributes": "Paires clé=valeur séparées par des virgules ajoutées à chaque entrée de journal (ex. deployment.environment=production,service.namespace=home).",
-          "token_type": "Schéma d'authentification : Bearer envoie le jeton tel quel ; Basic l'encode en base64 comme 'utilisateur:motdepasse'.",
-          "token": "Jeton optionnel. Envoyé dans l'en-tête 'Authorization'.",
-          "headers": "En-têtes HTTP supplémentaires optionnels au format 'Nom: valeur' (ex. stream-name: mon-stream). Saisir un en-tête par entrée.",
-          "path": "Chemin ajouté à hôte:port pour le point de terminaison des journaux (par défaut : /v1/logs). Préfixer avec tout chemin spécifique à l'API (ex. /api/otlp/v1/logs)."
-        }
-      },
-      "syslog": {
-        "title": "Configurer le point de terminaison Syslog",
-        "description": "Mettez à jour les informations de connexion de votre serveur syslog RFC 5424.",
-        "data": {
-          "host": "Hôte du serveur syslog",
-          "port": "Port du serveur syslog",
-          "protocol": "Protocole de transport",
-          "use_tls": "Utiliser TLS (TCP uniquement)",
-          "app_name": "Nom de l'application",
-          "facility": "Facility syslog"
-        },
-        "data_description": {
-          "host": "Nom d'hôte ou adresse IP du serveur syslog.",
-          "port": "Port du serveur syslog (par défaut : 514).",
-          "protocol": "Protocole de transport : UDP (sans confirmation) ou TCP (livraison fiable).",
-          "use_tls": "Activer le chiffrement TLS pour les connexions TCP. Ignoré pour UDP.",
-          "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
-          "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : user)."
-        }
-      },
       "events": {
         "title": "Événements Home Assistant supplémentaires",
         "description": "Abonnez-vous optionnellement aux événements Home Assistant au-delà des journaux système.",
@@ -206,6 +207,9 @@
           }
         }
       }
+    },
+    "error": {
+      "state_changes_exclusive": "Sélectionnez une seule option de changement d'état."
     }
   },
   "entity": {

@@ -43,6 +43,10 @@ system_log:
     fire_event: true
 ```
 
+### Instellingen wijzigen
+
+Om te wijzigen waar logs naartoe gaan (host, poort, TLS, token, headers en de overige verbindingsinstellingen), open je het item op de pagina van de integratie en kies je **Opnieuw configureren**. Met de knop **Configureren** stel je het logniveau in en welke Home Assistant-gebeurtenissen worden doorgestuurd.
+
 ## Open Telemetry (OTEL)
 
 Logboeken worden verzonden via de Open Telemetry Logs-specificatie over een [Open Telemetry Protocol](https://opentelemetry.io/docs/specs/otlp/) (OTLP)-verbinding, als Protobuf of JSON, momenteel alleen via HTTP (gRPC kan in de toekomst worden toegevoegd).

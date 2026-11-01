@@ -4,7 +4,7 @@
 # Rule set verified against https://contributors.home-assistant.io/core/quality-scale/rules/#checklist
 # (HA 2026.10.3 / 2026.11 beta; formerly developers.home-assistant.io). 54 rules, same set as
 # supernotify's 2026-08-06 verification: no rules added, removed, renamed or moved since.
-# Level: none yet. Bronze is blocked by config-flow (data/options split).
+# Level: bronze (manifest.json). Silver next: see the todo rules under SILVER TIER.
 
 rules:
   # ==================
@@ -34,21 +34,19 @@ rules:
       handler.py and helpers.py.
 
   config-flow:
-    status: todo
+    status: done
     comment: |
-      UI-only setup with a backend menu, and data_description on every form step. Not met:
-      "Uses ConfigEntry.data and ConfigEntry.options correctly". The options flow re-edits
-      the connection settings (host, port, TLS, token, headers) and stores them in options,
-      which then override data ({**entry.data, **entry.options} in both exporters).
-      Connection settings belong in data, changed through a reconfigure step (see
-      reconfiguration-flow); the options flow should keep only the event subscriptions.
+      UI-only setup with a backend menu, and data_description on every form step.
+      Connection settings (host, port, TLS, token, headers ...) are entry data, changed by
+      the reconfigure step; the options flow holds only the event subscriptions. Config
+      entry minor version 3 moves connection settings saved by the old options flow into
+      data.
 
   config-flow-test-coverage:
     status: done
     comment: |
       tests/test_config_flow.py covers the user menu, OTLP and syslog steps with errors,
-      the common step and the options flow. The reauth flow had no tests until the HA
-      2026.12 reauth fix PR.
+      the common step, the options flow, reauth and reconfigure.
 
   dependency-transparency:
     status: done
@@ -265,11 +263,10 @@ rules:
     comment: No icons.json (sensor and action icons).
 
   reconfiguration-flow:
-    status: todo
+    status: done
     comment: |
-      Connection settings are changed through the options flow instead. Add
-      async_step_reconfigure (supernotify's reconfigure step is the house pattern) and
-      drop the connection forms from the options flow; see config-flow.
+      async_step_reconfigure (reconfigure_otel / reconfigure_syslog) validates the new
+      connection, updates data, the OTLP unique_id and a still-generated title.
 
   repair-issues:
     status: todo

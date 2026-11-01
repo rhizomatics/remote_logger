@@ -69,6 +69,54 @@
           "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。"
         }
       },
+      "reconfigure_otel": {
+        "title": "OTLPエンドポイントの設定",
+        "description": "OpenTelemetryコレクターの接続情報を更新してください。接続を確認するためにテストログレコードが送信されます：「{validation_message}」",
+        "data": {
+          "host": "コレクターホスト",
+          "port": "コレクターポート",
+          "use_tls": "TLSを使用する（HTTPS）",
+          "encoding": "ペイロードエンコーディング",
+          "batch_max_size": "バッチ最大サイズ",
+          "resource_attributes": "カスタムリソース属性",
+          "token_type": "トークンタイプ",
+          "token": "Authorizationヘッダー用アクセストークン",
+          "headers": "追加ヘッダー",
+          "path": "ログエンドポイントパス"
+        },
+        "data_description": {
+          "host": "OTLPコレクターのホスト名またはIPアドレス。",
+          "port": "OTLPコレクターのHTTPポート（デフォルト: 4318）。",
+          "use_tls": "コレクターへの接続にHTTPSを有効化します。",
+          "encoding": "OTLPペイロードのエンコーディング形式: json または protobuf。",
+          "batch_max_size": "フラッシュ前にバッファするログレコードの最大数（1〜10000、デフォルト: 100）。",
+          "resource_attributes": "各ログレコードに追加するカンマ区切りのkey=valueペア（例: deployment.environment=production,service.namespace=home）。",
+          "token_type": "認証スキーム: Bearerはトークンをそのまま送信、Basicは「ユーザー名:パスワード」としてbase64エンコードして送信します。",
+          "token": "任意のトークン。「Authorization」ヘッダーで送信されます。",
+          "headers": "任意の追加HTTPヘッダー。「名前: 値」形式（例: stream-name: my-stream）。1エントリにつき1つ入力してください。",
+          "path": "ログエンドポイントのhost:portに追加するパス（デフォルト: /v1/logs）。API固有のパスをプレフィックスとして追加できます（例: /api/otlp/v1/logs）。"
+        }
+      },
+      "reconfigure_syslog": {
+        "title": "Syslogエンドポイントの設定",
+        "description": "RFC 5424 syslogサーバーの接続情報を更新してください。",
+        "data": {
+          "host": "Syslogサーバーホスト",
+          "port": "Syslogサーバーポート",
+          "protocol": "トランスポートプロトコル",
+          "use_tls": "TLSを使用する（TCPのみ）",
+          "app_name": "アプリケーション名",
+          "facility": "Syslogファシリティ"
+        },
+        "data_description": {
+          "host": "syslogサーバーのホスト名またはIPアドレス。",
+          "port": "syslogサーバーのポート（デフォルト: 514）。",
+          "protocol": "トランスポートプロトコル: UDP（ファイア・アンド・フォーゲット）またはTCP（信頼性の高い配信）。",
+          "use_tls": "TCP接続のTLS暗号化を有効にします。UDPでは無視されます。",
+          "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
+          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。"
+        }
+      },
       "common": {
         "title": "追加のHome Assistantイベント",
         "description": "システムログメッセージ以外のHome Assistantイベントをオプションで購読します。",
@@ -116,59 +164,12 @@
       "unknown": "予期しないエラーが発生しました。"
     },
     "abort": {
-      "already_configured": "このエンドポイントはすでに設定済みです。"
+      "already_configured": "このエンドポイントはすでに設定済みです。",
+      "reconfigure_successful": "接続設定を更新しました。"
     }
   },
   "options": {
     "step": {
-      "otel": {
-        "title": "OTLPエンドポイントの設定",
-        "description": "OpenTelemetryコレクターの接続情報を更新してください。接続を確認するためにテストログレコードが送信されます：「{validation_message}」",
-        "data": {
-          "host": "コレクターホスト",
-          "port": "コレクターポート",
-          "use_tls": "TLSを使用する（HTTPS）",
-          "encoding": "ペイロードエンコーディング",
-          "batch_max_size": "バッチ最大サイズ",
-          "resource_attributes": "カスタムリソース属性",
-          "token_type": "トークンタイプ",
-          "token": "Authorizationヘッダー用アクセストークン",
-          "headers": "追加ヘッダー",
-          "path": "ログエンドポイントパス"
-        },
-        "data_description": {
-          "host": "OTLPコレクターのホスト名またはIPアドレス。",
-          "port": "OTLPコレクターのHTTPポート（デフォルト: 4318）。",
-          "use_tls": "コレクターへの接続にHTTPSを有効化します。",
-          "encoding": "OTLPペイロードのエンコーディング形式: json または protobuf。",
-          "batch_max_size": "フラッシュ前にバッファするログレコードの最大数（1〜10000、デフォルト: 100）。",
-          "resource_attributes": "各ログレコードに追加するカンマ区切りのkey=valueペア（例: deployment.environment=production,service.namespace=home）。",
-          "token_type": "認証スキーム: Bearerはトークンをそのまま送信、Basicは「ユーザー名:パスワード」としてbase64エンコードして送信します。",
-          "token": "任意のトークン。「Authorization」ヘッダーで送信されます。",
-          "headers": "任意の追加HTTPヘッダー。「名前: 値」形式（例: stream-name: my-stream）。1エントリにつき1つ入力してください。",
-          "path": "ログエンドポイントのhost:portに追加するパス（デフォルト: /v1/logs）。API固有のパスをプレフィックスとして追加できます（例: /api/otlp/v1/logs）。"
-        }
-      },
-      "syslog": {
-        "title": "Syslogエンドポイントの設定",
-        "description": "RFC 5424 syslogサーバーの接続情報を更新してください。",
-        "data": {
-          "host": "Syslogサーバーホスト",
-          "port": "Syslogサーバーポート",
-          "protocol": "トランスポートプロトコル",
-          "use_tls": "TLSを使用する（TCPのみ）",
-          "app_name": "アプリケーション名",
-          "facility": "Syslogファシリティ"
-        },
-        "data_description": {
-          "host": "syslogサーバーのホスト名またはIPアドレス。",
-          "port": "syslogサーバーのポート（デフォルト: 514）。",
-          "protocol": "トランスポートプロトコル: UDP（ファイア・アンド・フォーゲット）またはTCP（信頼性の高い配信）。",
-          "use_tls": "TCP接続のTLS暗号化を有効にします。UDPでは無視されます。",
-          "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
-          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。"
-        }
-      },
       "events": {
         "title": "追加のHome Assistantイベント",
         "description": "システムログメッセージ以外のHome Assistantイベントをオプションで購読します。",
@@ -206,6 +207,9 @@
           }
         }
       }
+    },
+    "error": {
+      "state_changes_exclusive": "状態変化オプションは1つだけ選択してください。"
     }
   },
   "entity": {

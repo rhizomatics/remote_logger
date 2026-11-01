@@ -37,6 +37,10 @@ The integration installs using the Home Assistant integrations page, and has **n
 
 ![Choose Integration](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
+### Changing Settings
+
+To change where logs are sent (host, port, TLS, token, headers and the other connection settings), open the entry on the integration's page and choose **Reconfigure**. The **Configure** button covers the log level and which Home Assistant events are forwarded.
+
 ### Event Based Logging
 
 If choosing event based logging over the Python root logger, then a YAML change is required to the Home Assistant [System Log](https://www.home-assistant.io/integrations/system_log/) integration, to enable event forwarding for `system_log_event`. This is not required if using the default Python root logger approach.

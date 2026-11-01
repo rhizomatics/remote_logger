@@ -69,6 +69,54 @@
           "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user)."
         }
       },
+      "reconfigure_otel": {
+        "title": "OTLP-Endpunkt konfigurieren",
+        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector aktualisieren. Zur Prüfung der Verbindung wird ein Test-Logeintrag gesendet: \"{validation_message}\".",
+        "data": {
+          "host": "Collector-Host",
+          "port": "Collector-Port",
+          "use_tls": "TLS verwenden (HTTPS)",
+          "encoding": "Nutzlast-Kodierung",
+          "batch_max_size": "Maximale Batch-Größe",
+          "resource_attributes": "Benutzerdefinierte Ressourcenattribute",
+          "token_type": "Token-Typ",
+          "token": "Zugriffstoken für den Authorization-Header",
+          "headers": "Zusätzliche Header",
+          "path": "Endpunkt-Pfad für Protokolle"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des OTLP-Collectors.",
+          "port": "HTTP-Port des OTLP-Collectors (Standard: 4318).",
+          "use_tls": "HTTPS für die Verbindung zum Collector aktivieren.",
+          "encoding": "Kodierungsformat der OTLP-Nutzlast: json oder protobuf.",
+          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 100).",
+          "resource_attributes": "Optionale kommagetrennte Schlüssel=Wert-Paare, die jedem Protokolleintrag hinzugefügt werden (z. B. deployment.environment=production,service.namespace=home).",
+          "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
+          "token": "Optionales Token. Wird im Authorization-Header gesendet.",
+          "headers": "Optionale zusätzliche HTTP-Header im Format 'Name: Wert' (z. B. stream-name: mein-stream). Einen Header pro Eintrag eingeben.",
+          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs)."
+        }
+      },
+      "reconfigure_syslog": {
+        "title": "Syslog-Endpunkt konfigurieren",
+        "description": "Verbindungsdetails für Ihren RFC 5424-Syslog-Server aktualisieren.",
+        "data": {
+          "host": "Syslog-Server-Host",
+          "port": "Syslog-Server-Port",
+          "protocol": "Transportprotokoll",
+          "use_tls": "TLS verwenden (nur TCP)",
+          "app_name": "Anwendungsname",
+          "facility": "Syslog-Facility"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des Syslog-Servers.",
+          "port": "Port des Syslog-Servers (Standard: 514).",
+          "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
+          "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
+          "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
+          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user)."
+        }
+      },
       "common": {
         "title": "Zusätzliche HA-Ereignisse",
         "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus.",
@@ -116,59 +164,12 @@
       "unknown": "Ein unerwarteter Fehler ist aufgetreten."
     },
     "abort": {
-      "already_configured": "Dieser Endpunkt ist bereits konfiguriert."
+      "already_configured": "Dieser Endpunkt ist bereits konfiguriert.",
+      "reconfigure_successful": "Verbindungseinstellungen aktualisiert."
     }
   },
   "options": {
     "step": {
-      "otel": {
-        "title": "OTLP-Endpunkt konfigurieren",
-        "description": "Verbindungsdetails für Ihren OpenTelemetry-Collector aktualisieren. Zur Prüfung der Verbindung wird ein Test-Logeintrag gesendet: \"{validation_message}\".",
-        "data": {
-          "host": "Collector-Host",
-          "port": "Collector-Port",
-          "use_tls": "TLS verwenden (HTTPS)",
-          "encoding": "Nutzlast-Kodierung",
-          "batch_max_size": "Maximale Batch-Größe",
-          "resource_attributes": "Benutzerdefinierte Ressourcenattribute",
-          "token_type": "Token-Typ",
-          "token": "Zugriffstoken für den Authorization-Header",
-          "headers": "Zusätzliche Header",
-          "path": "Endpunkt-Pfad für Protokolle"
-        },
-        "data_description": {
-          "host": "Hostname oder IP-Adresse des OTLP-Collectors.",
-          "port": "HTTP-Port des OTLP-Collectors (Standard: 4318).",
-          "use_tls": "HTTPS für die Verbindung zum Collector aktivieren.",
-          "encoding": "Kodierungsformat der OTLP-Nutzlast: json oder protobuf.",
-          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 100).",
-          "resource_attributes": "Optionale kommagetrennte Schlüssel=Wert-Paare, die jedem Protokolleintrag hinzugefügt werden (z. B. deployment.environment=production,service.namespace=home).",
-          "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
-          "token": "Optionales Token. Wird im Authorization-Header gesendet.",
-          "headers": "Optionale zusätzliche HTTP-Header im Format 'Name: Wert' (z. B. stream-name: mein-stream). Einen Header pro Eintrag eingeben.",
-          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs)."
-        }
-      },
-      "syslog": {
-        "title": "Syslog-Endpunkt konfigurieren",
-        "description": "Verbindungsdetails für Ihren RFC 5424-Syslog-Server aktualisieren.",
-        "data": {
-          "host": "Syslog-Server-Host",
-          "port": "Syslog-Server-Port",
-          "protocol": "Transportprotokoll",
-          "use_tls": "TLS verwenden (nur TCP)",
-          "app_name": "Anwendungsname",
-          "facility": "Syslog-Facility"
-        },
-        "data_description": {
-          "host": "Hostname oder IP-Adresse des Syslog-Servers.",
-          "port": "Port des Syslog-Servers (Standard: 514).",
-          "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
-          "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
-          "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
-          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user)."
-        }
-      },
       "events": {
         "title": "Zusätzliche HA-Ereignisse",
         "description": "Optionale Abonnements für Home Assistant-Ereignisse über Systemprotokolle hinaus.",
@@ -206,6 +207,9 @@
           }
         }
       }
+    },
+    "error": {
+      "state_changes_exclusive": "Nur eine Zustandsänderungs-Option auswählen."
     }
   },
   "entity": {
