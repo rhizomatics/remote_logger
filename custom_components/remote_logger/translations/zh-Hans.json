@@ -223,5 +223,19 @@
         "name": "发送次数"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "没有已加载的 Remote Logger 条目。"
+    },
+    "entry_not_loaded": {
+      "message": "没有 id 为 {config_entry_id} 的已加载 Remote Logger 条目。"
+    },
+    "setup_cannot_connect": {
+      "message": "无法连接到 {endpoint}，将重试。"
+    },
+    "setup_auth_failed": {
+      "message": "{endpoint} 身份验证失败。"
+    }
   }
 }

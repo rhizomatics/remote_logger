@@ -127,6 +127,12 @@ buffers and show the last payload posted.
 
 ![Event Counter Sensor](https://remote-logger.rhizomatics.org.uk/assets/images/events_counter_sensor.png){width=480}
 
+## Removal
+
+1. In Home Assistant, go to **Settings** > **Devices & services** > **Remote Logger**. For each entry, open its menu (⋮) and choose **Delete**. Log export stops straight away, and the diagnostic sensors and their device are removed.
+2. To remove the integration's files as well, open **HACS**, find **Remote Logger**, choose **Remove**, then restart Home Assistant.
+3. If you added `fire_event: true` under `system_log:` in `configuration.yaml` only for Remote Logger, you can take it out again.
+
 ##  Rhizomatics Open Source for Home Assistant
 
 ### HACS

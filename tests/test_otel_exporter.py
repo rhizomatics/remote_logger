@@ -700,13 +700,15 @@ class TestOtelValidate:
         result = await validate(mock_session, "http://localhost:4318/v1/logs", "protobuf")
         assert result == {}
 
-    async def test_4xx_returns_cannot_connect(self) -> None:
+    @pytest.mark.parametrize("status", [401, 403])
+    async def test_auth_rejection_returns_invalid_auth(self, status: int) -> None:
+        # Distinguished from cannot_connect so setup can raise ConfigEntryAuthFailed and start reauth
         from unittest.mock import AsyncMock
 
         from custom_components.remote_logger.otel.exporter import validate
 
         mock_resp = MagicMock()
-        mock_resp.status = 401
+        mock_resp.status = status
         mock_resp.text = AsyncMock(return_value="unauthorized")
         mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
         mock_resp.__aexit__ = AsyncMock(return_value=False)
@@ -714,7 +716,7 @@ class TestOtelValidate:
         mock_session.post = MagicMock(return_value=mock_resp)
 
         result = await validate(mock_session, "http://localhost:4318/v1/logs", "json")
-        assert result == {"base": "cannot_connect"}
+        assert result == {"base": "invalid_auth"}
 
     @pytest.mark.parametrize("status", [400, 422])
     async def test_rejected_payload_returns_cannot_connect(self, status: int) -> None:
@@ -815,3 +817,27 @@ class TestOtelValidate:
         mock_session = MagicMock()
         with pytest.raises(ValueError, match="Unknown encoding"):
             await validate(mock_session, "http://localhost/v1/logs", "xml")
+
+
+@pytest.mark.real_connection_check
+class TestOtelCheckConnection:
+    async def test_passes_entry_settings_to_validate(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        mock_entry_otel.data = {**mock_entry_otel.data, "token": "secret"}
+        exporter = OtlpLogExporter(hass, mock_entry_otel)
+        with patch(
+            "custom_components.remote_logger.otel.exporter.validate", AsyncMock(return_value={"base": "invalid_auth"})
+        ) as mock_validate:
+            assert await exporter.async_check_connection() == "invalid_auth"
+        _, url, encoding, headers = mock_validate.call_args.args
+        assert url == "http://localhost:4318/v1/logs"
+        assert encoding == "json"
+        assert headers == {"Authorization": "Bearer secret"}
+
+    async def test_none_when_accepted(self, hass: HomeAssistant, mock_entry_otel: MagicMock) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        exporter = OtlpLogExporter(hass, mock_entry_otel)
+        with patch("custom_components.remote_logger.otel.exporter.validate", AsyncMock(return_value={})):
+            assert await exporter.async_check_connection() is None

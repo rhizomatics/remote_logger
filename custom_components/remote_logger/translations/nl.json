@@ -223,5 +223,19 @@
         "name": "Verzendingen"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "Er is geen Remote Logger-item geladen."
+    },
+    "entry_not_loaded": {
+      "message": "Geen geladen Remote Logger-item met id {config_entry_id}."
+    },
+    "setup_cannot_connect": {
+      "message": "Kan geen verbinding maken met {endpoint}; er wordt opnieuw geprobeerd."
+    },
+    "setup_auth_failed": {
+      "message": "Authenticatie mislukt voor {endpoint}."
+    }
   }
 }

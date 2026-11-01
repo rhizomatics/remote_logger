@@ -112,6 +112,12 @@ Home Assistantのセンサーが作成・更新され、ログアクティビテ
 
 ![診断エンティティ](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 
+## 削除
+
+1. Home Assistant で **設定** > **デバイスとサービス** > **Remote Logger** を開きます。各エントリのメニュー (⋮) を開き、**削除** を選びます。ログのエクスポートはすぐに止まり、診断センサーとそのデバイスも削除されます。
+2. 統合のファイルも削除するには、**HACS** を開き、**Remote Logger** を探して **削除** を選び、Home Assistant を再起動します。
+3. `configuration.yaml` の `system_log:` に `fire_event: true` を Remote Logger のためだけに追加していた場合は、元に戻してかまいません。
+
 ##  Home Assistant向けRhizomaticsオープンソース
 
 ### HACS

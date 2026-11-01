@@ -223,5 +223,19 @@
         "name": "Envois"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "Aucune entrée Remote Logger n'est chargée."
+    },
+    "entry_not_loaded": {
+      "message": "Aucune entrée Remote Logger chargée avec l'id {config_entry_id}."
+    },
+    "setup_cannot_connect": {
+      "message": "Impossible de se connecter à {endpoint} ; nouvelle tentative à venir."
+    },
+    "setup_auth_failed": {
+      "message": "Échec de l'authentification pour {endpoint}."
+    }
   }
 }

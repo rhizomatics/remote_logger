@@ -184,7 +184,10 @@ async def validate(
             timeout=aiohttp.ClientTimeout(total=10),
             **submission.body(),
         ) as resp:
-            if resp.status >= 400 and resp.status < 500:
+            if resp.status in (401, 403):
+                errors["base"] = "invalid_auth"
+                _LOGGER.error("remote_logger: authentication failed (%s): %s", resp.status, await resp.text())
+            elif resp.status >= 400 and resp.status < 500:
                 errors["base"] = "cannot_connect"
                 _LOGGER.error("remote_logger: client connect failed (%s): %s", resp.status, await resp.text())
             if resp.status >= 500:
@@ -310,6 +313,7 @@ class OtlpLogExporter(LogExporter):
         self.endpoint_url = f"{scheme}://{host}:{port}{path}"
         self.destination = (host, str(port), encoding)
         self._use_tls = use_tls
+        self._encoding = encoding
         self._use_protobuf = encoding == ENCODING_PROTOBUF
         self._entry = entry
         self._batch_max_size = opts.get(CONF_BATCH_MAX_SIZE, 100)
@@ -319,6 +323,12 @@ class OtlpLogExporter(LogExporter):
         self._resource = self._build_resource(opts)
 
         _LOGGER.info(f"remote_logger: otel configured for {self.endpoint_url}, protobuf={self._use_protobuf}")
+
+    async def async_check_connection(self) -> str | None:
+        """Send a test record to the collector. Returns an error key, or None if it was accepted."""
+        session = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
+        errors = await validate(session, self.endpoint_url, self._encoding, self._extra_headers or None)
+        return errors.get("base")
 
     def _build_extra_headers(self, opts: dict[str, typing.Any]) -> dict[str, str]:
         headers: dict[str, str] = {}

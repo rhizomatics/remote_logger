@@ -4,8 +4,7 @@
 # Rule set verified against https://contributors.home-assistant.io/core/quality-scale/rules/#checklist
 # (HA 2026.10.3 / 2026.11 beta; formerly developers.home-assistant.io). 54 rules, same set as
 # supernotify's 2026-08-06 verification: no rules added, removed, renamed or moved since.
-# Level: none yet. Bronze is blocked by action-setup, config-flow (data/options split),
-# docs-removal-instructions, entity-unique-id and test-before-setup.
+# Level: none yet. Bronze is blocked by config-flow (data/options split).
 
 rules:
   # ==================
@@ -13,11 +12,10 @@ rules:
   # ==================
 
   action-setup:
-    status: todo
+    status: done
     comment: |
-      send_log, flush and last_log are registered in async_setup_entry (remote_logger.py,
-      guarded by has_service) and never in async_setup, so they don't exist until an entry
-      loads. Move to async_setup and raise ServiceValidationError when no entry is loaded.
+      send_log, flush and last_log are registered in async_setup (remote_logger.py), so they
+      exist with no entry loaded; they raise ServiceValidationError in that case.
 
   appropriate-polling:
     status: done
@@ -72,8 +70,8 @@ rules:
     comment: README.md "Installation" (HACS, then the integrations page).
 
   docs-removal-instructions:
-    status: todo
-    comment: No removal section in README.md or docs/.
+    status: done
+    comment: README "Removal" (and the translated READMEs), included in the docs site index.
 
   docs-triggers:
     status: exempt
@@ -87,12 +85,11 @@ rules:
       async_unload_entry.
 
   entity-unique-id:
-    status: todo
+    status: done
     comment: |
-      Unique IDs are slugify(f"{exporter.name}_{key}") (sensor.py), and exporter.name is
-      entry.title (otel/exporter.py, syslog/exporter.py). Titles can be renamed by the user,
-      so after a rename and restart every sensor gets a new unique ID and the old entities
-      are orphaned. Use entry.entry_id, with an entity-registry migration for existing IDs.
+      Unique IDs are "<entry_id>_<key>" (sensor.py), so renaming an entry keeps its
+      entities. Config entry minor version 2 migrates the older title-based IDs
+      (async_migrate_entry in remote_logger.py).
 
   has-entity-name:
     status: done
@@ -106,11 +103,11 @@ rules:
     comment: otel validate() and syslog validate() run before the entry is created.
 
   test-before-setup:
-    status: todo
+    status: done
     comment: |
-      async_setup_entry starts the exporter without checking that the endpoint is
-      reachable. Raise ConfigEntryNotReady (or ConfigEntryAuthFailed for 401/403) on
-      failure, reusing the config flow's validate().
+      async_setup_entry runs the config flow's validate() through the exporter's
+      async_check_connection: ConfigEntryAuthFailed on OTLP 401/403 (starts reauth),
+      ConfigEntryNotReady otherwise.
 
   unique-config-entry:
     status: done
@@ -123,10 +120,10 @@ rules:
   # ==================
 
   action-exceptions:
-    status: todo
+    status: done
     comment: |
-      last_log returns {} for an unknown or unloaded config_entry_id, and send_log/flush
-      silently do nothing when no entry is loaded. Raise ServiceValidationError.
+      send_log and flush raise ServiceValidationError when no entry is loaded; last_log
+      raises it for an unknown or unloaded config_entry_id.
 
   config-entry-unloading:
     status: done
@@ -259,7 +256,9 @@ rules:
 
   exception-translations:
     status: todo
-    comment: No exceptions section in translations; depends on action-exceptions.
+    comment: |
+      Action and setup exceptions are translated (translations/*.json "exceptions"). Still
+      to check: any other user-facing exception before marking done.
 
   icon-translations:
     status: todo

@@ -101,6 +101,10 @@ class SyslogExporter(LogExporter):
         )
         _LOGGER.info(f"remote_logger: syslog configured for {self.endpoint_desc}")
 
+    async def async_check_connection(self) -> str | None:
+        """Check the syslog server can be reached. Returns an error key, or None."""
+        return await validate(self._hass, self._host, self._port, self._protocol, self._use_tls)
+
     def create_log_record(
         self,
         event_data: Mapping[str, Any],

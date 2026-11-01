@@ -223,5 +223,19 @@
         "name": "Wysłania"
       }
     }
+  },
+  "exceptions": {
+    "no_loaded_entries": {
+      "message": "Nie załadowano żadnego wpisu Remote Logger."
+    },
+    "entry_not_loaded": {
+      "message": "Brak załadowanego wpisu Remote Logger o id {config_entry_id}."
+    },
+    "setup_cannot_connect": {
+      "message": "Nie można połączyć się z {endpoint}; nastąpi ponowna próba."
+    },
+    "setup_auth_failed": {
+      "message": "Uwierzytelnianie dla {endpoint} nie powiodło się."
+    }
   }
 }

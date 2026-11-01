@@ -119,6 +119,12 @@ Des capteurs Home Assistant sont créés et mis à jour pour surveiller l'activi
 
 ![Entités de diagnostic](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 
+## Désinstallation
+
+1. Dans Home Assistant, ouvrez **Paramètres** > **Appareils et services** > **Remote Logger**. Pour chaque entrée, ouvrez son menu (⋮) et choisissez **Supprimer**. L'export des journaux s'arrête immédiatement, et les capteurs de diagnostic ainsi que leur appareil sont supprimés.
+2. Pour supprimer aussi les fichiers de l'intégration, ouvrez **HACS**, trouvez **Remote Logger**, choisissez **Supprimer**, puis redémarrez Home Assistant.
+3. Si vous aviez ajouté `fire_event: true` sous `system_log:` dans `configuration.yaml` uniquement pour Remote Logger, vous pouvez le retirer.
+
 ##  Rhizomatics Open Source pour Home Assistant
 
 ### HACS
