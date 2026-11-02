@@ -81,7 +81,7 @@ class LoggerEntity(SensorEntity):
 
     _attr_should_poll = True
     _attr_has_entity_name = True
-    entity_description: RemoteLoggerDiagnosticEntityDescription  # pyright: ignore[reportIncompatibleVariableOverride]
+    entity_description: RemoteLoggerDiagnosticEntityDescription  # ty: ignore[invalid-mutable-override]
 
     def __init__(
         self,

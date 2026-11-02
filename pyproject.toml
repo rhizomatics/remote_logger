@@ -129,6 +129,7 @@ include = ["tests/**"]
 invalid-argument-type = "ignore"
 not-subscriptable = "ignore"
 unresolved-attribute = "ignore"
+unsupported-operator = "ignore"
 
 [tool.codespell]
 ignore-words-list = "hass,alot,astroid,NotIn,datas,dof,dur,farenheit,hist,iff,ines,ist,lightsensor,mut,nd,pres,referer,ser,serie,te,technik,ue,uint,visability,wan,wanna,withing"

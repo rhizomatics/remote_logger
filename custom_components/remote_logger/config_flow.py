@@ -6,7 +6,6 @@ import logging
 import re
 from typing import Any
 
-import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HEADERS, CONF_HOST, CONF_PATH, CONF_PORT, CONF_PROTOCOL, CONF_TOKEN
 from homeassistant.core import HomeAssistant, callback
@@ -14,6 +13,7 @@ from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .compat import vol
 from .const import (
     BACKEND_OTEL,
     BACKEND_SYSLOG,

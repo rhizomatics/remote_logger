@@ -98,7 +98,7 @@ class LogExporter:
             # prevent log loops
             return
         try:
-            record: LogMessage = self.create_log_record(event.data, event.event_type, event.time_fired)
+            record: LogMessage = self.create_log_record(event.data, str(event.event_type), event.time_fired)
             self._buffer.append(record)
 
             if len(self._buffer) >= self._batch_max_size:
@@ -199,7 +199,7 @@ class LogExporter:
 
             record: LogMessage = self.create_log_record(
                 event_data,
-                event.event_type,
+                str(event.event_type),
                 event.time_fired,
                 message_override=message,
                 level_override="INFO",

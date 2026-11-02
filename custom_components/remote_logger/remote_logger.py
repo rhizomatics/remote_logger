@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
-import voluptuous as vol
 from homeassistant.components.system_log import EVENT_SYSTEM_LOG
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
@@ -20,6 +19,7 @@ from homeassistant.helpers import entity_registry as er
 
 from custom_components.remote_logger.handler import ExportingLogHandler
 
+from .compat import vol
 from .config_flow import OTEL_CONNECTION_KEYS, SYSLOG_CONNECTION_KEYS
 from .const import (
     BACKEND_SYSLOG,

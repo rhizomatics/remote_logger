@@ -295,6 +295,8 @@ class OtlpLogExporter(LogExporter):
         self.name = entry.title
 
         self._lock = asyncio.Lock()
+        self.server_address: str | None
+        self.server_port: int | None
         if hass and hass.config and hass.config.api:
             self.server_address = hass.config.api.local_ip
             self.server_port = hass.config.api.port
