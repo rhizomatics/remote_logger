@@ -114,6 +114,10 @@ unfixable = ["B"]
 [tool.ruff.format]
 preview = true
 
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disable_error_code = ["arg-type", "call-overload", "index", "operator"]
+
 [tool.ty.src]
 include = ["custom_components/remote_logger","tests"]
 
