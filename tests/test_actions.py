@@ -8,11 +8,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.setup import async_setup_component
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.remote_logger.config_flow import OtelLogsConfigFlow
 from custom_components.remote_logger.const import CONF_EVENT_BASED_LOGGING, DOMAIN
 from custom_components.remote_logger.otel.exporter import OtlpJsonSubmission, OtlpMessage, OtlpProtobufSubmission
+from tests.ha_testing import MockConfigEntry
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Awaitable, Callable

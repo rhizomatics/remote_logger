@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.remote_logger import async_setup_entry, async_unload_entry
 from custom_components.remote_logger.config_flow import OtelLogsConfigFlow
@@ -26,6 +25,7 @@ from custom_components.remote_logger.const import (
     LIFECYCLE_EVENTS,
 )
 from custom_components.remote_logger.remote_logger import RemoteLoggerData
+from tests.ha_testing import MockConfigEntry
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry

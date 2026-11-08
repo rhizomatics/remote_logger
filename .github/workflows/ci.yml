@@ -58,12 +58,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # oldest supported (hacs.json), the locked release, and the newest
         include:
-          - python-version: "3.14"
-            ha-version: "2026.5"
+          - ha-version: "2026.5"
+            python-version: "3.14"
             ha-override: "2026.5.*"
-          - python-version: "3.14"
-            ha-version: "2026.10"
+          - ha-version: "2026.10"
+            python-version: "3.14"
+          - ha-version: "2026.11"
+            python-version: "3.14"
+            ha-override: "2026.11.*"
+            # Home Assistant's own test package, replacing pytest-homeassistant-custom-component from 2026.11
+            ha-test-package: pytest-homeassistant
 
     steps:
       - uses: actions/checkout@v7.0.1
@@ -76,12 +82,19 @@ jobs:
       - name: Install dependencies
         run: uv sync --python ${{ matrix.python-version }}
 
-      # As supernotify: --no-config keeps [tool.uv] settings in pyproject.toml out of this resolve.
-      # The test harness has to move with homeassistant, as it is built against one HA release
+      # --no-config keeps the [tool.uv] settings in pyproject.toml out of this resolve. The test
+      # harness has to move with homeassistant, as it is built against one HA release: Home
+      # Assistant's own pytest-homeassistant from 2026.11, pytest-homeassistant-custom-component
+      # before that (see tests/ha_testing.py)
       - name: Pin Home Assistant ${{ matrix.ha-version }}
         if: matrix.ha-override
         run: |
-          uv pip install --no-config "homeassistant==${{ matrix.ha-override }}" pytest-homeassistant-custom-component
+          uv pip uninstall pytest-homeassistant pytest-homeassistant-custom-component
+          if [ "${{ matrix.ha-test-package }}" = "pytest-homeassistant" ]; then
+            uv pip install --no-config "homeassistant==${{ matrix.ha-override }}" "pytest-homeassistant==${{ matrix.ha-override }}"
+          else
+            uv pip install --no-config "homeassistant==${{ matrix.ha-override }}" pytest-homeassistant-custom-component
+          fi
           uv run --no-sync python -c "import homeassistant.const as c; v = c.__version__; print('Home Assistant', v); assert v.startswith('${{ matrix.ha-version }}.'), v"
 
       # --no-sync: a plain uv run would re-sync to the lock and undo the pin above
