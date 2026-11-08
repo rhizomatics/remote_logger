@@ -58,20 +58,3 @@ repos:
     hooks:
       - id: ty
         args: [--isolated, --no-python-downloads]
-
-
-ci:
-    autofix_commit_msg: |
-        [pre-commit.ci] auto fixes from pre-commit.com hooks
-
-        for more information, see https://pre-commit.ci
-    autofix_prs: true
-    autoupdate_branch: ''
-    autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
-    autoupdate_schedule: weekly
-    skip:
-      - bandit
-      - mypy
-      # ty resolves the project environment, which pre-commit.ci can't build; it still runs locally
-      - ty
-    submodules: false
