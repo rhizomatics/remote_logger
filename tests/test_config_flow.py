@@ -340,7 +340,7 @@ class TestReauthFlow:
     """Reauth must not combine an update listener with async_update_reload_and_abort (raises from HA 2026.12)."""
 
     def _make_entry(self, hass: HomeAssistant, options: dict[str, Any] | None = None) -> Any:
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
+        from tests.ha_testing import MockConfigEntry
 
         entry = MockConfigEntry(
             domain=DOMAIN,
@@ -389,7 +389,7 @@ class TestReconfigureFlow:
     """Connection settings are entry data, changed by a reconfigure step (config-flow, reconfiguration-flow)."""
 
     def _otel_entry(self, hass: HomeAssistant, title: str = "OTLP @ localhost:4318", **data: Any) -> Any:
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
+        from tests.ha_testing import MockConfigEntry
 
         entry = MockConfigEntry(
             domain=DOMAIN,
@@ -465,7 +465,7 @@ class TestReconfigureFlow:
         assert entry.data[CONF_HOST] == "localhost"
 
     async def test_otel_aborts_if_other_entry_has_endpoint(self, hass: HomeAssistant) -> None:
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
+        from tests.ha_testing import MockConfigEntry
 
         MockConfigEntry(domain=DOMAIN, unique_id=f"{DOMAIN}_otel_other_4318", data={"backend": "otel"}).add_to_hass(hass)
         entry = self._otel_entry(hass)
@@ -477,7 +477,7 @@ class TestReconfigureFlow:
         assert entry.data[CONF_HOST] == "localhost"
 
     async def test_syslog(self, hass: HomeAssistant) -> None:
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
+        from tests.ha_testing import MockConfigEntry
 
         entry = MockConfigEntry(
             domain=DOMAIN,
@@ -498,7 +498,7 @@ class TestReconfigureFlow:
         assert entry.title == "Syslog @ new:6514 (TCP)"
 
     async def test_syslog_validation_error_shown(self, hass: HomeAssistant) -> None:
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
+        from tests.ha_testing import MockConfigEntry
 
         entry = MockConfigEntry(
             domain=DOMAIN,

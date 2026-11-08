@@ -164,6 +164,8 @@ norecursedirs = [
 ]
 
 addopts = [
+    # pytest-homeassistant installs respx, whose pytest plugin it asks to be switched off
+    "-p", "no:respx",
     "--timeout=30",
     "--cov-report=xml:cov.xml",
     "--cov-report=html",
@@ -171,3 +173,10 @@ addopts = [
     "--cov=custom_components/remote_logger",
     "--cov-fail-under=90"
 ]
+
+# only one of the two test helper packages is installed at a time
+[[tool.ty.overrides]]
+include = ["tests/ha_testing.py"]
+
+[tool.ty.overrides.rules]
+import-not-found = "ignore"
