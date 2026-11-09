@@ -2,20 +2,39 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
 import pytest
 
+from custom_components.remote_logger.helpers import isotimestamp
 from custom_components.remote_logger.syslog.exporter import (
     SyslogExporter,
     SyslogMessage,
     _sd_escape,
+    _strict_param_name,
 )
 
 if TYPE_CHECKING:
     from homeassistant.core import Event, HomeAssistant
+
+# RFC 5424 SD-ELEMENT grammar: SD-NAME is 1-32 PRINTUSASCII excluding '=', SP, ']', '"';
+# PARAM-VALUE may only contain '"', '\' and ']' when backslash-escaped.
+_SD_NAME = r"[!#-<>-\\^-~]{1,32}"
+_SD_PARAM = _SD_NAME + r'="(?:[^"\\\]]|\\["\\\]])*"'
+_SD_ELEMENT = re.compile(r"\[" + _SD_NAME + r"(?: " + _SD_PARAM + r")*\]")
+
+
+def _sd_block(line: str) -> re.Match[str] | None:
+    """Match the STRUCTURED-DATA field of an RFC 5424 line against the grammar."""
+    rest = line.split(" ", 6)[6]
+    match = _SD_ELEMENT.match(rest)
+    if match is None or (match.end() < len(rest) and rest[match.end()] != " "):
+        return None
+    return match
+
 
 # ---------------------------------------------------------------------------
 # _sd_escape
@@ -161,6 +180,17 @@ class TestSyslogExporter:
         msg = exporter.create_log_record(data, "system_log_event", None).payload.decode("utf-8")
         assert "error happened" in msg
         assert "ValueError: bad" in msg
+
+    def test_exception_stacktrace_is_escaped(self, exporter: SyslogExporter) -> None:
+        data = {"message": ["x"], "level": "ERROR", "exception": 'ValueError: "bad]" in C:\\path'}
+        msg = exporter.create_log_record(data, "system_log_event", None).payload.decode("utf-8")
+        assert 'exception.stacktrace="ValueError: \\"bad\\]\\" in C:\\\\path"' in msg
+        assert _sd_block(msg) is not None
+
+    def test_event_name_is_quoted(self, exporter: SyslogExporter) -> None:
+        msg = exporter.create_log_record({}, "homeassistant_started", None).payload.decode("utf-8")
+        assert '[opentelemetry eventName="homeassistant_started"]' in msg
+        assert _sd_block(msg) is not None
 
     def test_to_syslog_message_empty_messages(self, exporter: SyslogExporter) -> None:
         data = {"message": [], "level": "INFO", "timestamp": 1700000000.0}
@@ -547,3 +577,114 @@ class TestSyslogCheckConnection:
         ) as mock_validate:
             assert await exporter.async_check_connection() == "cannot_connect"
         mock_validate.assert_awaited_once_with(hass, "syslog.example.com", 514, "udp", False)
+
+
+# ---------------------------------------------------------------------------
+# Strict RFC 5424 mode
+# ---------------------------------------------------------------------------
+
+LONG_EVENT = "a_custom_event_type_longer_than_thirty_two_chars"
+
+
+class TestSyslogStrictMode:
+    def _exporter(self, hass: HomeAssistant, mock_entry_syslog: MagicMock, **opts: object) -> SyslogExporter:
+        mock_entry_syslog.options = opts
+        return SyslogExporter(hass, mock_entry_syslog)
+
+    def test_off_by_default_keeps_long_msgid_and_otel_names(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, enterprise_number=12345)
+        line = exporter.create_log_record({"entity_id": "light.x"}, LONG_EVENT, None).payload.decode("utf-8")
+        assert line.split(" ")[5] == LONG_EVENT
+        assert f'[opentelemetry eventName="{LONG_EVENT}" event.data.entity_id="light.x"]' in line
+
+    def test_msgid_truncated_to_32(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True)
+        line = exporter.create_log_record({}, LONG_EVENT, None).payload.decode("utf-8")
+        assert line.split(" ")[5] == LONG_EVENT[:32]
+        # The full event type is still carried in the structured data
+        assert f'event_type="{LONG_EVENT}"' in line
+
+    def test_log_direct_msgid_truncated_to_32(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True)
+        exporter.log_direct(LONG_EVENT, "hello", "INFO")
+        assert exporter._buffer[0].payload.decode("utf-8").split(" ")[5] == LONG_EVENT[:32]
+
+    def test_sd_id_defaults_to_documentation_pen(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True)
+        line = exporter.create_log_record({}, "homeassistant_started", None).payload.decode("utf-8")
+        assert '[homeassistant@32473 event_type="homeassistant_started"]' in line
+        assert _sd_block(line) is not None
+
+    def test_sd_id_with_enterprise_number(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True, enterprise_number=12345)
+        line = exporter.create_log_record({}, "homeassistant_started", None).payload.decode("utf-8")
+        assert '[homeassistant@12345 event_type="homeassistant_started"]' in line
+
+    def test_system_log_event_uses_ha_names(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True, suppress_system_log_event_name=False)
+        data = {
+            "name": "homeassistant.components.sensor",
+            "message": ["Something went wrong"],
+            "level": "ERROR",
+            "source": ("homeassistant/core.py", 50),
+            "exception": 'ValueError: "bad]"',
+            "count": 3,
+            "first_occurred": 1699999000.0,
+        }
+        line = exporter.create_log_record(data, "system_log_event", None).payload.decode("utf-8")
+        sd = _sd_block(line)
+        assert sd is not None
+        assert sd.group(0) == (
+            '[homeassistant@32473 source="homeassistant/core.py:50" name="homeassistant.components.sensor"'
+            f' count="3" first_occurred="{isotimestamp(1699999000.0)}"'
+            ' exception="ValueError: \\"bad\\]\\"" event_type="system_log_event"]'
+        )
+
+    def test_event_data_names_shortened(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True)
+        data = {
+            "entity_id": "light.x",
+            "new_state": {
+                "state": "on",
+                "attributes": {"friendly_name": "X"},
+                "last_changed": "t",
+                "context": {"parent_id": "p"},
+            },
+        }
+        line = exporter.create_log_record(data, "state_changed", None).payload.decode("utf-8")
+        sd = _sd_block(line)
+        assert sd is not None
+        assert sd.group(0) == (
+            '[homeassistant@32473 event_type="state_changed" entity_id="light.x" new.state="on"'
+            ' new.attr.friendly_name="X" new.changed="t" new.ctx.parent="p"]'
+        )
+
+    def test_log_direct_attributes(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True, enterprise_number=12345)
+        exporter.log_direct("unit_test", "hello", "INFO", {"k": "v", "bad key": "w"})
+        line = exporter._buffer[0].payload.decode("utf-8")
+        assert '[homeassistant@12345 k="v" bad_key="w"]' in line
+        assert _sd_block(line) is not None
+
+
+class TestStrictParamName:
+    @pytest.mark.parametrize(
+        ("key", "expected"),
+        [
+            ("entity_id", "entity_id"),
+            ("old_state.attributes.unit_of_measurement", "old.attr.unit_of_measurement"),
+            ("service_data.brightness", "data.brightness"),
+            ("new_state.last_updated", "new.updated"),
+            ("new_state.last_reported", "new.reported"),
+            # A segment is only abbreviated when it matches exactly
+            ("my_attributes.x", "my_attributes.x"),
+            # Characters not allowed in an RFC 5424 PARAM-NAME are replaced
+            ('a b=c]d"e', "a_b_c_d_e"),
+            ("température", "temp_rature"),
+            # Anything still over 32 characters is cut to the limit
+            ("new_state.attributes.supported_color_modes_extra", "new.attr.supported_color_modes_e"),
+        ],
+    )
+    def test_strict_param_name(self, key: str, expected: str) -> None:
+        assert _strict_param_name(key) == expected
+        assert len(_strict_param_name(key)) <= 32

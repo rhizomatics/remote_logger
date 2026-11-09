@@ -58,7 +58,9 @@
           "protocol": "Transportprotocol",
           "use_tls": "TLS gebruiken (alleen TCP)",
           "app_name": "Applicatienaam",
-          "facility": "Syslog-facility"
+          "facility": "Syslog-facility",
+          "strict_mode": "Strikte RFC 5424-modus",
+          "enterprise_number": "Enterprise-nummer (strikte modus)"
         },
         "data_description": {
           "host": "Hostnaam of IP-adres van de syslogserver.",
@@ -66,7 +68,9 @@
           "protocol": "Transportprotocol: UDP (fire-and-forget) of TCP (betrouwbare bezorging).",
           "use_tls": "TLS-versleuteling inschakelen voor TCP-verbindingen. Wordt genegeerd voor UDP.",
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
-          "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user)."
+          "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user).",
+          "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@<enterprise-nummer>. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
+          "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@<nummer> in strikte modus. Standaard 32473, het documentatienummer uit RFC 5612."
         }
       },
       "reconfigure_otel": {
@@ -106,7 +110,9 @@
           "protocol": "Transportprotocol",
           "use_tls": "TLS gebruiken (alleen TCP)",
           "app_name": "Applicatienaam",
-          "facility": "Syslog-facility"
+          "facility": "Syslog-facility",
+          "strict_mode": "Strikte RFC 5424-modus",
+          "enterprise_number": "Enterprise-nummer (strikte modus)"
         },
         "data_description": {
           "host": "Hostnaam of IP-adres van de syslogserver.",
@@ -114,7 +120,9 @@
           "protocol": "Transportprotocol: UDP (fire-and-forget) of TCP (betrouwbare bezorging).",
           "use_tls": "TLS-versleuteling inschakelen voor TCP-verbindingen. Wordt genegeerd voor UDP.",
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
-          "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user)."
+          "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user).",
+          "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@<enterprise-nummer>. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
+          "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@<nummer> in strikte modus. Standaard 32473, het documentatienummer uit RFC 5612."
         }
       },
       "common": {

@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import logging
 import os
+import re
 import socket
 import ssl
 import time
@@ -18,7 +19,9 @@ from custom_components.remote_logger.const import (
     CONF_APP_NAME,
     CONF_BATCH_MAX_SIZE,
     CONF_CLIENT_TIMEOUT,
+    CONF_ENTERPRISE_NUMBER,
     CONF_FACILITY,
+    CONF_STRICT_MODE,
     CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME,
     CONF_USE_TLS,
     DEFAULT_CLIENT_TIMEOUT,
@@ -28,9 +31,17 @@ from custom_components.remote_logger.helpers import flatten_event_data, isotimes
 
 from .const import (
     DEFAULT_APP_NAME,
+    DEFAULT_ENTERPRISE_NUMBER,
     DEFAULT_FACILITY,
     DEFAULT_SYSLOG_SEVERITY,
+    MSGID_MAX_LENGTH,
+    OTEL_SD_NAMES,
     PROTOCOL_UDP,
+    SD_ID,
+    SD_NAME_MAX_LENGTH,
+    STRICT_PARAM_ABBREVIATIONS,
+    STRICT_SD_ID,
+    STRICT_SD_NAMES,
     SYSLOG_FACILITY_MAP,
     SYSLOG_SEVERITY_MAP,
 )
@@ -86,6 +97,13 @@ class SyslogExporter(LogExporter):
         self._batch_max_size = opts.get(CONF_BATCH_MAX_SIZE, 10)
         self._client_timeout = opts.get(CONF_CLIENT_TIMEOUT, DEFAULT_CLIENT_TIMEOUT)
         self._suppress_system_log_event_name = opts.get(CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME, True)
+        self._strict_mode = opts.get(CONF_STRICT_MODE, False)
+        if self._strict_mode:
+            self._sd_id = f"{STRICT_SD_ID}@{opts.get(CONF_ENTERPRISE_NUMBER) or DEFAULT_ENTERPRISE_NUMBER}"
+            self._sd_names = STRICT_SD_NAMES
+        else:
+            self._sd_id = SD_ID
+            self._sd_names = OTEL_SD_NAMES
         self._hostname = "-"
 
         # TCP connection state (lazily created)
@@ -141,44 +159,57 @@ class SyslogExporter(LogExporter):
         # Structured data with meta info
         sd = "-"
         sd_params: list[str] = []
+        names = self._sd_names
         if event_type == EVENT_SYSTEM_LOG:
             source = data.get("source")
             if source and isinstance(source, tuple):
                 source_path, source_linenum = source
-                sd_params.extend([f'code.file.path="{_sd_escape(source_path)}"', f'code.line.number="{source_linenum}"'])
+                if self._strict_mode:
+                    sd_params.append(f'source="{_sd_escape(f"{source_path}:{source_linenum}")}"')
+                else:
+                    sd_params.extend([f'code.file.path="{_sd_escape(source_path)}"', f'code.line.number="{source_linenum}"'])
             logger_name = data.get("name")
             if logger_name:
-                sd_params.append(f'code.function.name="{_sd_escape(logger_name)}"')
+                sd_params.append(f'{names["logger"]}="{_sd_escape(logger_name)}"')
             if data.get("count"):
-                sd_params.append(f'exception.count="{data["count"]}"')
+                sd_params.append(f'{names["count"]}="{data["count"]}"')
             if data.get("first_occurred"):
-                sd_params.append(f'exception.first_occurred="{isotimestamp(data["first_occurred"])}"')
+                sd_params.append(f'{names["first_occurred"]}="{isotimestamp(data["first_occurred"])}"')
 
             exception = data.get("exception")
             if exception:
-                sd_params.append(f'exception.stacktrace="{data["exception"]}"')
+                sd_params.append(f'{names["exception"]}="{_sd_escape(exception)}"')
             if not self._suppress_system_log_event_name:
-                sd_params.append(f'eventName="{EVENT_SYSTEM_LOG}"')
+                sd_params.append(f'{names["event_type"]}="{EVENT_SYSTEM_LOG}"')
                 msgid: str = EVENT_SYSTEM_LOG
             else:
                 msgid = "-"
         else:
             if event_type is not None:
-                sd_params.append(f"eventName={event_type}")
+                sd_params.append(f'{names["event_type"]}="{_sd_escape(event_type)}"')
             # Use HA event type as MSGID for non-system-log events; "-" otherwise
             msgid = event_type or "-"
             for k, v in data.items():
-                for flat_key, flat_val in flatten_event_data(f"event.data.{k}" if k != "event.data" else k, v, state_only):
-                    sd_params.append(f'{_sd_escape(flat_key)}="{_sd_escape(str(flat_val))}"')
+                if self._strict_mode:
+                    for flat_key, flat_val in flatten_event_data(k, v, state_only):
+                        sd_params.append(f'{_strict_param_name(flat_key)}="{_sd_escape(str(flat_val))}"')
+                else:
+                    for flat_key, flat_val in flatten_event_data(f"event.data.{k}" if k != "event.data" else k, v, state_only):
+                        sd_params.append(f'{_sd_escape(flat_key)}="{_sd_escape(str(flat_val))}"')
 
         if sd_params:
-            sd = f"[opentelemetry {' '.join(sd_params)}]"
+            sd = f"[{self._sd_id} {' '.join(sd_params)}]"
+        msgid = self._msgid(msgid)
 
         # RFC 5424: <PRI>VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID SP SD [SP MSG]
         # VERSION = 1, PROCID = -
         syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {msgid} {sd} {msg}"
 
         return SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
+
+    def _msgid(self, msgid: str) -> str:
+        """Truncate MSGID to the RFC 5424 limit in strict mode."""
+        return msgid[:MSGID_MAX_LENGTH] if self._strict_mode else msgid
 
     def log_direct(self, event_name: str, message: str, level: str, attributes: dict[str, Any] | None = None) -> None:
         """Buffer a custom syslog record without requiring a HA Event."""
@@ -187,9 +218,10 @@ class SyslogExporter(LogExporter):
         timestamp = isotimestamp(time.time())
         sd = "-"
         if attributes:
-            sd_params = [f'{_sd_escape(k)}="{_sd_escape(str(v))}"' for k, v in attributes.items()]
-            sd = f"[opentelemetry {' '.join(sd_params)}]"
-        syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {event_name} {sd} {message}"
+            param_name = _strict_param_name if self._strict_mode else _sd_escape
+            sd_params = [f'{param_name(k)}="{_sd_escape(str(v))}"' for k, v in attributes.items()]
+            sd = f"[{self._sd_id} {' '.join(sd_params)}]"
+        syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {self._msgid(event_name)} {sd} {message}"
         record = SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
         self._buffer.append(record)
         self.on_event()
@@ -293,6 +325,16 @@ class SyslogExporter(LogExporter):
 def _sd_escape(value: str) -> str:
     """Escape special characters for RFC 5424 structured data values."""
     return value.replace("\\", "\\\\").replace('"', '\\"').replace("]", "\\]")
+
+
+# RFC 5424 SD-NAME: printable US-ASCII except '=', SP, ']' and '"'
+_SD_NAME_INVALID = re.compile(r"[^!#-<>-\\^-~]")
+
+
+def _strict_param_name(key: str) -> str:
+    """Make a valid RFC 5424 PARAM-NAME, shortening common Home Assistant terms in dotted keys."""
+    name = ".".join(STRICT_PARAM_ABBREVIATIONS.get(segment, segment) for segment in key.split("."))
+    return _SD_NAME_INVALID.sub("_", name)[:SD_NAME_MAX_LENGTH]
 
 
 async def validate(hass: Any, host: str, port: int, protocol: str, use_tls: bool) -> str | None:

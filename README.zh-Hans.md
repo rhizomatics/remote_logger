@@ -62,6 +62,8 @@ Syslog 支持 TCP 或 UDP 传输。
 
 ![配置 Syslog](https://remote-logger.rhizomatics.org.uk/assets/images/config_syslog.png){width=360}
 
+**严格 RFC 5424 模式**适用于会严格检查消息的接收端，例如 Grafana Alloy。可在 Syslog 设置表单中启用，或之后通过**重新配置**启用。启用后，结构化数据使用 Home Assistant 自己的名称，如 `name`、`source`、`exception` 和 `event_type`，事件数据的键会缩短到 RFC 规定的 32 个字符以内（例如 `new_state.attributes.friendly_name` 变为 `new.attr.friendly_name`）。`MSGID` 截断为 32 个字符，SD-ID 为 `homeassistant@<编号>`，编号使用你填写的 [IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/)，留空时使用文档用编号 32473。未启用严格模式时，使用下方列出的 OTEL 名称。
+
 ## 事件
 
 ### 系统日志事件
