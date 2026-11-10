@@ -4,7 +4,6 @@ import asyncio
 import contextlib
 import logging
 import os
-import re
 import socket
 import ssl
 import time
@@ -327,14 +326,14 @@ def _sd_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"').replace("]", "\\]")
 
 
-# RFC 5424 SD-NAME: printable US-ASCII except '=', SP, ']' and '"'
-_SD_NAME_INVALID = re.compile(r"[^!#-<>-\\^-~]")
+# RFC 5424 SD-NAME: printable US-ASCII (33-126) except '=', ']' and '"'
+_SD_NAME_CHARS = frozenset(chr(c) for c in range(33, 127)) - set('="]')
 
 
 def _strict_param_name(key: str) -> str:
     """Make a valid RFC 5424 PARAM-NAME, shortening common Home Assistant terms in dotted keys."""
     name = ".".join(STRICT_PARAM_ABBREVIATIONS.get(segment, segment) for segment in key.split("."))
-    return _SD_NAME_INVALID.sub("_", name)[:SD_NAME_MAX_LENGTH]
+    return "".join(c if c in _SD_NAME_CHARS else "_" for c in name)[:SD_NAME_MAX_LENGTH]
 
 
 async def validate(hass: Any, host: str, port: int, protocol: str, use_tls: bool) -> str | None:
