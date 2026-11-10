@@ -130,7 +130,7 @@ As you review documentation, update your agent memory with discoveries about:
 
 # Persistent Agent Memory
 
-You have a persistent Persistent Agent Memory directory at `/Users/jey/Code/hassotel/.claude/agent-memory/docs-reviewer/`. Its contents persist across conversations.
+You have a persistent Persistent Agent Memory directory at `/Users/jey/Projects/remote_logger/.claude/agent-memory/docs-reviewer/`. Its contents persist across conversations.
 
 As you work, consult your memory files to build on previous experience. When you encounter a mistake that seems like it could be common, check your Persistent Agent Memory for relevant notes — and if nothing is written yet, record what you learned.
 
