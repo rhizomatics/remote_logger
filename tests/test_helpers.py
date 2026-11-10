@@ -36,14 +36,14 @@ class TestFlattenEventData:
 
     def test_as_dict_called(self) -> None:
         class Obj:
-            def as_dict(self) -> dict:
+            def as_dict(self) -> dict[str, str]:
                 return {"k": "v"}
 
         assert flatten_event_data("ev", Obj(), False) == [("ev.k", "v")]
 
     def test_as_dict_nested(self) -> None:
         class Nested:
-            def as_dict(self) -> dict:
+            def as_dict(self) -> dict[str, int]:
                 return {"a": 1, "b": 2}
 
         result = flatten_event_data("ev", {"child": Nested()}, False)

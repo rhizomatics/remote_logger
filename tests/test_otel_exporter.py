@@ -517,7 +517,7 @@ class TestOtlpLogExporter:
         assert "N/A" in body
 
     def test_handle_ha_event_call_service_message(self, exporter: OtlpLogExporter) -> None:
-        from homeassistant.core import EVENT_CALL_SERVICE
+        from homeassistant.const import EVENT_CALL_SERVICE
 
         event = MagicMock()
         event.event_type = EVENT_CALL_SERVICE
