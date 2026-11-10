@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import urlparse
 
 import pytest
+from homeassistant.util import dt as dt_util
 
 from custom_components.remote_logger.helpers import isotimestamp
 from custom_components.remote_logger.syslog.exporter import (
@@ -18,6 +19,8 @@ from custom_components.remote_logger.syslog.exporter import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Coroutine
+
     from homeassistant.core import Event, HomeAssistant
 
 # RFC 5424 SD-ELEMENT grammar: SD-NAME is 1-32 PRINTUSASCII excluding '=', SP, ']', '"';
@@ -34,6 +37,19 @@ def _sd_block(line: str) -> re.Match[str] | None:
     if match is None or (match.end() < len(rest) and rest[match.end()] != " "):
         return None
     return match
+
+
+def _close(coro: Coroutine[Any, Any, Any]) -> None:
+    """Stand-in for hass.async_create_task: close the coroutine so it isn't left un-awaited."""
+    coro.close()
+
+
+def _mock_writer() -> MagicMock:
+    """A StreamWriter stand-in: write() and close() are sync, drain() and wait_closed() are async."""
+    writer = MagicMock()
+    writer.drain = AsyncMock()
+    writer.wait_closed = AsyncMock()
+    return writer
 
 
 # ---------------------------------------------------------------------------
@@ -254,7 +270,7 @@ class TestSyslogExporter:
         from unittest.mock import patch
 
         exporter._batch_max_size = 1
-        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+        with patch.object(exporter._hass, "async_create_task", side_effect=_close) as mock_create_task:
             exporter.handle_event(mock_event)
         mock_create_task.assert_called_once()
 
@@ -285,7 +301,7 @@ class TestSyslogExporter:
         mock_transport.sendto.assert_called_once()
 
     async def test_flush_sends_via_tcp(self, hass: HomeAssistant, mock_event: MagicMock) -> None:
-        from unittest.mock import AsyncMock, patch
+        from unittest.mock import patch
 
         entry = MagicMock()
         entry.data = {
@@ -299,7 +315,7 @@ class TestSyslogExporter:
         exporter = SyslogExporter(hass, entry)
         exporter.handle_event(mock_event)
 
-        mock_writer = AsyncMock()
+        mock_writer = _mock_writer()
         mock_writer.is_closing.return_value = False
 
         async def fake_connect() -> None:
@@ -377,7 +393,7 @@ class TestSyslogExporter:
         mock_reader = MagicMock()
         mock_writer = MagicMock()
 
-        with patch("asyncio.wait_for", new=AsyncMock(return_value=(mock_reader, mock_writer))):
+        with patch("asyncio.open_connection", new=AsyncMock(return_value=(mock_reader, mock_writer))):
             await exporter._connect_tcp()
 
         assert exporter._tcp_reader is mock_reader
@@ -402,10 +418,7 @@ class TestSyslogExporter:
         mock_reader = MagicMock()
         mock_writer = MagicMock()
 
-        with (
-            patch("asyncio.wait_for", new=AsyncMock(return_value=(mock_reader, mock_writer))),
-            patch("asyncio.open_connection") as open_connection,
-        ):
+        with patch("asyncio.open_connection", new=AsyncMock(return_value=(mock_reader, mock_writer))) as open_connection:
             await exporter._connect_tcp()
 
         assert exporter._tcp_writer is mock_writer
@@ -413,9 +426,8 @@ class TestSyslogExporter:
         assert open_connection.call_args.kwargs["ssl"] is client_context()
 
     async def test_close_tcp_with_writer(self, exporter: SyslogExporter) -> None:
-        from unittest.mock import AsyncMock
 
-        mock_writer = AsyncMock()
+        mock_writer = _mock_writer()
         exporter._tcp_writer = mock_writer
         exporter._tcp_reader = MagicMock()
 
@@ -426,10 +438,9 @@ class TestSyslogExporter:
         assert exporter._tcp_reader is None
 
     async def test_close_all_resources(self, exporter: SyslogExporter) -> None:
-        from unittest.mock import AsyncMock
 
         mock_udp = MagicMock()
-        mock_writer = AsyncMock()
+        mock_writer = _mock_writer()
         exporter._udp_transport = mock_udp
         exporter._tcp_writer = mock_writer
 
@@ -469,6 +480,41 @@ class TestSyslogExporter:
         assert exporter.event_count == 1
 
 
+class TestSyslogHandleEntry:
+    """handle_entry is called by the root log handler, often from worker threads with no running loop."""
+
+    @pytest.fixture
+    def mock_hass(self) -> MagicMock:
+        return MagicMock()
+
+    @pytest.fixture
+    def exporter(self, mock_hass: MagicMock, mock_entry_syslog: MagicMock) -> SyslogExporter:
+        exporter = SyslogExporter(mock_hass, mock_entry_syslog)
+        exporter._batch_max_size = 1
+        return exporter
+
+    def test_flush_handed_to_running_loop(
+        self, exporter: SyslogExporter, mock_hass: MagicMock, sample_event_data: dict[str, Any]
+    ) -> None:
+        mock_hass.loop.is_running.return_value = True
+        mock_hass.create_task.side_effect = _close
+        exporter.handle_entry(sample_event_data, dt_util.utcnow())
+        mock_hass.create_task.assert_called_once()
+        assert len(exporter._buffer) == 1
+
+    def test_no_flush_once_loop_stopped(
+        self, exporter: SyslogExporter, mock_hass: MagicMock, sample_event_data: dict[str, Any]
+    ) -> None:
+        # At the end of shutdown HA's loop has stopped or closed: scheduling a flush would leave the
+        # coroutine un-awaited, and create_task raising on a closed loop was counted as a format error
+        mock_hass.loop.is_running.return_value = False
+        mock_hass.create_task.side_effect = RuntimeError("Event loop is closed")
+        exporter.handle_entry(sample_event_data, dt_util.utcnow())
+        mock_hass.create_task.assert_not_called()
+        assert len(exporter._buffer) == 1
+        assert exporter.format_error_count == 0
+
+
 class TestSyslogLogDirectMethod:
     @pytest.fixture
     def exporter(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> SyslogExporter:
@@ -506,7 +552,7 @@ class TestSyslogLogDirectMethod:
         from unittest.mock import patch
 
         exporter._batch_max_size = 1
-        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+        with patch.object(exporter._hass, "async_create_task", side_effect=_close) as mock_create_task:
             exporter.log_direct("unit_test", "msg", "INFO")
         mock_create_task.assert_called_once()
 
@@ -528,8 +574,8 @@ class TestSyslogValidate:
 
         from custom_components.remote_logger.syslog.exporter import validate
 
-        mock_writer = AsyncMock()
-        with patch("asyncio.wait_for", new=AsyncMock(return_value=(MagicMock(), mock_writer))):
+        mock_writer = _mock_writer()
+        with patch("asyncio.open_connection", new=AsyncMock(return_value=(MagicMock(), mock_writer))):
             result = await validate(hass, "localhost", 514, "tcp", False)
 
         assert result is None
@@ -540,7 +586,7 @@ class TestSyslogValidate:
 
         from custom_components.remote_logger.syslog.exporter import validate
 
-        with patch("asyncio.wait_for", new=AsyncMock(side_effect=ConnectionRefusedError)):
+        with patch("asyncio.open_connection", new=AsyncMock(side_effect=ConnectionRefusedError)):
             result = await validate(hass, "localhost", 514, "tcp", False)
 
         assert result == "cannot_connect"

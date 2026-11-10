@@ -10,6 +10,7 @@
 ## 🐛 Bug fixes
 - Syslog messages for Home Assistant events other than `system_log_event` had an unquoted `eventName`, which strict RFC 5424 receivers rejected ([#113](https://github.com/rhizomatics/remote_logger/issues/113))
 - Syslog `exception.stacktrace` values weren't escaped, so a stacktrace containing `"`, `\` or `]` broke the structured data ([#113](https://github.com/rhizomatics/remote_logger/issues/113))
+- Log records from worker threads at the very end of Home Assistant shutdown no longer try to schedule a flush on the stopped event loop, which left a "coroutine was never awaited" warning and counted as a format error
 
 
 # 2.1.0

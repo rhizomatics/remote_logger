@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -20,13 +20,18 @@ from custom_components.remote_logger.otel.exporter import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Coroutine, Mapping
 
     from homeassistant.core import HomeAssistant
 
 # ---------------------------------------------------------------------------
 # build_auth_header
 # ---------------------------------------------------------------------------
+
+
+def _close(coro: Coroutine[Any, Any, Any]) -> None:
+    """Stand-in for hass.async_create_task: close the coroutine so it isn't left un-awaited."""
+    coro.close()
 
 
 class TestBuildAuthHeader:
@@ -331,7 +336,7 @@ class TestOtlpLogExporter:
         from unittest.mock import patch
 
         exporter._batch_max_size = 1
-        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+        with patch.object(exporter._hass, "async_create_task", side_effect=_close) as mock_create_task:
             exporter.handle_event(mock_event)
         mock_create_task.assert_called_once()
 
@@ -468,7 +473,7 @@ class TestOtlpLogExporter:
         event = MagicMock()
         event.time_fired.timestamp.return_value = 1700000000.0
         event.data = {}
-        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+        with patch.object(exporter._hass, "async_create_task", side_effect=_close) as mock_create_task:
             exporter.handle_ha_event("my_event", event)
         mock_create_task.assert_called_once()
 
@@ -658,7 +663,7 @@ class TestOtlpLogDirectMethod:
         from unittest.mock import patch
 
         exporter._batch_max_size = 1
-        with patch.object(exporter._hass, "async_create_task") as mock_create_task:
+        with patch.object(exporter._hass, "async_create_task", side_effect=_close) as mock_create_task:
             exporter.log_direct("unit_test", "msg", "INFO")
         mock_create_task.assert_called_once()
 
