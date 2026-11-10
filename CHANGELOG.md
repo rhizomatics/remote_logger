@@ -1,4 +1,4 @@
-# 2.2.0
+# 2.11.0
 
 ## ✨ Enhancements
 - Optional strict RFC 5424 mode for Syslog, for receivers such as Grafana Alloy that check messages closely
