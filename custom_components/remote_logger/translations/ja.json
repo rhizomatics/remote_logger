@@ -58,7 +58,9 @@
           "protocol": "トランスポートプロトコル",
           "use_tls": "TLSを使用する（TCPのみ）",
           "app_name": "アプリケーション名",
-          "facility": "Syslogファシリティ"
+          "facility": "Syslogファシリティ",
+          "strict_mode": "厳格な RFC 5424 モード",
+          "enterprise_number": "エンタープライズ番号（厳格モード）"
         },
         "data_description": {
           "host": "syslogサーバーのホスト名またはIPアドレス。",
@@ -66,7 +68,9 @@
           "protocol": "トランスポートプロトコル: UDP（ファイア・アンド・フォーゲット）またはTCP（信頼性の高い配信）。",
           "use_tls": "TCP接続のTLS暗号化を有効にします。UDPでは無視されます。",
           "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
-          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。"
+          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。",
+          "strict_mode": "syslog ネイティブの出力を送信します。Home Assistant のパラメーター名を RFC 5424 の制限内に短縮し、MSGID を 32 文字に切り詰め、プライベート SD-ID homeassistant@<エンタープライズ番号> を使用します。受信側がメッセージを拒否する場合（例: Grafana Alloy）に有効にしてください。",
+          "enterprise_number": "厳格モードの SD-ID homeassistant@<番号> に使う任意の IANA プライベートエンタープライズ番号。既定値は RFC 5612 のドキュメント用番号 32473 です。"
         }
       },
       "reconfigure_otel": {
@@ -106,7 +110,9 @@
           "protocol": "トランスポートプロトコル",
           "use_tls": "TLSを使用する（TCPのみ）",
           "app_name": "アプリケーション名",
-          "facility": "Syslogファシリティ"
+          "facility": "Syslogファシリティ",
+          "strict_mode": "厳格な RFC 5424 モード",
+          "enterprise_number": "エンタープライズ番号（厳格モード）"
         },
         "data_description": {
           "host": "syslogサーバーのホスト名またはIPアドレス。",
@@ -114,7 +120,9 @@
           "protocol": "トランスポートプロトコル: UDP（ファイア・アンド・フォーゲット）またはTCP（信頼性の高い配信）。",
           "use_tls": "TCP接続のTLS暗号化を有効にします。UDPでは無視されます。",
           "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
-          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。"
+          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。",
+          "strict_mode": "syslog ネイティブの出力を送信します。Home Assistant のパラメーター名を RFC 5424 の制限内に短縮し、MSGID を 32 文字に切り詰め、プライベート SD-ID homeassistant@<エンタープライズ番号> を使用します。受信側がメッセージを拒否する場合（例: Grafana Alloy）に有効にしてください。",
+          "enterprise_number": "厳格モードの SD-ID homeassistant@<番号> に使う任意の IANA プライベートエンタープライズ番号。既定値は RFC 5612 のドキュメント用番号 32473 です。"
         }
       },
       "common": {

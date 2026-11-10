@@ -22,6 +22,8 @@ CONF_BATCH_MAX_SIZE = "batch_max_size"
 # Syslog-specific config keys
 CONF_APP_NAME = "app_name"
 CONF_FACILITY = "facility"
+CONF_STRICT_MODE = "strict_mode"
+CONF_ENTERPRISE_NUMBER = "enterprise_number"
 
 
 # Optional HA event subscriptions config keys

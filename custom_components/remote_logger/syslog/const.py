@@ -6,7 +6,9 @@ from custom_components.remote_logger.const import (
     CONF_APP_NAME,
     CONF_BATCH_MAX_SIZE,
     CONF_CLIENT_TIMEOUT,
+    CONF_ENTERPRISE_NUMBER,
     CONF_FACILITY,
+    CONF_STRICT_MODE,
     CONF_USE_TLS,
     DEFAULT_BATCH_MAX_SIZE,
     DEFAULT_CLIENT_TIMEOUT,
@@ -51,6 +53,43 @@ PROTOCOL_TCP = "tcp"
 DEFAULT_PROTOCOL = PROTOCOL_UDP
 DEFAULT_APP_NAME = "homeassistant"
 DEFAULT_FACILITY = "local0"
+SD_ID = "opentelemetry"
+MSGID_MAX_LENGTH = 32  # RFC 5424 section 6
+SD_NAME_MAX_LENGTH = 32  # RFC 5424 section 6
+
+# Strict mode: a private SD-ID of homeassistant@<IANA Private Enterprise Number>
+STRICT_SD_ID = "homeassistant"
+# RFC 5612 documentation PEN, used until a dedicated PEN is assigned
+DEFAULT_ENTERPRISE_NUMBER = 32473
+
+# Structured data PARAM-NAMEs for system_log_event fields: OpenTelemetry by default, Home Assistant in strict mode
+OTEL_SD_NAMES: dict[str, str] = {
+    "logger": "code.function.name",
+    "count": "exception.count",
+    "first_occurred": "exception.first_occurred",
+    "exception": "exception.stacktrace",
+    "event_type": "eventName",
+}
+STRICT_SD_NAMES: dict[str, str] = {
+    "logger": "name",
+    "count": "count",
+    "first_occurred": "first_occurred",
+    "exception": "exception",
+    "event_type": "event_type",
+}
+
+# Strict mode: dotted event data key segments shortened to keep PARAM-NAMEs within 32 characters
+STRICT_PARAM_ABBREVIATIONS: dict[str, str] = {
+    "new_state": "new",
+    "old_state": "old",
+    "attributes": "attr",
+    "context": "ctx",
+    "parent_id": "parent",
+    "last_changed": "changed",
+    "last_updated": "updated",
+    "last_reported": "reported",
+    "service_data": "data",
+}
 
 SYSLOG_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST): str,
@@ -65,4 +104,7 @@ SYSLOG_DATA_SCHEMA = vol.Schema({
     ),
     vol.Optional(CONF_BATCH_MAX_SIZE, default=DEFAULT_BATCH_MAX_SIZE): vol.All(int, vol.Range(min=1, max=10000)),
     vol.Optional(CONF_CLIENT_TIMEOUT, default=DEFAULT_CLIENT_TIMEOUT): vol.All(int, vol.Range(min=1, max=300)),
+    vol.Optional(CONF_STRICT_MODE, default=False): bool,
+    # IANA Private Enterprise Number, giving a private SD-ID of homeassistant@<number> in strict mode
+    vol.Optional(CONF_ENTERPRISE_NUMBER): vol.All(int, vol.Range(min=1)),
 })

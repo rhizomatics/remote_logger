@@ -497,6 +497,37 @@ class TestReconfigureFlow:
         assert entry.unique_id == f"{DOMAIN}_syslog"
         assert entry.title == "Syslog @ new:6514 (TCP)"
 
+    async def test_syslog_strict_mode(self, hass: HomeAssistant) -> None:
+        from tests.ha_testing import MockConfigEntry
+
+        connection = {CONF_HOST: "old", CONF_PORT: 514, CONF_PROTOCOL: "udp", CONF_USE_TLS: False}
+        entry = MockConfigEntry(
+            domain=DOMAIN, version=2, minor_version=3, unique_id=f"{DOMAIN}_syslog", data={"backend": "syslog", **connection}
+        )
+        entry.add_to_hass(hass)
+        result = await self._submit(hass, entry, {**connection, "strict_mode": True, "enterprise_number": 32473})
+        assert result["reason"] == "reconfigure_successful"
+        assert entry.data["strict_mode"] is True
+        assert entry.data["enterprise_number"] == 32473
+
+        # Clearing the enterprise number in the form removes it
+        await self._submit(hass, entry, {**connection, "strict_mode": True})
+        assert "enterprise_number" not in entry.data
+
+    async def test_syslog_enterprise_number_must_be_positive(self, hass: HomeAssistant) -> None:
+        from homeassistant.data_entry_flow import InvalidData
+
+        from tests.ha_testing import MockConfigEntry
+
+        connection = {CONF_HOST: "old", CONF_PORT: 514, CONF_PROTOCOL: "udp", CONF_USE_TLS: False}
+        entry = MockConfigEntry(
+            domain=DOMAIN, version=2, minor_version=3, unique_id=f"{DOMAIN}_syslog", data={"backend": "syslog", **connection}
+        )
+        entry.add_to_hass(hass)
+        result = await entry.start_reconfigure_flow(hass)
+        with pytest.raises(InvalidData):
+            await hass.config_entries.flow.async_configure(result["flow_id"], {**connection, "enterprise_number": 0})
+
     async def test_syslog_validation_error_shown(self, hass: HomeAssistant) -> None:
         from tests.ha_testing import MockConfigEntry
 

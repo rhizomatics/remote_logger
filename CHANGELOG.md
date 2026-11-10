@@ -1,3 +1,17 @@
+# 2.2.0
+
+## ✨ Enhancements
+- Optional strict RFC 5424 mode for Syslog, for receivers such as Grafana Alloy that check messages closely
+  - Structured data uses Home Assistant names (`name`, `source`, `exception`, `event_type` and so on) and event data keys are shortened to fit the 32-character limit, e.g. `new.attr.friendly_name`
+  - `MSGID` is cut to 32 characters
+  - The SD-ID is `homeassistant@<number>`, using an IANA Private Enterprise Number if one is entered, otherwise the RFC 5612 documentation number 32473
+  - Off by default, so existing Syslog output, with its OTEL names, is unchanged
+
+## 🐛 Bug fixes
+- Syslog messages for Home Assistant events other than `system_log_event` had an unquoted `eventName`, which strict RFC 5424 receivers rejected ([#113](https://github.com/rhizomatics/remote_logger/issues/113))
+- Syslog `exception.stacktrace` values weren't escaped, so a stacktrace containing `"`, `\` or `]` broke the structured data ([#113](https://github.com/rhizomatics/remote_logger/issues/113))
+
+
 # 2.1.0
 ## 🚨 Breaking changes
 - Support for Python 3.13, and versions of Home Assistant from 2026.4 and earlier no longer supported. They may continue to work, however there's no automated test assurance any longer, and newer features will start to be introduced

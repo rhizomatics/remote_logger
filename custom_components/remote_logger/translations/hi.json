@@ -58,7 +58,9 @@
           "protocol": "ट्रांसपोर्ट प्रोटोकॉल",
           "use_tls": "TLS उपयोग करें (केवल TCP)",
           "app_name": "एप्लिकेशन नाम",
-          "facility": "Syslog फैसिलिटी"
+          "facility": "Syslog फैसिलिटी",
+          "strict_mode": "सख़्त RFC 5424 मोड",
+          "enterprise_number": "एंटरप्राइज़ नंबर (सख़्त मोड)"
         },
         "data_description": {
           "host": "Syslog सर्वर का होस्टनेम या IP पता।",
@@ -66,7 +68,9 @@
           "protocol": "ट्रांसपोर्ट प्रोटोकॉल: UDP (fire-and-forget) या TCP (विश्वसनीय डिलीवरी)।",
           "use_tls": "TCP कनेक्शन के लिए TLS एन्क्रिप्शन सक्षम करें। UDP के लिए अनदेखा किया जाता है।",
           "app_name": "RFC 5424 संदेशों में APP-NAME फ़ील्ड (डिफ़ॉल्ट: homeassistant)।",
-          "facility": "PRI मान की गणना के लिए उपयोग किया जाने वाला Syslog फैसिलिटी कोड (डिफ़ॉल्ट: user)।"
+          "facility": "PRI मान की गणना के लिए उपयोग किया जाने वाला Syslog फैसिलिटी कोड (डिफ़ॉल्ट: user)।",
+          "strict_mode": "syslog-नेटिव आउटपुट भेजें: RFC 5424 सीमाओं के अनुसार छोटे किए गए Home Assistant पैरामीटर नाम, 32 अक्षरों तक छोटा MSGID, और निजी SD-ID homeassistant@<एंटरप्राइज़ नंबर>। यदि रिसीवर संदेश अस्वीकार करता है (जैसे Grafana Alloy) तो सक्षम करें।",
+          "enterprise_number": "सख़्त मोड के SD-ID homeassistant@<नंबर> के लिए वैकल्पिक IANA Private Enterprise Number। डिफ़ॉल्ट 32473 है, जो RFC 5612 का दस्तावेज़ीकरण नंबर है।"
         }
       },
       "reconfigure_otel": {
@@ -106,7 +110,9 @@
           "protocol": "ट्रांसपोर्ट प्रोटोकॉल",
           "use_tls": "TLS उपयोग करें (केवल TCP)",
           "app_name": "एप्लिकेशन नाम",
-          "facility": "Syslog फैसिलिटी"
+          "facility": "Syslog फैसिलिटी",
+          "strict_mode": "सख़्त RFC 5424 मोड",
+          "enterprise_number": "एंटरप्राइज़ नंबर (सख़्त मोड)"
         },
         "data_description": {
           "host": "Syslog सर्वर का होस्टनेम या IP पता।",
@@ -114,7 +120,9 @@
           "protocol": "ट्रांसपोर्ट प्रोटोकॉल: UDP (fire-and-forget) या TCP (विश्वसनीय डिलीवरी)।",
           "use_tls": "TCP कनेक्शन के लिए TLS एन्क्रिप्शन सक्षम करें। UDP के लिए अनदेखा किया जाता है।",
           "app_name": "RFC 5424 संदेशों में APP-NAME फ़ील्ड (डिफ़ॉल्ट: homeassistant)।",
-          "facility": "PRI मान की गणना के लिए उपयोग किया जाने वाला Syslog फैसिलिटी कोड (डिफ़ॉल्ट: user)।"
+          "facility": "PRI मान की गणना के लिए उपयोग किया जाने वाला Syslog फैसिलिटी कोड (डिफ़ॉल्ट: user)।",
+          "strict_mode": "syslog-नेटिव आउटपुट भेजें: RFC 5424 सीमाओं के अनुसार छोटे किए गए Home Assistant पैरामीटर नाम, 32 अक्षरों तक छोटा MSGID, और निजी SD-ID homeassistant@<एंटरप्राइज़ नंबर>। यदि रिसीवर संदेश अस्वीकार करता है (जैसे Grafana Alloy) तो सक्षम करें।",
+          "enterprise_number": "सख़्त मोड के SD-ID homeassistant@<नंबर> के लिए वैकल्पिक IANA Private Enterprise Number। डिफ़ॉल्ट 32473 है, जो RFC 5612 का दस्तावेज़ीकरण नंबर है।"
         }
       },
       "common": {

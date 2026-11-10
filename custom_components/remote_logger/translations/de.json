@@ -58,7 +58,9 @@
           "protocol": "Transportprotokoll",
           "use_tls": "TLS verwenden (nur TCP)",
           "app_name": "Anwendungsname",
-          "facility": "Syslog-Facility"
+          "facility": "Syslog-Facility",
+          "strict_mode": "Strikter RFC 5424-Modus",
+          "enterprise_number": "Enterprise-Nummer (strikter Modus)"
         },
         "data_description": {
           "host": "Hostname oder IP-Adresse des Syslog-Servers.",
@@ -66,7 +68,9 @@
           "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
           "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
-          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user)."
+          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user).",
+          "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@<Enterprise-Nummer>. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
+          "enterprise_number": "Optionale IANA Private Enterprise Number für die SD-ID homeassistant@<Nummer> im strikten Modus. Standard ist 32473, die Dokumentationsnummer aus RFC 5612."
         }
       },
       "reconfigure_otel": {
@@ -106,7 +110,9 @@
           "protocol": "Transportprotokoll",
           "use_tls": "TLS verwenden (nur TCP)",
           "app_name": "Anwendungsname",
-          "facility": "Syslog-Facility"
+          "facility": "Syslog-Facility",
+          "strict_mode": "Strikter RFC 5424-Modus",
+          "enterprise_number": "Enterprise-Nummer (strikter Modus)"
         },
         "data_description": {
           "host": "Hostname oder IP-Adresse des Syslog-Servers.",
@@ -114,7 +120,9 @@
           "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
           "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
-          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user)."
+          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user).",
+          "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@<Enterprise-Nummer>. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
+          "enterprise_number": "Optionale IANA Private Enterprise Number für die SD-ID homeassistant@<Nummer> im strikten Modus. Standard ist 32473, die Dokumentationsnummer aus RFC 5612."
         }
       },
       "common": {

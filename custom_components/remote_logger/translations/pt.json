@@ -58,7 +58,9 @@
           "protocol": "Protocolo de transporte",
           "use_tls": "Usar TLS (apenas TCP)",
           "app_name": "Nome da aplicação",
-          "facility": "Facility do Syslog"
+          "facility": "Facility do Syslog",
+          "strict_mode": "Modo RFC 5424 estrito",
+          "enterprise_number": "Número de empresa (modo estrito)"
         },
         "data_description": {
           "host": "Nome do anfitrião ou endereço IP do servidor syslog.",
@@ -66,7 +68,9 @@
           "protocol": "Protocolo de transporte: UDP (sem confirmação) ou TCP (entrega fiável).",
           "use_tls": "Ativar cifra TLS para ligações TCP. Ignorado para UDP.",
           "app_name": "O campo APP-NAME nas mensagens RFC 5424 (predefinição: homeassistant).",
-          "facility": "Código de facility do syslog usado para calcular o valor PRI (predefinição: user)."
+          "facility": "Código de facility do syslog usado para calcular o valor PRI (predefinição: user).",
+          "strict_mode": "Envia uma saída nativa de syslog: nomes de parâmetros do Home Assistant encurtados para os limites do RFC 5424, MSGID truncado para 32 caracteres e um SD-ID privado homeassistant@<número de empresa>. Ative se o recetor rejeitar mensagens (por exemplo Grafana Alloy).",
+          "enterprise_number": "IANA Private Enterprise Number opcional para o SD-ID homeassistant@<número> do modo estrito. Por omissão 32473, o número de documentação do RFC 5612."
         }
       },
       "reconfigure_otel": {
@@ -106,7 +110,9 @@
           "protocol": "Protocolo de transporte",
           "use_tls": "Usar TLS (apenas TCP)",
           "app_name": "Nome da aplicação",
-          "facility": "Facility do Syslog"
+          "facility": "Facility do Syslog",
+          "strict_mode": "Modo RFC 5424 estrito",
+          "enterprise_number": "Número de empresa (modo estrito)"
         },
         "data_description": {
           "host": "Nome do anfitrião ou endereço IP do servidor syslog.",
@@ -114,7 +120,9 @@
           "protocol": "Protocolo de transporte: UDP (sem confirmação) ou TCP (entrega fiável).",
           "use_tls": "Ativar cifra TLS para ligações TCP. Ignorado para UDP.",
           "app_name": "O campo APP-NAME nas mensagens RFC 5424 (predefinição: homeassistant).",
-          "facility": "Código de facility do syslog usado para calcular o valor PRI (predefinição: user)."
+          "facility": "Código de facility do syslog usado para calcular o valor PRI (predefinição: user).",
+          "strict_mode": "Envia uma saída nativa de syslog: nomes de parâmetros do Home Assistant encurtados para os limites do RFC 5424, MSGID truncado para 32 caracteres e um SD-ID privado homeassistant@<número de empresa>. Ative se o recetor rejeitar mensagens (por exemplo Grafana Alloy).",
+          "enterprise_number": "IANA Private Enterprise Number opcional para o SD-ID homeassistant@<número> do modo estrito. Por omissão 32473, o número de documentação do RFC 5612."
         }
       },
       "common": {

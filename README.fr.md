@@ -64,6 +64,8 @@ Syslog peut être envoyé en TCP ou UDP.
 
 ![Configurer Syslog](https://remote-logger.rhizomatics.org.uk/assets/images/config_syslog.png){width=360}
 
+Le **mode RFC 5424 strict** est destiné aux récepteurs qui vérifient les messages de près, comme Grafana Alloy. Il s'active dans le formulaire de configuration Syslog, ou plus tard via **Reconfigurer**. Les données structurées utilisent alors les noms propres à Home Assistant, comme `name`, `source`, `exception` et `event_type`, et les clés des données d'événement sont raccourcies à la limite de 32 caractères du RFC (par exemple `new_state.attributes.friendly_name` devient `new.attr.friendly_name`). `MSGID` est tronqué à 32 caractères, et le SD-ID est `homeassistant@<numéro>`, avec l'[IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/) saisi ou, s'il est vide, le numéro de documentation 32473. Sans le mode strict, les noms OTEL ci-dessous sont utilisés.
+
 ## Événements
 
 ### Événement System Log
