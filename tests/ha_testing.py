@@ -4,14 +4,18 @@ installed: pytest-homeassistant (`pytest_homeassistant`), published by Home Assi
 Home Assistant has the first, importing from `pytest_homeassistant` directly (same model as
 supernotify, hq-private#85)."""
 
-try:
-    from pytest_homeassistant.common import (  # type: ignore[import-not-found,unused-ignore]
-        MockConfigEntry,
-    )
-except ImportError:
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # One declaration for type checkers, which otherwise take the unresolved first import as Unknown
     from pytest_homeassistant_custom_component.common import (  # type: ignore[import-untyped,unused-ignore]
         MockConfigEntry,
     )
+else:
+    try:
+        from pytest_homeassistant.common import MockConfigEntry
+    except ImportError:
+        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 __all__ = [
     "MockConfigEntry",

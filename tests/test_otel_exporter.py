@@ -216,7 +216,7 @@ class TestOtlpLogExporter:
     def test_to_log_record_full(self, exporter: OtlpLogExporter, sample_log_event: Event) -> None:
         record: OtlpMessage = exporter.create_log_record(
             sample_log_event.data,
-            sample_log_event.event_type,
+            str(sample_log_event.event_type),
             sample_log_event.time_fired,
         )
 
@@ -235,7 +235,9 @@ class TestOtlpLogExporter:
         assert "exception.first_occurred" in attr_keys
 
     def test_to_log_record_minimal(self, exporter: OtlpLogExporter, minimal_log_event: Event) -> None:
-        record = exporter.create_log_record(minimal_log_event.data, minimal_log_event.event_type, minimal_log_event.time_fired)
+        record = exporter.create_log_record(
+            minimal_log_event.data, str(minimal_log_event.event_type), minimal_log_event.time_fired
+        )
 
         assert record.payload["severityNumber"] == 9
         assert record.payload["severityText"] == "INFO"
@@ -256,7 +258,9 @@ class TestOtlpLogExporter:
     def test_to_protobuf(self, exporter: OtlpLogExporter, sample_log_event: Event) -> None:
         from custom_components.remote_logger.otel.exporter import OtlpProtobufSubmission
 
-        record = exporter.create_log_record(sample_log_event.data, sample_log_event.event_type, sample_log_event.time_fired)
+        record = exporter.create_log_record(
+            sample_log_event.data, str(sample_log_event.event_type), sample_log_event.time_fired
+        )
         submission = OtlpProtobufSubmission(exporter._resource, [record])
         result = submission.body()
         assert result["data"] is not None
@@ -266,7 +270,9 @@ class TestOtlpLogExporter:
     def test_to_json(self, exporter: OtlpLogExporter, sample_log_event: Event) -> None:
         from custom_components.remote_logger.otel.exporter import OtlpJsonSubmission
 
-        record = exporter.create_log_record(sample_log_event.data, sample_log_event.event_type, sample_log_event.time_fired)
+        record = exporter.create_log_record(
+            sample_log_event.data, str(sample_log_event.event_type), sample_log_event.time_fired
+        )
         submission = OtlpJsonSubmission(exporter._resource, [record])
         result = submission.body()
         body = result["json"]
@@ -455,7 +461,7 @@ class TestOtlpLogExporter:
             EVENT_SYSTEM_LOG,
             {"message": ["test"], "level": "error", "timestamp": 1700000000.0},
         )
-        record: OtlpMessage = exporter.create_log_record(event.data, event.event_type, event.time_fired)
+        record: OtlpMessage = exporter.create_log_record(event.data, str(event.event_type), event.time_fired)
         assert "eventName" not in record.payload
 
     def test_handle_ha_event_buffers(self, exporter: OtlpLogExporter) -> None:
@@ -517,7 +523,7 @@ class TestOtlpLogExporter:
         assert "N/A" in body
 
     def test_handle_ha_event_call_service_message(self, exporter: OtlpLogExporter) -> None:
-        from homeassistant.core import EVENT_CALL_SERVICE
+        from homeassistant.const import EVENT_CALL_SERVICE
 
         event = MagicMock()
         event.event_type = EVENT_CALL_SERVICE

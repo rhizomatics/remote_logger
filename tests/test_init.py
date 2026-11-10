@@ -5,14 +5,13 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.remote_logger import async_setup_entry, async_unload_entry
 from custom_components.remote_logger.config_flow import OtelLogsConfigFlow
 from custom_components.remote_logger.const import (
     CONF_CUSTOM_EVENTS,
@@ -24,7 +23,7 @@ from custom_components.remote_logger.const import (
     DOMAIN,
     LIFECYCLE_EVENTS,
 )
-from custom_components.remote_logger.remote_logger import RemoteLoggerData
+from custom_components.remote_logger.remote_logger import RemoteLoggerData, async_setup_entry, async_unload_entry
 from tests.ha_testing import MockConfigEntry
 
 if TYPE_CHECKING:
@@ -276,7 +275,7 @@ class TestSetupConnectionCheck:
         entry = await self._setup(hass, mock_entry_otel)
         assert entry.state is ConfigEntryState.SETUP_ERROR
         flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
-        assert [f["context"]["source"] for f in flows] == [SOURCE_REAUTH]
+        assert [f.get("context", {}).get("source") for f in flows] == [SOURCE_REAUTH]
 
     async def test_reachable_endpoint_loads(
         self, hass: HomeAssistant, mock_entry_otel: MagicMock, mock_connection_check: AsyncMock
@@ -354,7 +353,7 @@ class TestConnectionOptionsMigration:
     def auto_enable_custom_integrations(self, enable_custom_integrations: None) -> None:
         """Allow Home Assistant to load the integration from custom_components."""
 
-    async def _migrate(self, hass: HomeAssistant, data: dict, options: dict) -> MockConfigEntry:
+    async def _migrate(self, hass: HomeAssistant, data: dict[str, Any], options: dict[str, Any]) -> MockConfigEntry:
         entry = MockConfigEntry(domain=DOMAIN, version=2, minor_version=2, title="x", data=data, options=options)
         entry.add_to_hass(hass)
         assert await hass.config_entries.async_setup(entry.entry_id)

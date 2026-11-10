@@ -10,11 +10,17 @@ from homeassistant.components.system_log import LogEntry
 from homeassistant.util import dt as dt_util
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Mapping
 
     from homeassistant.core import HomeAssistant
 
 type KeyType = tuple[str, tuple[str, int], tuple[str, int, str] | None]
+
+
+class EntryHandler(typing.Protocol):
+    """Receives each log entry, as LogExporter.handle_entry does."""
+
+    def __call__(self, entry: Mapping[str, typing.Any], time_fired: dt.datetime) -> None: ...
 
 
 class ExportingLogHandler(logging.Handler):
@@ -23,7 +29,7 @@ class ExportingLogHandler(logging.Handler):
     def __init__(
         self,
         hass: HomeAssistant,
-        handler: Callable,
+        handler: EntryHandler,
     ) -> None:
         """Initialize a new LogErrorHandler."""
         super().__init__()

@@ -1,7 +1,12 @@
 """Unit tests for config flow helpers."""
 
+# Flow results are TypedDicts with no required keys; each test reads the keys its step returns,
+# and a missing one failing with KeyError is what the test should do.
+# pyright: reportTypedDictNotRequiredAccess=false
+
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -109,6 +114,7 @@ class TestOtelConfigFlow:
                 },
             )
         assert result["type"] == FlowResultType.FORM
+        assert result["errors"] is not None
         assert result["errors"]["base"] == "cannot_connect"
 
     async def test_step_otel_basic_auth_stored(self, hass: HomeAssistant) -> None:
@@ -168,6 +174,7 @@ class TestOtelConfigFlow:
                 },
             )
         assert result["type"] == FlowResultType.FORM
+        assert result["errors"] is not None
         assert "resource_attributes" in result["errors"]
 
 
@@ -236,12 +243,13 @@ class TestSyslogConfigFlow:
                 },
             )
         assert result["type"] == FlowResultType.FORM
+        assert result["errors"] is not None
         assert result["errors"]["base"] == "cannot_connect"
 
 
 @pytest.mark.usefixtures("enable_custom_integrations")
 class TestOptionsFlow:
-    def _make_otel_entry(self, extra: dict | None = None) -> ConfigEntry:
+    def _make_otel_entry(self, extra: dict[str, Any] | None = None) -> ConfigEntry:
         entry = MagicMock(spec=ConfigEntry)
         entry.entry_id = "opt_test"
         entry.domain = DOMAIN
@@ -295,8 +303,7 @@ class TestOptionsFlow:
         from custom_components.remote_logger.config_flow import RemoteLoggerOptionsFlow
 
         entry: ConfigEntry[Any] = self._make_otel_entry()
-        entry.options[CONF_LOG_HA_LIFECYCLE] = True  # type: ignore
-        entry.options[CONF_CUSTOM_EVENTS] = ["zha_event"]  # type: ignore
+        entry.options = MappingProxyType({CONF_LOG_HA_LIFECYCLE: True, CONF_CUSTOM_EVENTS: ["zha_event"]})
         flow = RemoteLoggerOptionsFlow(entry)
         flow.hass = hass
         result = await flow.async_step_init(None)
@@ -412,7 +419,9 @@ class TestReconfigureFlow:
         entry.add_to_hass(hass)
         return entry
 
-    async def _submit(self, hass: HomeAssistant, entry: Any, user_input: dict[str, Any], errors: dict | None = None) -> Any:
+    async def _submit(
+        self, hass: HomeAssistant, entry: Any, user_input: dict[str, Any], errors: dict[str, str] | None = None
+    ) -> Any:
         result = await entry.start_reconfigure_flow(hass)
         with (
             patch("custom_components.remote_logger.config_flow.otel_validate", new=AsyncMock(return_value=errors or {})),

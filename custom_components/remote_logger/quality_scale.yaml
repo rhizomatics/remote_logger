@@ -291,7 +291,7 @@ rules:
     comment: Uses async_get_clientsession for OTLP posts and validation.
 
   strict-typing:
-    status: todo
+    status: done
     comment: |
-      py.typed is present, but mypy isn't strict and has 14 errors on main
-      (hq-private#64).
+      py.typed is present, and mypy runs with strict = true and warn_unreachable (pyproject.toml)
+      in pre-commit and CI, clean across the integration, tests and docs hooks (hq-private#64).
