@@ -1,6 +1,7 @@
 """Constants for the remote_logger integration."""
 
-from homeassistant.const import EntityPlatforms, Platform
+from homeassistant.const import Platform
+from homeassistant.generated.entity_platforms import EntityPlatforms
 
 DOMAIN = "remote_logger"
 
