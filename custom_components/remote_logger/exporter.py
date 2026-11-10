@@ -120,7 +120,10 @@ class LogExporter:
                 try:
                     asyncio.get_running_loop().create_task(self.flush())
                 except RuntimeError:
-                    self._hass.create_task(self.flush())
+                    # Logged from a worker thread, so hand the flush to HA's loop - unless it has already
+                    # stopped at the end of shutdown, when the record can only stay buffered
+                    if self._hass.loop.is_running():
+                        self._hass.create_task(self.flush())
         except Exception as e:  # ruff: ignore[blind-except]
             _LOGGER.error("remote_logger: %s entry handler failure %s on %s", self.logger_type, e, entry)
             self.on_format_error(str(e))

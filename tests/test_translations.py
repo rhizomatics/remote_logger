@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -68,3 +69,17 @@ def test_translation_has_no_extra_keys(translation_path: Path, english_keys: set
     assert not extra, f"{translation_path.name} has {len(extra)} extra key(s) not in en.json:\n" + "\n".join(
         f"  {k}" for k in sorted(extra)
     )
+
+
+def _all_strings(obj: object, prefix: str = "") -> list[tuple[str, str]]:
+    """Recursively collect (key path, value) for every string in a nested dict."""
+    if isinstance(obj, dict):
+        return [pair for k, v in obj.items() for pair in _all_strings(v, f"{prefix}.{k}" if prefix else k)]
+    return [(prefix, obj)] if isinstance(obj, str) else []
+
+
+@pytest.mark.parametrize("translation_path", sorted(_TRANSLATIONS_DIR.glob("*.json")), ids=lambda p: p.stem)
+def test_translation_has_no_html(translation_path: Path) -> None:
+    """hassfest rejects strings containing HTML, which includes placeholders such as `<number>`."""
+    html = [(k, v) for k, v in _all_strings(_load(translation_path)) if re.search(r"<[^<>]*>", v)]
+    assert not html, f"{translation_path.name} has HTML in:\n" + "\n".join(f"  {k}: {v}" for k, v in html)

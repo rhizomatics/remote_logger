@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import urlparse
 
 import pytest
+from homeassistant.util import dt as dt_util
 
 from custom_components.remote_logger.helpers import isotimestamp
 from custom_components.remote_logger.syslog.exporter import (
@@ -477,6 +478,41 @@ class TestSyslogExporter:
         exporter.handle_ha_event("homeassistant_stop", event)
         assert len(exporter._buffer) == 1
         assert exporter.event_count == 1
+
+
+class TestSyslogHandleEntry:
+    """handle_entry is called by the root log handler, often from worker threads with no running loop."""
+
+    @pytest.fixture
+    def mock_hass(self) -> MagicMock:
+        return MagicMock()
+
+    @pytest.fixture
+    def exporter(self, mock_hass: MagicMock, mock_entry_syslog: MagicMock) -> SyslogExporter:
+        exporter = SyslogExporter(mock_hass, mock_entry_syslog)
+        exporter._batch_max_size = 1
+        return exporter
+
+    def test_flush_handed_to_running_loop(
+        self, exporter: SyslogExporter, mock_hass: MagicMock, sample_event_data: dict[str, Any]
+    ) -> None:
+        mock_hass.loop.is_running.return_value = True
+        mock_hass.create_task.side_effect = _close
+        exporter.handle_entry(sample_event_data, dt_util.utcnow())
+        mock_hass.create_task.assert_called_once()
+        assert len(exporter._buffer) == 1
+
+    def test_no_flush_once_loop_stopped(
+        self, exporter: SyslogExporter, mock_hass: MagicMock, sample_event_data: dict[str, Any]
+    ) -> None:
+        # At the end of shutdown HA's loop has stopped or closed: scheduling a flush would leave the
+        # coroutine un-awaited, and create_task raising on a closed loop was counted as a format error
+        mock_hass.loop.is_running.return_value = False
+        mock_hass.create_task.side_effect = RuntimeError("Event loop is closed")
+        exporter.handle_entry(sample_event_data, dt_util.utcnow())
+        mock_hass.create_task.assert_not_called()
+        assert len(exporter._buffer) == 1
+        assert exporter.format_error_count == 0
 
 
 class TestSyslogLogDirectMethod:
