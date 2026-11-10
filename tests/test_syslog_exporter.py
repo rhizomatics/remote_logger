@@ -267,7 +267,7 @@ class TestSyslogExporter:
     def test_to_protobuf(self, exporter: SyslogExporter, sample_log_event: Event) -> None:
         msg = exporter.create_log_record(
             sample_log_event.data,
-            sample_log_event.event_type,
+            str(sample_log_event.event_type),
             sample_log_event.time_fired,
         ).payload.decode("utf-8")
         assert msg is not None

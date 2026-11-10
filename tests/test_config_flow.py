@@ -1,5 +1,9 @@
 """Unit tests for config flow helpers."""
 
+# Flow results are TypedDicts with no required keys; each test reads the keys its step returns,
+# and a missing one failing with KeyError is what the test should do.
+# pyright: reportTypedDictNotRequiredAccess=false
+
 from __future__ import annotations
 
 from types import MappingProxyType
@@ -110,6 +114,7 @@ class TestOtelConfigFlow:
                 },
             )
         assert result["type"] == FlowResultType.FORM
+        assert result["errors"] is not None
         assert result["errors"]["base"] == "cannot_connect"
 
     async def test_step_otel_basic_auth_stored(self, hass: HomeAssistant) -> None:
@@ -169,6 +174,7 @@ class TestOtelConfigFlow:
                 },
             )
         assert result["type"] == FlowResultType.FORM
+        assert result["errors"] is not None
         assert "resource_attributes" in result["errors"]
 
 
@@ -237,6 +243,7 @@ class TestSyslogConfigFlow:
                 },
             )
         assert result["type"] == FlowResultType.FORM
+        assert result["errors"] is not None
         assert result["errors"]["base"] == "cannot_connect"
 
 

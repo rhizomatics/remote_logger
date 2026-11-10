@@ -25,6 +25,15 @@ if TYPE_CHECKING:
 type SetupEntry = Callable[[ConfigEntry], Awaitable[RemoteLoggerConfigEntry]]
 
 
+async def _last_log(hass: HomeAssistant, entry_id: str) -> dict[str, Any]:
+    """Call the last_log action, returning its response, which is typed only as JSON."""
+    result = await hass.services.async_call(
+        DOMAIN, "last_log", {"config_entry_id": entry_id}, blocking=True, return_response=True
+    )
+    assert isinstance(result, dict)
+    return cast("dict[str, Any]", result)
+
+
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Allow Home Assistant to load the integration from custom_components."""
@@ -166,13 +175,7 @@ class TestLastLogService:
     ) -> None:
         await setup_entry(mock_entry_otel)
 
-        result = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": mock_entry_otel.entry_id},
-            blocking=True,
-            return_response=True,
-        )
+        result = await _last_log(hass, mock_entry_otel.entry_id)
 
         assert result == {}
 
@@ -187,13 +190,7 @@ class TestLastLogService:
             records=[OtlpMessage(payload={"body": {"stringValue": "hello"}, "severityText": "INFO"})],
         )
 
-        result = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": mock_entry_otel.entry_id},
-            blocking=True,
-            return_response=True,
-        )
+        result = await _last_log(hass, mock_entry_otel.entry_id)
 
         assert result == {
             "headers": {"Content-Type": "application/json"},
@@ -232,13 +229,7 @@ class TestLastLogService:
         with _patch("aiohttp.ClientSession.post", return_value=mock_resp):
             await exporter.flush()
 
-        result = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": mock_entry_otel.entry_id},
-            blocking=True,
-            return_response=True,
-        )
+        result = await _last_log(hass, mock_entry_otel.entry_id)
 
         assert result["headers"]["Content-Type"] == "application/json"
         log_record = result["json"]["resourceLogs"][0]["scopeLogs"][0]["logRecords"][0]
@@ -264,13 +255,7 @@ class TestLastLogService:
         with _patch("aiohttp.ClientSession.post", return_value=mock_resp):
             await exporter.flush()
 
-        result = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": mock_entry_otel_protobuf.entry_id},
-            blocking=True,
-            return_response=True,
-        )
+        result = await _last_log(hass, mock_entry_otel_protobuf.entry_id)
 
         assert result["headers"]["Content-Type"] == "application/x-protobuf"
         assert isinstance(result["data"], str)
@@ -292,13 +277,7 @@ class TestLastLogService:
             mock_send.side_effect = lambda msgs: [setattr(m, "sent", True) for m in msgs]  # type:ignore[func-returns-value]
             await exporter.flush()
 
-        result = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": mock_entry_syslog.entry_id},
-            blocking=True,
-            return_response=True,
-        )
+        result = await _last_log(hass, mock_entry_syslog.entry_id)
 
         assert result["protocol"] == "udp"
         assert "hello syslog" in result["data"]
@@ -315,13 +294,7 @@ class TestLastLogService:
             extra_headers={"Authorization": f"Bearer {credential}"},
         )
 
-        result = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": mock_entry_otel.entry_id},
-            blocking=True,
-            return_response=True,
-        )
+        result = await _last_log(hass, mock_entry_otel.entry_id)
 
         assert result["headers"]["Authorization"] == "Bearer ****************"
 
@@ -340,13 +313,7 @@ class TestLastLogService:
             extra_headers={"Authorization": f"Bearer {credential}"},
         )
 
-        result = await hass.services.async_call(
-            "remote_logger",
-            "last_log",
-            {"config_entry_id": mock_entry_otel_protobuf.entry_id},
-            blocking=True,
-            return_response=True,
-        )
+        result = await _last_log(hass, mock_entry_otel_protobuf.entry_id)
 
         assert result["headers"]["Authorization"] == "Bearer *************"
 
