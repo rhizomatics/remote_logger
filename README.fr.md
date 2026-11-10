@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![hacs][hacsbadge]][hacs]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -29,7 +29,7 @@ Seul le serveur Home Assistant lui-même, avec ses composants personnalisés, es
 
 ## Installation
 
-**Remote Logger** est un composant HACS, qui doit donc être installé en premier en suivant les instructions de [Getting Started with HACS](https://www.hacs.xyz/docs/use/).
+**Remote Logger** s'installe depuis le [Home Assistant Marketplace][marketplace] : allez dans **Paramètres → Marketplace** et cherchez **Remote Logger**. Avant Home Assistant 2026.11, installez-le plutôt depuis [HACS](https://www.hacs.xyz/docs/use/).
 
 L'intégration s'installe depuis la page des intégrations de Home Assistant et **ne nécessite aucune configuration YAML**.
 
@@ -127,12 +127,12 @@ Des capteurs Home Assistant sont créés et mis à jour pour surveiller l'activi
 ## Désinstallation
 
 1. Dans Home Assistant, ouvrez **Paramètres** > **Appareils et services** > **Remote Logger**. Pour chaque entrée, ouvrez son menu (⋮) et choisissez **Supprimer**. L'export des journaux s'arrête immédiatement, et les capteurs de diagnostic ainsi que leur appareil sont supprimés.
-2. Pour supprimer aussi les fichiers de l'intégration, ouvrez **HACS**, trouvez **Remote Logger**, choisissez **Supprimer**, puis redémarrez Home Assistant.
+2. Pour supprimer aussi les fichiers de l'intégration, allez dans **Paramètres → Marketplace**, ouvrez **Remote Logger** et choisissez **Désinstaller** dans le menu à trois points. (**Supprimer et désinstaller** fait aussi l'étape 1.) Avant Home Assistant 2026.11, ouvrez **HACS**, trouvez **Remote Logger**, choisissez **Supprimer**, puis redémarrez Home Assistant.
 3. Si vous aviez ajouté `fire_event: true` sous `system_log:` dans `configuration.yaml` uniquement pour Remote Logger, vous pouvez le retirer.
 
 ##  Rhizomatics Open Source pour Home Assistant
 
-### HACS
+### Home Assistant Marketplace
 - [AutoArm](https://autoarm.rhizomatics.org.uk) - Arme et désarme automatiquement les panneaux de contrôle d'alarme de Home Assistant à l'aide de boutons physiques, de la présence, de calendriers, du soleil et plus encore
 - [Supernotify](https://supernotify.rhizomatics.org.uk) - Notification unifiée pour une messagerie multi-canal simple, avec une intégration puissante des sonnettes et des caméras de sécurité.
 
@@ -142,5 +142,5 @@ Des capteurs Home Assistant sont créés et mis à jour pour surveiller l'activi
 - [Anpr2MQTT](https://anpr2mqtt.rhizomatics.org.uk) - Intègre les caméras ANPR/ALPR de reconnaissance de plaques via le système de fichiers (NAS/FTP) vers MQTT avec analyse d'image optionnelle et intégration DVLA UK.
 - [Updates2MQTT](https://updates2mqtt.rhizomatics.org.uk) - Notifie automatiquement via MQTT les mises à jour d'images Docker, avec une gestion avancée pour extraire les versions et les notes de version des images, et la possibilité de déclencher à distance le pull et le redémarrage des conteneurs depuis Home Assistant. Disponible également sur [PyPI](https://pypi.org/project/updates2mqtt/)
 
-[hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Default-blue.svg
+[marketplace]: https://www.home-assistant.io/integrations/marketplace
+[marketplacebadge]: https://img.shields.io/badge/Home%20Assistant-Marketplace-blue.svg

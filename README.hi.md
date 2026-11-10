@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![hacs][hacsbadge]][hacs]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -29,7 +29,7 @@ Syslog या OpenTelemetry (OTLP) कलेक्टर को भेजता 
 
 ## इंस्टॉलेशन
 
-**Remote Logger** एक HACS कंपोनेंट है, इसलिए पहले [Getting Started with HACS](https://www.hacs.xyz/docs/use/) के निर्देशों का पालन करके HACS इंस्टॉल करें।
+**Remote Logger** को [Home Assistant Marketplace][marketplace] से इंस्टॉल करें: **सेटिंग्स → Marketplace** पर जाएँ और **Remote Logger** खोजें। Home Assistant 2026.11 से पहले, इसे [HACS](https://www.hacs.xyz/docs/use/) से इंस्टॉल करें।
 
 यह इंटीग्रेशन Home Assistant की इंटीग्रेशन पेज से इंस्टॉल होता है और इसमें **कोई YAML कॉन्फ़िगरेशन नहीं** है।
 
@@ -123,12 +123,12 @@ OTEL टैक्सोनॉमी OTEL और Syslog दोनों के �
 ## हटाना
 
 1. Home Assistant में **Settings** > **Devices & services** > **Remote Logger** पर जाएँ। हर प्रविष्टि का मेनू (⋮) खोलें और **Delete** चुनें। लॉग निर्यात तुरंत बंद हो जाता है, और डायग्नोस्टिक सेंसर तथा उनका डिवाइस हटा दिए जाते हैं।
-2. इंटीग्रेशन की फ़ाइलें भी हटाने के लिए **HACS** खोलें, **Remote Logger** ढूँढें, **Remove** चुनें, फिर Home Assistant को पुनः आरंभ करें।
+2. इंटीग्रेशन की फ़ाइलें भी हटाने के लिए **सेटिंग्स → Marketplace** पर जाएँ, **Remote Logger** खोलें, और तीन बिंदुओं वाले मेनू से **Uninstall** चुनें। (**Delete and uninstall** चरण 1 भी कर देता है।) Home Assistant 2026.11 से पहले, **HACS** खोलें, **Remote Logger** ढूँढें, **Remove** चुनें, फिर Home Assistant को पुनः आरंभ करें।
 3. यदि आपने `configuration.yaml` में `system_log:` के अंतर्गत `fire_event: true` केवल Remote Logger के लिए जोड़ा था, तो उसे हटा सकते हैं।
 
 ##  Home Assistant के लिए Rhizomatics ओपन सोर्स
 
-### HACS
+### Home Assistant Marketplace
 - [AutoArm](https://autoarm.rhizomatics.org.uk) - भौतिक बटन, उपस्थिति, कैलेंडर, सूर्य और अधिक का उपयोग करके Home Assistant अलार्म कंट्रोल पैनल को स्वचालित रूप से आर्म और डिसआर्म करें
 - [Supernotify](https://supernotify.rhizomatics.org.uk) - शक्तिशाली चाइम और सुरक्षा कैमरा इंटीग्रेशन सहित आसान मल्टी-चैनल मैसेजिंग के लिए एकीकृत नोटिफिकेशन।
 
@@ -138,5 +138,5 @@ OTEL टैक्सोनॉमी OTEL और Syslog दोनों के �
 - [Anpr2MQTT](https://anpr2mqtt.rhizomatics.org.uk) - फ़ाइल सिस्टम (NAS/FTP) से MQTT तक वैकल्पिक इमेज विश्लेषण और UK DVLA इंटीग्रेशन के साथ ANPR/ALPR लाइसेंस प्लेट कैमरे इंटीग्रेट करें।
 - [Updates2MQTT](https://updates2mqtt.rhizomatics.org.uk) - Docker इमेज अपडेट पर MQTT के माध्यम से स्वचालित रूप से सूचित करें, इमेज से संस्करण और रिलीज़ नोट निकालने की उन्नत हैंडलिंग के साथ, और Home Assistant से कंटेनर को दूरस्थ रूप से पुल और रीस्टार्ट करने का विकल्प। [PyPI](https://pypi.org/project/updates2mqtt/) पर भी उपलब्ध।
 
-[hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Default-blue.svg
+[marketplace]: https://www.home-assistant.io/integrations/marketplace
+[marketplacebadge]: https://img.shields.io/badge/Home%20Assistant-Marketplace-blue.svg

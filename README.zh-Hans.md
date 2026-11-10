@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![hacs][hacsbadge]][hacs]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -27,7 +27,7 @@
 
 ## 安装
 
-**Remote Logger** 是一个 HACS 组件，因此需要先按照 [HACS 入门指南](https://www.hacs.xyz/docs/use/) 安装 HACS。
+**Remote Logger** 可从 [Home Assistant Marketplace][marketplace] 安装：前往 **设置 → Marketplace**，搜索 **Remote Logger**。Home Assistant 2026.11 之前的版本，请改为通过 [HACS](https://www.hacs.xyz/docs/use/) 安装。
 
 该集成通过 Home Assistant 集成页面安装，**无需 YAML 配置**。
 
@@ -119,12 +119,12 @@ OTEL 分类法同时用于 OTEL 和 Syslog，因为在此级别的 Syslog 中没
 ## 移除
 
 1. 在 Home Assistant 中打开 **设置** > **设备与服务** > **Remote Logger**。对每个条目，打开其菜单 (⋮) 并选择 **删除**。日志导出会立即停止，诊断传感器及其设备也会被移除。
-2. 如需同时移除集成文件，打开 **HACS**，找到 **Remote Logger**，选择 **移除**，然后重启 Home Assistant。
+2. 如需同时移除集成文件，前往 **设置 → Marketplace**，打开 **Remote Logger**，在三点菜单中选择 **卸载**（选择 **删除并卸载** 会同时完成第 1 步）。Home Assistant 2026.11 之前的版本：打开 **HACS**，找到 **Remote Logger**，选择 **移除**，然后重启 Home Assistant。
 3. 如果你只是为了 Remote Logger 才在 `configuration.yaml` 的 `system_log:` 下添加了 `fire_event: true`，可以将其删除。
 
 ##  Rhizomatics Home Assistant 开源项目
 
-### HACS
+### Home Assistant Marketplace
 - [AutoArm](https://autoarm.rhizomatics.org.uk) - 使用实体按钮、存在感应、日历、太阳位置等自动布撤防 Home Assistant 报警控制面板
 - [Supernotify](https://supernotify.rhizomatics.org.uk) - 统一通知，轻松实现多渠道消息推送，包含强大的门铃和安防摄像头集成。
 
@@ -134,5 +134,5 @@ OTEL 分类法同时用于 OTEL 和 Syslog，因为在此级别的 Syslog 中没
 - [Anpr2MQTT](https://anpr2mqtt.rhizomatics.org.uk) - 通过文件系统（NAS/FTP）将 ANPR/ALPR 车牌摄像头集成到 MQTT，支持可选的图像分析和英国 DVLA 集成。
 - [Updates2MQTT](https://updates2mqtt.rhizomatics.org.uk) - 自动通过 MQTT 通知 Docker 镜像更新，具备从镜像中提取版本和发布说明的高级处理能力，并支持从 Home Assistant 远程拉取和重启容器。同样可在 [PyPI](https://pypi.org/project/updates2mqtt/) 获取。
 
-[hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Default-blue.svg
+[marketplace]: https://www.home-assistant.io/integrations/marketplace
+[marketplacebadge]: https://img.shields.io/badge/Home%20Assistant-Marketplace-blue.svg
