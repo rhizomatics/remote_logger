@@ -33,6 +33,9 @@ theme:
     - search.share
     - toc.follow
     - toc.integrate
+extra_css:
+  - assets/stylesheets/extra.css
+
 hooks:
   # heading anchors match GitHub (incl. non-ASCII), so translated README links work
   - docs_hooks/slugs.py
