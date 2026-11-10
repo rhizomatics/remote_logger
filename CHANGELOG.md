@@ -17,7 +17,7 @@
 - mypy now runs in strict mode, meeting the Home Assistant Integration Quality Scale `strict-typing` rule
 
 
-# 2.1.0
+# 2.10.0
 ## 🚨 Breaking changes
 - Support for Python 3.13, and versions of Home Assistant from 2026.4 and earlier no longer supported. They may continue to work, however there's no automated test assurance any longer, and newer features will start to be introduced
 - Tested range is Home Assistant 2026.5.0 to 2026.10.x
