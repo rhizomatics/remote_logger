@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -48,7 +48,8 @@ async def setup_entry(hass: HomeAssistant) -> AsyncGenerator[SetupEntry]:
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
         entries.append(entry)
-        return entry
+        # MockConfigEntry is untyped (Any) in the test helper packages
+        return cast("RemoteLoggerConfigEntry", entry)
 
     yield _setup
     for entry in entries:

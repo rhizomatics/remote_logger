@@ -7,11 +7,17 @@ from asyncio import sleep
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.auth import EVENT_USER_ADDED, EVENT_USER_REMOVED, EVENT_USER_UPDATED, HomeAssistant
+from homeassistant.auth import EVENT_USER_ADDED, EVENT_USER_REMOVED, EVENT_USER_UPDATED
 from homeassistant.components.automation import EVENT_AUTOMATION_TRIGGERED
-from homeassistant.components.script import EVENT_SCRIPT_STARTED
-from homeassistant.const import EVENT_COMPONENT_LOADED, EVENT_STATE_CHANGED
-from homeassistant.core import EVENT_CALL_SERVICE, EVENT_SERVICE_REGISTERED, EVENT_SERVICE_REMOVED, Event, callback
+from homeassistant.components.script.const import EVENT_SCRIPT_STARTED
+from homeassistant.const import (
+    EVENT_CALL_SERVICE,
+    EVENT_COMPONENT_LOADED,
+    EVENT_SERVICE_REGISTERED,
+    EVENT_SERVICE_REMOVED,
+    EVENT_STATE_CHANGED,
+)
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.area_registry import EVENT_AREA_REGISTRY_UPDATED
 from homeassistant.helpers.category_registry import EVENT_CATEGORY_REGISTRY_UPDATED
 from homeassistant.helpers.device_registry import EVENT_DEVICE_REGISTRY_UPDATED

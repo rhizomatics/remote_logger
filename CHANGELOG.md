@@ -12,6 +12,10 @@
 - Syslog `exception.stacktrace` values weren't escaped, so a stacktrace containing `"`, `\` or `]` broke the structured data ([#113](https://github.com/rhizomatics/remote_logger/issues/113))
 - Log records from worker threads at the very end of Home Assistant shutdown no longer try to schedule a flush on the stopped event loop, which left a "coroutine was never awaited" warning and counted as a format error
 
+## 📝 Other changes
+### Internal
+- mypy now runs in strict mode, meeting the Home Assistant Integration Quality Scale `strict-typing` rule
+
 
 # 2.1.0
 ## 🚨 Breaking changes

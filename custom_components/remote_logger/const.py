@@ -1,10 +1,10 @@
 """Constants for the remote_logger integration."""
 
-from homeassistant.const import EntityPlatforms, Platform
+from homeassistant.const import Platform
 
 DOMAIN = "remote_logger"
 
-PLATFORMS: list[EntityPlatforms] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 # Backend selection
 CONF_BACKEND = "backend"

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -25,8 +26,9 @@ def _all_key_paths(obj: object, prefix: str = "") -> set[str]:
     return paths
 
 
-def _load(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
+def _load(path: Path) -> dict[str, Any]:
+    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return data
 
 
 @pytest.fixture(scope="module")

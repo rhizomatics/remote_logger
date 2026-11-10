@@ -44,6 +44,14 @@ def _close(coro: Coroutine[Any, Any, Any]) -> None:
     coro.close()
 
 
+def _connections(exporter: SyslogExporter) -> tuple[object, object, object]:
+    """The exporter's UDP transport, TCP writer and TCP reader, read afresh.
+
+    mypy keeps an attribute narrowed to the mock a test assigned, even across an awaited call that resets it.
+    """
+    return exporter._udp_transport, exporter._tcp_writer, exporter._tcp_reader
+
+
 def _mock_writer() -> MagicMock:
     """A StreamWriter stand-in: write() and close() are sync, drain() and wait_closed() are async."""
     writer = MagicMock()
@@ -434,8 +442,9 @@ class TestSyslogExporter:
         await exporter._close_tcp()
 
         mock_writer.close.assert_called_once()
-        assert exporter._tcp_writer is None
-        assert exporter._tcp_reader is None
+        _, writer, reader = _connections(exporter)
+        assert writer is None
+        assert reader is None
 
     async def test_close_all_resources(self, exporter: SyslogExporter) -> None:
 
@@ -447,8 +456,9 @@ class TestSyslogExporter:
         await exporter.close()
 
         mock_udp.close.assert_called_once()
-        assert exporter._udp_transport is None
-        assert exporter._tcp_writer is None
+        udp_transport, writer, _ = _connections(exporter)
+        assert udp_transport is None
+        assert writer is None
 
     def test_to_syslog_message_event_data_in_sd(self, exporter: SyslogExporter) -> None:
         data = {

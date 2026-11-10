@@ -113,6 +113,16 @@ unfixable = ["B"]
 [tool.ruff.format]
 preview = true
 
+[tool.mypy]
+# Home Assistant Integration Quality Scale (Platinum): strict-typing
+strict = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+# docs_hooks type against properdocs, which is in the docs group but not the pre-commit mypy environment
+module = ["properdocs.*"]
+ignore_missing_imports = true
+
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disable_error_code = ["arg-type", "call-overload", "index", "operator"]
