@@ -149,7 +149,7 @@ buffers and show the last payload posted.
 ### Python / Docker
 
 - [Anpr2MQTT](https://anpr2mqtt.rhizomatics.org.uk) - Integrate with ANPR/ALPR licence plate cameras via file system (NAS/FTP) to MQTT with optional image analysis and UK DVLA integration.
-- [Dev Shell](https://devshell.rhizomatics.org.uk) - Python REPL for Home Assistant development and data exploration.
+- [Home Assistant REPL](https://homeassistant-repl.rhizomatics.org.uk) - Python REPL for direct internal API and SQL access for Home Assistant development and data exploration.
 - [Updates2MQTT](https://updates2mqtt.rhizomatics.org.uk) - Automatically notify via MQTT on Docker image updates, with advanced handling to extract versions and release notes from images, and option to remotely pull and restart containers from Home Assistant. Also available on [PyPI](https://pypi.org/project/updates2mqtt/)
 
 [hacs]: https://hacs.xyz
