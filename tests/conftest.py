@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -10,12 +11,25 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from custom_components.remote_logger.handler import ExportingLogHandler
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "real_connection_check: don't stub the exporters' setup connection check")
+
+
+@pytest.fixture(autouse=True)
+def remove_leaked_log_handlers() -> Iterator[None]:
+    """Remove log handlers left on the root logger by entries a test set up but didn't unload.
+
+    Otherwise they outlive the test's hass, and later log records schedule flushes on its closed loop.
+    """
+    yield
+    for handler in [h for h in logging.root.handlers if isinstance(h, ExportingLogHandler)]:
+        logging.root.removeHandler(handler)
 
 
 @pytest.fixture(autouse=True)
