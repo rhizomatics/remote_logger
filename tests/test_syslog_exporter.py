@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 # RFC 5424 SD-ELEMENT grammar: SD-NAME is 1-32 PRINTUSASCII excluding '=', SP, ']', '"';
 # PARAM-VALUE may only contain '"', '\' and ']' when backslash-escaped.
-_SD_NAME = r"[!#-<>-\\^-~]{1,32}"
+_SD_NAME = "[" + re.escape("".join(chr(c) for c in range(33, 127) if chr(c) not in '="]')) + "]{1,32}"
 _SD_PARAM = _SD_NAME + r'="(?:[^"\\\]]|\\["\\\]])*"'
 _SD_ELEMENT = re.compile(r"\[" + _SD_NAME + r"(?: " + _SD_PARAM + r")*\]")
 
