@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![hacs][hacsbadge]][hacs]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -28,7 +28,7 @@ SyslogまたはOpenTelemetry（OTLP）コレクターに送信します。ライ
 
 ## インストール
 
-**Remote Logger**はHACSコンポーネントのため、まず[Getting Started with HACS](https://www.hacs.xyz/docs/use/)の手順に従ってHACSをインストールしてください。
+**Remote Logger** は [Home Assistant Marketplace][marketplace] からインストールします。**設定 → Marketplace** を開き、**Remote Logger** を検索してください。Home Assistant 2026.11 より前は、[HACS](https://www.hacs.xyz/docs/use/) からインストールします。
 
 このインテグレーションはHome Assistantのインテグレーションページからインストールでき、**YAMLの設定は不要**です。
 
@@ -120,12 +120,12 @@ Home Assistantのセンサーが作成・更新され、ログアクティビテ
 ## 削除
 
 1. Home Assistant で **設定** > **デバイスとサービス** > **Remote Logger** を開きます。各エントリのメニュー (⋮) を開き、**削除** を選びます。ログのエクスポートはすぐに止まり、診断センサーとそのデバイスも削除されます。
-2. 統合のファイルも削除するには、**HACS** を開き、**Remote Logger** を探して **削除** を選び、Home Assistant を再起動します。
+2. 統合のファイルも削除するには、**設定 → Marketplace** を開き、**Remote Logger** を開いて、3 点メニューから **アンインストール** を選びます（**削除してアンインストール** を選ぶと手順 1 も行われます）。Home Assistant 2026.11 より前は、**HACS** を開き、**Remote Logger** を探して **削除** を選び、Home Assistant を再起動します。
 3. `configuration.yaml` の `system_log:` に `fire_event: true` を Remote Logger のためだけに追加していた場合は、元に戻してかまいません。
 
 ##  Home Assistant向けRhizomaticsオープンソース
 
-### HACS
+### Home Assistant Marketplace
 - [AutoArm](https://autoarm.rhizomatics.org.uk) - 物理ボタン、在宅検知、カレンダー、太陽位置などを使用してHome Assistantのアラームコントロールパネルを自動的にアーム・ディスアームする
 - [Supernotify](https://supernotify.rhizomatics.org.uk) - ドアベルやセキュリティカメラの強力な統合を含む、簡単なマルチチャンネルメッセージングのための統合通知。
 
@@ -135,5 +135,5 @@ Home Assistantのセンサーが作成・更新され、ログアクティビテ
 - [Anpr2MQTT](https://anpr2mqtt.rhizomatics.org.uk) - ファイルシステム（NAS/FTP）経由でANPR/ALPRナンバープレートカメラをMQTTに接続し、オプションの画像分析とUK DVLA連携を提供。
 - [Updates2MQTT](https://updates2mqtt.rhizomatics.org.uk) - Dockerイメージの更新をMQTT経由で自動通知。イメージからバージョンやリリースノートを抽出する高度な処理と、Home Assistantからコンテナのリモートプル・再起動オプションも提供。[PyPI](https://pypi.org/project/updates2mqtt/)でも利用可能。
 
-[hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Default-blue.svg
+[marketplace]: https://www.home-assistant.io/integrations/marketplace
+[marketplacebadge]: https://img.shields.io/badge/Home%20Assistant-Marketplace-blue.svg
