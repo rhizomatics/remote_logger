@@ -63,7 +63,7 @@ SyslogはTCPまたはUDPで送信できます。
 
 ![Syslogの設定](https://remote-logger.rhizomatics.org.uk/assets/images/config_syslog.png){width=360}
 
-**厳格な RFC 5424 モード**は、Grafana Alloy のようにメッセージを厳密にチェックする受信側向けです。Syslog のセットアップフォーム、または後から**再設定**で有効にします。構造化データには `name`、`source`、`exception`、`event_type` などの Home Assistant 独自の名前が使われ、イベントデータのキーは RFC の 32 文字制限に収まるよう短縮されます（例: `new_state.attributes.friendly_name` は `new.attr.friendly_name` になります）。`MSGID` は 32 文字に切り詰められ、SD-ID は `homeassistant@<番号>` となります。番号には入力した [IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/)、空欄の場合はドキュメント用番号 32473 が使われます。厳格モードでない場合は、以下の OTEL 名が使われます。
+**厳格な RFC 5424 モード**は、Grafana Alloy のようにメッセージを厳密にチェックする受信側向けです。Syslog のセットアップフォーム、または後から**再設定**で有効にします。構造化データには `name`、`source`、`exception`、`event_type` などの Home Assistant 独自の名前が使われ、イベントデータのキーは RFC の 32 文字制限に収まるよう短縮されます（例: `new_state.attributes.friendly_name` は `new.attr.friendly_name` になります）。`MSGID` は 32 文字に切り詰められ、SD-ID は `homeassistant@<番号>` となります。番号には入力した [IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/)、空欄の場合は Rhizomatics の PEN 67614 が使われます。テスト用には、代わりに RFC 5612 のドキュメント用番号 32473 を入力できます。厳格モードでない場合は、以下の OTEL 名が使われます。
 
 ## イベント
 

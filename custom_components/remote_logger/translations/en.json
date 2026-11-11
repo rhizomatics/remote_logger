@@ -70,7 +70,7 @@
           "app_name": "The APP-NAME field in RFC 5424 messages (default: homeassistant).",
           "facility": "Syslog facility code used to calculate the PRI value (default: user).",
           "strict_mode": "Send syslog-native output: Home Assistant parameter names shortened to fit RFC 5424 limits, MSGID cut to 32 characters, and a private SD-ID of homeassistant@PEN. Enable if your receiver rejects messages (for example Grafana Alloy).",
-          "enterprise_number": "Optional IANA Private Enterprise Number (PEN) for the strict mode SD-ID homeassistant@PEN. Defaults to 32473, the RFC 5612 documentation number."
+          "enterprise_number": "Optional IANA Private Enterprise Number (PEN) for the strict mode SD-ID homeassistant@PEN. Defaults to 67614, the Rhizomatics PEN. For testing, 32473, the RFC 5612 documentation number, can be used instead."
         }
       },
       "reconfigure_otel": {
@@ -122,7 +122,7 @@
           "app_name": "The APP-NAME field in RFC 5424 messages (default: homeassistant).",
           "facility": "Syslog facility code used to calculate the PRI value (default: user).",
           "strict_mode": "Send syslog-native output: Home Assistant parameter names shortened to fit RFC 5424 limits, MSGID cut to 32 characters, and a private SD-ID of homeassistant@PEN. Enable if your receiver rejects messages (for example Grafana Alloy).",
-          "enterprise_number": "Optional IANA Private Enterprise Number (PEN) for the strict mode SD-ID homeassistant@PEN. Defaults to 32473, the RFC 5612 documentation number."
+          "enterprise_number": "Optional IANA Private Enterprise Number (PEN) for the strict mode SD-ID homeassistant@PEN. Defaults to 67614, the Rhizomatics PEN. For testing, 32473, the RFC 5612 documentation number, can be used instead."
         }
       },
       "common": {

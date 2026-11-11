@@ -70,7 +70,7 @@
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
           "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：user）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
-          "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 32473，即 RFC 5612 的文档用编号。"
+          "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 67614，即 Rhizomatics 的 PEN。测试时可改用 32473，即 RFC 5612 的文档用编号。"
         }
       },
       "reconfigure_otel": {
@@ -122,7 +122,7 @@
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
           "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：user）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
-          "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 32473，即 RFC 5612 的文档用编号。"
+          "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 67614，即 Rhizomatics 的 PEN。测试时可改用 32473，即 RFC 5612 的文档用编号。"
         }
       },
       "common": {

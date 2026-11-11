@@ -1,3 +1,9 @@
+# 2.11.1
+
+## ✨ Enhancements
+- Strict RFC 5424 Syslog mode now defaults to SD-ID `homeassistant@67614`, using the IANA Private Enterprise Number assigned to Rhizomatics, instead of the RFC 5612 documentation number 32473
+  - Enter 32473 as the enterprise number to keep the previous SD-ID, e.g. for testing
+
 # 2.11.0
 
 ## ✨ Enhancements
