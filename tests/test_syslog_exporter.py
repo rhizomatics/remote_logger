@@ -665,16 +665,21 @@ class TestSyslogStrictMode:
         exporter.log_direct(LONG_EVENT, "hello", "INFO")
         assert exporter._buffer[0].payload.decode("utf-8").split(" ")[5] == LONG_EVENT[:32]
 
-    def test_sd_id_defaults_to_documentation_pen(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+    def test_sd_id_defaults_to_rhizomatics_pen(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
         exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True)
         line = exporter.create_log_record({}, "homeassistant_started", None).payload.decode("utf-8")
-        assert '[homeassistant@32473 event_type="homeassistant_started"]' in line
+        assert '[homeassistant@67614 event_type="homeassistant_started"]' in line
         assert _sd_block(line) is not None
 
     def test_sd_id_with_enterprise_number(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
         exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True, enterprise_number=12345)
         line = exporter.create_log_record({}, "homeassistant_started", None).payload.decode("utf-8")
         assert '[homeassistant@12345 event_type="homeassistant_started"]' in line
+
+    def test_sd_id_overridden_to_documentation_pen(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
+        exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True, enterprise_number=32473)
+        line = exporter.create_log_record({}, "homeassistant_started", None).payload.decode("utf-8")
+        assert '[homeassistant@32473 event_type="homeassistant_started"]' in line
 
     def test_system_log_event_uses_ha_names(self, hass: HomeAssistant, mock_entry_syslog: MagicMock) -> None:
         exporter = self._exporter(hass, mock_entry_syslog, strict_mode=True, suppress_system_log_event_name=False)
@@ -691,7 +696,7 @@ class TestSyslogStrictMode:
         sd = _sd_block(line)
         assert sd is not None
         assert sd.group(0) == (
-            '[homeassistant@32473 source="homeassistant/core.py:50" name="homeassistant.components.sensor"'
+            '[homeassistant@67614 source="homeassistant/core.py:50" name="homeassistant.components.sensor"'
             f' count="3" first_occurred="{isotimestamp(1699999000.0)}"'
             ' exception="ValueError: \\"bad\\]\\"" event_type="system_log_event"]'
         )
@@ -711,7 +716,7 @@ class TestSyslogStrictMode:
         sd = _sd_block(line)
         assert sd is not None
         assert sd.group(0) == (
-            '[homeassistant@32473 event_type="state_changed" entity_id="light.x" new.state="on"'
+            '[homeassistant@67614 event_type="state_changed" entity_id="light.x" new.state="on"'
             ' new.attr.friendly_name="X" new.changed="t" new.ctx.parent="p"]'
         )
 

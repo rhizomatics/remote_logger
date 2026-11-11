@@ -71,7 +71,7 @@ Syslog can be sent as TCP or UDP.
 
 ![Configure Syslog](https://remote-logger.rhizomatics.org.uk/assets/images/config_syslog.png){width=360}
 
-**Strict RFC 5424 mode** is for receivers that check messages closely, such as Grafana Alloy. Turn it on in the Syslog setup form, or later with **Reconfigure**. Structured data then uses Home Assistant's own names, such as `name`, `source`, `exception` and `event_type`, and event data keys are shortened to fit the RFC's 32-character limit (for example `new_state.attributes.friendly_name` becomes `new.attr.friendly_name`). `MSGID` is cut to 32 characters, and the SD-ID is `homeassistant@<number>`, using the [IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/) you enter, or 32473, the documentation number, if you leave it empty. Without strict mode, the OTEL names below are used.
+**Strict RFC 5424 mode** is for receivers that check messages closely, such as Grafana Alloy. Turn it on in the Syslog setup form, or later with **Reconfigure**. Structured data then uses Home Assistant's own names, such as `name`, `source`, `exception` and `event_type`, and event data keys are shortened to fit the RFC's 32-character limit (for example `new_state.attributes.friendly_name` becomes `new.attr.friendly_name`). `MSGID` is cut to 32 characters, and the SD-ID is `homeassistant@<number>`, using the [IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/) you enter, or 67614, the Rhizomatics PEN, if you leave it empty. For testing, you can enter 32473, the RFC 5612 documentation number, instead. Without strict mode, the OTEL names below are used.
 
 ## Events
 

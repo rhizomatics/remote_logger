@@ -70,7 +70,7 @@
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
           "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user).",
           "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@PEN. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
-          "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@PEN in strikte modus. Standaard 32473, het documentatienummer uit RFC 5612."
+          "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@PEN in strikte modus. Standaard 67614, het PEN van Rhizomatics. Voor tests kan in plaats daarvan 32473, het documentatienummer uit RFC 5612, worden gebruikt."
         }
       },
       "reconfigure_otel": {
@@ -122,7 +122,7 @@
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
           "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user).",
           "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@PEN. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
-          "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@PEN in strikte modus. Standaard 32473, het documentatienummer uit RFC 5612."
+          "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@PEN in strikte modus. Standaard 67614, het PEN van Rhizomatics. Voor tests kan in plaats daarvan 32473, het documentatienummer uit RFC 5612, worden gebruikt."
         }
       },
       "common": {

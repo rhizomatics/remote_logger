@@ -59,8 +59,8 @@ SD_NAME_MAX_LENGTH = 32  # RFC 5424 section 6
 
 # Strict mode: a private SD-ID of homeassistant@<IANA Private Enterprise Number>
 STRICT_SD_ID = "homeassistant"
-# RFC 5612 documentation PEN, used until a dedicated PEN is assigned
-DEFAULT_ENTERPRISE_NUMBER = 32473
+# IANA PEN assigned to Rhizomatics; can be overridden, e.g. with 32473, the RFC 5612 documentation PEN
+DEFAULT_ENTERPRISE_NUMBER = 67614
 
 # Structured data PARAM-NAMEs for system_log_event fields: OpenTelemetry by default, Home Assistant in strict mode
 OTEL_SD_NAMES: dict[str, str] = {

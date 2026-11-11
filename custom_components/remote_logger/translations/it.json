@@ -70,7 +70,7 @@
           "app_name": "Il campo APP-NAME nei messaggi RFC 5424 (predefinito: homeassistant).",
           "facility": "Codice di facility syslog usato per calcolare il valore PRI (predefinito: user).",
           "strict_mode": "Invia un output syslog nativo: nomi dei parametri di Home Assistant accorciati ai limiti di RFC 5424, MSGID troncato a 32 caratteri e un SD-ID privato homeassistant@PEN. Abilitare se il ricevitore rifiuta i messaggi (ad esempio Grafana Alloy).",
-          "enterprise_number": "IANA Private Enterprise Number opzionale per l'SD-ID homeassistant@PEN della modalità rigorosa. Predefinito 32473, il numero di documentazione di RFC 5612."
+          "enterprise_number": "IANA Private Enterprise Number opzionale per l'SD-ID homeassistant@PEN della modalità rigorosa. Predefinito 67614, il PEN di Rhizomatics. Per i test si può usare invece 32473, il numero di documentazione di RFC 5612."
         }
       },
       "reconfigure_otel": {
@@ -122,7 +122,7 @@
           "app_name": "Il campo APP-NAME nei messaggi RFC 5424 (predefinito: homeassistant).",
           "facility": "Codice di facility syslog usato per calcolare il valore PRI (predefinito: user).",
           "strict_mode": "Invia un output syslog nativo: nomi dei parametri di Home Assistant accorciati ai limiti di RFC 5424, MSGID troncato a 32 caratteri e un SD-ID privato homeassistant@PEN. Abilitare se il ricevitore rifiuta i messaggi (ad esempio Grafana Alloy).",
-          "enterprise_number": "IANA Private Enterprise Number opzionale per l'SD-ID homeassistant@PEN della modalità rigorosa. Predefinito 32473, il numero di documentazione di RFC 5612."
+          "enterprise_number": "IANA Private Enterprise Number opzionale per l'SD-ID homeassistant@PEN della modalità rigorosa. Predefinito 67614, il PEN di Rhizomatics. Per i test si può usare invece 32473, il numero di documentazione di RFC 5612."
         }
       },
       "common": {

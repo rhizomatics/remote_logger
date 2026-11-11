@@ -64,7 +64,7 @@ Syslog TCP या UDP के माध्यम से भेजा जा स�
 
 ![Syslog कॉन्फ़िगर करें](https://remote-logger.rhizomatics.org.uk/assets/images/config_syslog.png){width=360}
 
-**सख़्त RFC 5424 मोड** उन रिसीवरों के लिए है जो संदेशों की बारीकी से जाँच करते हैं, जैसे Grafana Alloy। इसे Syslog सेटअप फ़ॉर्म में, या बाद में **Reconfigure** से चालू करें। तब संरचित डेटा Home Assistant के अपने नामों का उपयोग करता है, जैसे `name`, `source`, `exception` और `event_type`, और इवेंट डेटा कुंजियाँ RFC की 32-अक्षर सीमा तक छोटी की जाती हैं (उदाहरण के लिए `new_state.attributes.friendly_name` बनता है `new.attr.friendly_name`)। `MSGID` 32 अक्षरों तक छोटा किया जाता है, और SD-ID `homeassistant@<नंबर>` होता है, जिसमें आपके द्वारा दर्ज [IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/) या, खाली छोड़ने पर, दस्तावेज़ीकरण नंबर 32473 उपयोग होता है। सख़्त मोड के बिना, नीचे दिए गए OTEL नाम उपयोग होते हैं।
+**सख़्त RFC 5424 मोड** उन रिसीवरों के लिए है जो संदेशों की बारीकी से जाँच करते हैं, जैसे Grafana Alloy। इसे Syslog सेटअप फ़ॉर्म में, या बाद में **Reconfigure** से चालू करें। तब संरचित डेटा Home Assistant के अपने नामों का उपयोग करता है, जैसे `name`, `source`, `exception` और `event_type`, और इवेंट डेटा कुंजियाँ RFC की 32-अक्षर सीमा तक छोटी की जाती हैं (उदाहरण के लिए `new_state.attributes.friendly_name` बनता है `new.attr.friendly_name`)। `MSGID` 32 अक्षरों तक छोटा किया जाता है, और SD-ID `homeassistant@<नंबर>` होता है, जिसमें आपके द्वारा दर्ज [IANA Private Enterprise Number](https://www.iana.org/assignments/enterprise-numbers/) या, खाली छोड़ने पर, Rhizomatics का PEN 67614 उपयोग होता है। परीक्षण के लिए आप इसकी जगह 32473, RFC 5612 का दस्तावेज़ीकरण नंबर, दर्ज कर सकते हैं। सख़्त मोड के बिना, नीचे दिए गए OTEL नाम उपयोग होते हैं।
 
 ## इवेंट
 
