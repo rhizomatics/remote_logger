@@ -54,7 +54,7 @@ plugins:
       full_output: llms-full.txt
       preprocess: docs_hooks/llmstxt_preprocess.py
       markdown_description: >
-        Remote Logger is a Home Assistant custom integration (installed via HACS) that forwards
+        Remote Logger is a Home Assistant custom integration (installed via the Home Assistant Marketplace) that forwards
         Home Assistant log records and selected events to a remote Syslog server or an
         OpenTelemetry (OTLP) collector, with structured multi-line entries and stack traces.
       sections:

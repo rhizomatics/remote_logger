@@ -65,7 +65,7 @@ rules:
 
   docs-installation-instructions:
     status: done
-    comment: README.md "Installation" (HACS, then the integrations page).
+    comment: README.md "Installation" (Home Assistant Marketplace, then the integrations page).
 
   docs-removal-instructions:
     status: done

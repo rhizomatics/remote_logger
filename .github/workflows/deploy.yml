@@ -13,7 +13,7 @@ on:
 
 jobs:
   release-zip:
-    # separate from build so HACS can download the zip as soon as possible
+    # separate from build so the Home Assistant Marketplace can download the zip as soon as possible
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
@@ -42,12 +42,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7.0.1
-    - name: HACS Action
+    - name: Marketplace validation
       uses: "hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa"
       with:
         category: "integration"
         ignore: "brands"
-    - name: HACS Hassfest
+    - name: Hassfest
       uses: "home-assistant/actions/hassfest@86d4564712fa02543c808e3a693dd04f9d3f8361"
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v7
