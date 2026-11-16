@@ -36,12 +36,12 @@
     volumes:
       - ./conf:/etc/vector
       - ./logs:/logs
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./vector_data:/var/vector
     environment:
       VECTOR_LOG: warn
     ports:
-      - 8686:8686
+      - 127.0.0.1:8686:8686 # Vector API, from this host only
       - 514:514/udp
       - 5514:5514/tcp
     cap_add:

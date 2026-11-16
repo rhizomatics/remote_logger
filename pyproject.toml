@@ -23,6 +23,8 @@ dev=[
     "mypy",
     "genbadge[all]",
     "codespell>=2.4.3",
+    "bandit>=1.9.4,<2.0.0",
+    "zizmor>=1.32.0,<2.0.0",
 ]
 docs=[
     "mkdocs-minify-plugin",

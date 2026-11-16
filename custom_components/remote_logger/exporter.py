@@ -4,6 +4,7 @@ import logging
 import threading
 from abc import abstractmethod
 from asyncio import sleep
+from collections import deque
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -24,9 +25,10 @@ from homeassistant.helpers.device_registry import EVENT_DEVICE_REGISTRY_UPDATED
 from homeassistant.helpers.entity_registry import EVENT_ENTITY_REGISTRY_UPDATED
 from homeassistant.helpers.floor_registry import EVENT_FLOOR_REGISTRY_UPDATED
 from homeassistant.helpers.label_registry import EVENT_LABEL_REGISTRY_UPDATED
+from homeassistant.helpers.redact import async_redact_data
 from homeassistant.util import dt as dt_util
 
-from custom_components.remote_logger.const import BATCH_FLUSH_INTERVAL_SECONDS
+from custom_components.remote_logger.const import BATCH_FLUSH_INTERVAL_SECONDS, MAX_BUFFERED_RECORDS, REDACT_KEYS
 
 if TYPE_CHECKING:
     import datetime as dt
@@ -40,7 +42,7 @@ _HA_EVENT_BODY_ATTRIBUTE_KEYS: frozenset[str] = frozenset({"entity_id", "domain"
 def _event_data_serializer(obj: Any) -> Any:
     """JSON serializer for HA event data objects."""
     if hasattr(obj, "as_dict"):
-        return obj.as_dict()
+        return async_redact_data(obj.as_dict(), REDACT_KEYS)
     if hasattr(obj, "value"):
         return obj.value
     return str(obj)
@@ -81,7 +83,8 @@ class LogExporter:
         self.last_posting_error_message: str | None = None
         self.last_posting_error: dt.datetime | None = None
 
-        self._buffer: list[LogMessage] = []
+        # Bounded, so an endpoint that stays down can't use up memory: the oldest records are dropped
+        self._buffer: deque[LogMessage] = deque(maxlen=MAX_BUFFERED_RECORDS)
         self.self_source: str = f"custom_components/remote_logger/{self.logger_type}"
         self.last_sent_payload: LogSubmission | None = None
         self.flushing: threading.Event = threading.Event()
@@ -110,7 +113,8 @@ class LogExporter:
             if len(self._buffer) >= self._batch_max_size:
                 self._hass.async_create_task(self.flush())
         except Exception as e:  # ruff: ignore[blind-except]
-            _LOGGER.error("remote_logger: %s event handler failure %s on %s", self.logger_type, e, event.data)
+            # the event type only: event data can hold secrets, and this goes to the Home Assistant log
+            _LOGGER.error("remote_logger: %s event handler failure %s on %s", self.logger_type, e, event.event_type)
             self.on_format_error(str(e))
 
     def handle_entry(self, entry: Mapping[str, Any], time_fired: dt.datetime) -> None:
@@ -131,7 +135,7 @@ class LogExporter:
                     if self._hass.loop.is_running():
                         self._hass.create_task(self.flush())
         except Exception as e:  # ruff: ignore[blind-except]
-            _LOGGER.error("remote_logger: %s entry handler failure %s on %s", self.logger_type, e, entry)
+            _LOGGER.error("remote_logger: %s entry handler failure %s on %s", self.logger_type, e, entry.get("name"))
             self.on_format_error(str(e))
 
     @abstractmethod
@@ -198,13 +202,15 @@ class LogExporter:
             else:
                 message = [event_type]
 
+            # codes, passwords, tokens and the like are never exported
+            data: dict[str, Any] = async_redact_data(event.data, REDACT_KEYS)
             if event_body:
-                flat_event: dict[str, Any] = {k: v for k, v in event.data.items() if k not in _HA_EVENT_BODY_ATTRIBUTE_KEYS}
-                event_data: dict[str, Any] = {k: v for k, v in event.data.items() if k in _HA_EVENT_BODY_ATTRIBUTE_KEYS}
+                flat_event: dict[str, Any] = {k: v for k, v in data.items() if k not in _HA_EVENT_BODY_ATTRIBUTE_KEYS}
+                event_data: dict[str, Any] = {k: v for k, v in data.items() if k in _HA_EVENT_BODY_ATTRIBUTE_KEYS}
                 if flat_event:
                     event_data["event.data"] = json.dumps(flat_event, default=_event_data_serializer, indent=2)
             else:
-                event_data = dict(event.data)
+                event_data = data
 
             record: LogMessage = self.create_log_record(
                 event_data,

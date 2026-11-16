@@ -57,6 +57,9 @@
           "port": "Syslog 服务器端口",
           "protocol": "传输协议",
           "use_tls": "使用 TLS（仅 TCP）",
+          "tls_ca_file": "CA 证书文件",
+          "tls_client_cert": "客户端证书文件",
+          "tls_client_key": "客户端密钥文件",
           "app_name": "应用名称",
           "facility": "Syslog 设施",
           "strict_mode": "严格 RFC 5424 模式",
@@ -67,6 +70,9 @@
           "port": "Syslog 服务器端口（默认：514）。",
           "protocol": "传输协议：UDP（即发即弃）或 TCP（可靠传输）。",
           "use_tls": "为 TCP 连接启用 TLS 加密，UDP 时忽略此选项。",
+          "tls_ca_file": "可选：包含为服务器证书签名的证书颁发机构的 PEM 文件路径，用于私有 CA。留空则使用系统证书存储。",
+          "tls_client_cert": "可选：PEM 客户端证书的路径，用于要求双向 TLS 的服务器。",
+          "tls_client_key": "可选：客户端证书的 PEM 私钥路径（如果不在同一文件中）。",
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
           "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：user）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
@@ -109,6 +115,9 @@
           "port": "Syslog 服务器端口",
           "protocol": "传输协议",
           "use_tls": "使用 TLS（仅 TCP）",
+          "tls_ca_file": "CA 证书文件",
+          "tls_client_cert": "客户端证书文件",
+          "tls_client_key": "客户端密钥文件",
           "app_name": "应用名称",
           "facility": "Syslog 设施",
           "strict_mode": "严格 RFC 5424 模式",
@@ -119,6 +128,9 @@
           "port": "Syslog 服务器端口（默认：514）。",
           "protocol": "传输协议：UDP（即发即弃）或 TCP（可靠传输）。",
           "use_tls": "为 TCP 连接启用 TLS 加密，UDP 时忽略此选项。",
+          "tls_ca_file": "可选：包含为服务器证书签名的证书颁发机构的 PEM 文件路径，用于私有 CA。留空则使用系统证书存储。",
+          "tls_client_cert": "可选：PEM 客户端证书的路径，用于要求双向 TLS 的服务器。",
+          "tls_client_key": "可选：客户端证书的 PEM 私钥路径（如果不在同一文件中）。",
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
           "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：user）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
@@ -169,6 +181,8 @@
       "invalid_headers": "格式无效，每项必须为'名称: 值'格式（例如 stream-name: my-stream）。",
       "invalid_auth": "认证失败，请检查 Bearer 令牌。",
       "state_changes_exclusive": "只能选择一种状态变更选项。",
+      "tls_requires_tcp": "TLS 仅适用于 TCP。请选择 TCP 或关闭 TLS。",
+      "invalid_tls_files": "无法读取 TLS 证书或密钥文件。请检查路径，并确认它们是 PEM 文件。",
       "unknown": "发生意外错误。"
     },
     "abort": {
@@ -234,6 +248,12 @@
       "postings": {
         "name": "发送次数"
       }
+    }
+  },
+  "issues": {
+    "plaintext_token": {
+      "title": "访问令牌未加密发送",
+      "description": "{endpoint} 的访问令牌通过明文 HTTP 发送，网络路径上的任何人都可以读取。请重新配置该条目以使用 TLS (HTTPS)；如果收集器位于同一主机或受信任的网络中，可忽略此提示。"
     }
   },
   "exceptions": {

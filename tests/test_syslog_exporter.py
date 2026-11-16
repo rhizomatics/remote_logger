@@ -632,7 +632,7 @@ class TestSyslogCheckConnection:
             "custom_components.remote_logger.syslog.exporter.validate", AsyncMock(return_value="cannot_connect")
         ) as mock_validate:
             assert await exporter.async_check_connection() == "cannot_connect"
-        mock_validate.assert_awaited_once_with(hass, "syslog.example.com", 514, "udp", False)
+        mock_validate.assert_awaited_once_with(hass, "syslog.example.com", 514, "udp", False, None, None, None)
 
 
 # ---------------------------------------------------------------------------

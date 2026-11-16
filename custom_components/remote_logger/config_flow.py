@@ -30,6 +30,9 @@ from .const import (
     CONF_LOG_LEVEL,
     CONF_RESOURCE_ATTRIBUTES,
     CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME,
+    CONF_TLS_CA_FILE,
+    CONF_TLS_CLIENT_CERT,
+    CONF_TLS_CLIENT_KEY,
     CONF_USE_TLS,
     DEFAULT_LOG_LEVEL,
     DOMAIN,
@@ -44,7 +47,7 @@ from .otel.const import (
 )
 from .otel.exporter import build_auth_header, parse_headers, parse_resource_attributes
 from .otel.exporter import validate as otel_validate
-from .syslog.const import SYSLOG_DATA_SCHEMA
+from .syslog.const import PROTOCOL_UDP, SYSLOG_DATA_SCHEMA
 from .syslog.exporter import validate as syslog_validate
 
 _LOGGER = logging.getLogger(__name__)
@@ -143,8 +146,19 @@ async def _async_validate_otel(
 
 async def _async_validate_syslog(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, str]:
     """Check the syslog server can be reached with the form's settings."""
+    use_tls: bool = user_input.get(CONF_USE_TLS, False)
+    if use_tls and user_input[CONF_PROTOCOL] == PROTOCOL_UDP:
+        # rather than quietly send unencrypted
+        return {CONF_USE_TLS: "tls_requires_tcp"}
     error = await syslog_validate(
-        hass, user_input[CONF_HOST], user_input[CONF_PORT], user_input[CONF_PROTOCOL], user_input.get(CONF_USE_TLS, False)
+        hass,
+        user_input[CONF_HOST],
+        user_input[CONF_PORT],
+        user_input[CONF_PROTOCOL],
+        use_tls,
+        user_input.get(CONF_TLS_CA_FILE),
+        user_input.get(CONF_TLS_CLIENT_CERT),
+        user_input.get(CONF_TLS_CLIENT_KEY),
     )
     return {"base": error} if error else {}
 

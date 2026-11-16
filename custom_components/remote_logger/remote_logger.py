@@ -11,11 +11,18 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.system_log import EVENT_SYSTEM_LOG
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import EVENT_HOMEASSISTANT_CLOSE, EVENT_HOMEASSISTANT_FINAL_WRITE, EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import (
+    CONF_TOKEN,
+    EVENT_HOMEASSISTANT_CLOSE,
+    EVENT_HOMEASSISTANT_FINAL_WRITE,
+    EVENT_HOMEASSISTANT_STOP,
+)
 from homeassistant.core import SupportsResponse, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.service import async_register_admin_service
 
 from custom_components.remote_logger.handler import ExportingLogHandler
 
@@ -33,6 +40,7 @@ from .const import (
     CONF_LOG_HA_LIFECYCLE,
     CONF_LOG_HA_STATE_CHANGES,
     CONF_LOG_LEVEL,
+    CONF_USE_TLS,
     CORE_ACTIVITY_EVENTS,
     CORE_CHANGE_EVENTS,
     CORE_STATE_EVENTS,
@@ -90,8 +98,10 @@ type RemoteLoggerConfigEntry = ConfigEntry[RemoteLoggerData]
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Register the integration's actions, whether or not an entry is loaded."""
     hass.services.async_register(DOMAIN, SERVICE_SEND_LOG, handle_send_log, schema=SERVICE_SEND_LOG_SCHEMA)
-    hass.services.async_register(DOMAIN, SERVICE_FLUSH, handle_flush)
-    hass.services.async_register(
+    # Administrators only: last_log gives back log content, which other users can't otherwise see
+    async_register_admin_service(hass, DOMAIN, SERVICE_FLUSH, handle_flush)
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_LAST_LOG,
         handle_last_log,
@@ -181,6 +191,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntry)
     # Options take precedence over initial data for the three event-subscription keys
     opts = {**entry.data, **entry.options}
 
+    if backend != BACKEND_SYSLOG and opts.get(CONF_TOKEN, "").strip() and not opts.get(CONF_USE_TLS):
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            f"plaintext_token_{entry.entry_id}",
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="plaintext_token",
+            translation_placeholders={"endpoint": label},
+        )
+    else:
+        ir.async_delete_issue(hass, DOMAIN, f"plaintext_token_{entry.entry_id}")
+
     async def _flush_on_stop(_: Any) -> None:
         await exporter.disable_buffer()
 
@@ -269,8 +292,8 @@ async def handle_flush(call: ServiceCall) -> None:
         await entry.runtime_data.exporter.flush()
 
 
-@callback
-def handle_last_log(call: ServiceCall) -> dict[str, Any]:
+async def handle_last_log(call: ServiceCall) -> dict[str, Any]:
+    # a coroutine, as an admin action only passes on the response of one
     entry_id: str = call.data["config_entry_id"]
     entry: RemoteLoggerConfigEntry | None = call.hass.config_entries.async_get_entry(entry_id)
     if entry is None or entry.domain != DOMAIN or entry.state is not ConfigEntryState.LOADED:
@@ -291,6 +314,9 @@ def handle_send_log(call: ServiceCall) -> None:
     level: str = call.data["level"]
     event_name: str = call.data["event"]
     attributes: dict[str, Any] | None = call.data.get("attributes")
+    if call.context.user_id:
+        # Any user can call this action, so each record says who did
+        attributes = {**(attributes or {}), "user.id": call.context.user_id}
     for entry in _loaded_entries(call.hass):
         entry.runtime_data.exporter.log_direct(event_name, message, level, attributes)
 
@@ -302,6 +328,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: RemoteLoggerConfigEntry
     """
     await hass.config_entries.async_unload_platforms(entry, ["sensor"])
     data = entry.runtime_data
+    ir.async_delete_issue(hass, DOMAIN, f"plaintext_token_{entry.entry_id}")
 
     for cancel in data.cancel_listeners:
         try:

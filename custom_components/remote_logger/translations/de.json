@@ -57,6 +57,9 @@
           "port": "Syslog-Server-Port",
           "protocol": "Transportprotokoll",
           "use_tls": "TLS verwenden (nur TCP)",
+          "tls_ca_file": "CA-Zertifikatsdatei",
+          "tls_client_cert": "Client-Zertifikatsdatei",
+          "tls_client_key": "Client-Schlüsseldatei",
           "app_name": "Anwendungsname",
           "facility": "Syslog-Facility",
           "strict_mode": "Strikter RFC 5424-Modus",
@@ -67,6 +70,9 @@
           "port": "Port des Syslog-Servers (Standard: 514).",
           "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
           "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
+          "tls_ca_file": "Optionaler Pfad zu einer PEM-Datei mit der Zertifizierungsstelle, die das Serverzertifikat signiert hat (private CA). Leer lassen, um den Zertifikatsspeicher des Systems zu verwenden.",
+          "tls_client_cert": "Optionaler Pfad zu einem PEM-Client-Zertifikat für Server, die gegenseitiges TLS verlangen.",
+          "tls_client_key": "Optionaler Pfad zum privaten PEM-Schlüssel des Client-Zertifikats, falls er nicht in derselben Datei liegt.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
           "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user).",
           "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@PEN. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
@@ -109,6 +115,9 @@
           "port": "Syslog-Server-Port",
           "protocol": "Transportprotokoll",
           "use_tls": "TLS verwenden (nur TCP)",
+          "tls_ca_file": "CA-Zertifikatsdatei",
+          "tls_client_cert": "Client-Zertifikatsdatei",
+          "tls_client_key": "Client-Schlüsseldatei",
           "app_name": "Anwendungsname",
           "facility": "Syslog-Facility",
           "strict_mode": "Strikter RFC 5424-Modus",
@@ -119,6 +128,9 @@
           "port": "Port des Syslog-Servers (Standard: 514).",
           "protocol": "Transportprotokoll: UDP (ohne Bestätigung) oder TCP (zuverlässige Zustellung).",
           "use_tls": "TLS-Verschlüsselung für TCP-Verbindungen aktivieren. Wird bei UDP ignoriert.",
+          "tls_ca_file": "Optionaler Pfad zu einer PEM-Datei mit der Zertifizierungsstelle, die das Serverzertifikat signiert hat (private CA). Leer lassen, um den Zertifikatsspeicher des Systems zu verwenden.",
+          "tls_client_cert": "Optionaler Pfad zu einem PEM-Client-Zertifikat für Server, die gegenseitiges TLS verlangen.",
+          "tls_client_key": "Optionaler Pfad zum privaten PEM-Schlüssel des Client-Zertifikats, falls er nicht in derselben Datei liegt.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
           "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user).",
           "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@PEN. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
@@ -169,6 +181,8 @@
       "invalid_headers": "Ungültiges Format. Jeder Eintrag muss das Format 'Name: Wert' haben (z. B. stream-name: mein-stream).",
       "invalid_auth": "Authentifizierung fehlgeschlagen. Bearer-Token prüfen.",
       "state_changes_exclusive": "Nur eine Zustandsänderungs-Option auswählen.",
+      "tls_requires_tcp": "TLS ist nur mit TCP verfügbar. TCP wählen oder TLS ausschalten.",
+      "invalid_tls_files": "Die TLS-Zertifikats- oder Schlüsseldateien konnten nicht gelesen werden. Pfade prüfen und sicherstellen, dass es PEM-Dateien sind.",
       "unknown": "Ein unerwarteter Fehler ist aufgetreten."
     },
     "abort": {
@@ -234,6 +248,12 @@
       "postings": {
         "name": "Sendungen"
       }
+    }
+  },
+  "issues": {
+    "plaintext_token": {
+      "title": "Zugriffstoken wird unverschlüsselt gesendet",
+      "description": "Das Zugriffstoken für {endpoint} wird über unverschlüsseltes HTTP gesendet und kann von jedem auf dem Netzwerkpfad gelesen werden. Den Eintrag neu konfigurieren und TLS (HTTPS) verwenden, oder dies ignorieren, wenn der Collector auf demselben Host oder in einem vertrauenswürdigen Netzwerk läuft."
     }
   },
   "exceptions": {

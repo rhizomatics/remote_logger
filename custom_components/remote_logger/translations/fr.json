@@ -57,6 +57,9 @@
           "port": "Port du serveur syslog",
           "protocol": "Protocole de transport",
           "use_tls": "Utiliser TLS (TCP uniquement)",
+          "tls_ca_file": "Fichier de certificat de l'AC",
+          "tls_client_cert": "Fichier de certificat client",
+          "tls_client_key": "Fichier de clé client",
           "app_name": "Nom de l'application",
           "facility": "Facility syslog",
           "strict_mode": "Mode RFC 5424 strict",
@@ -67,6 +70,9 @@
           "port": "Port du serveur syslog (par défaut : 514).",
           "protocol": "Protocole de transport : UDP (sans confirmation) ou TCP (livraison fiable).",
           "use_tls": "Activer le chiffrement TLS pour les connexions TCP. Ignoré pour UDP.",
+          "tls_ca_file": "Chemin facultatif vers un fichier PEM contenant l'autorité de certification qui a signé le certificat du serveur, pour une AC privée. Laisser vide pour utiliser le magasin de certificats du système.",
+          "tls_client_cert": "Chemin facultatif vers un certificat client PEM, pour les serveurs qui exigent le TLS mutuel.",
+          "tls_client_key": "Chemin facultatif vers la clé privée PEM du certificat client, si elle n'est pas dans le même fichier.",
           "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
           "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : user).",
           "strict_mode": "Envoie une sortie syslog native : noms de paramètres Home Assistant raccourcis selon les limites de RFC 5424, MSGID tronqué à 32 caractères et SD-ID privé homeassistant@PEN. À activer si le récepteur rejette les messages (par exemple Grafana Alloy).",
@@ -109,6 +115,9 @@
           "port": "Port du serveur syslog",
           "protocol": "Protocole de transport",
           "use_tls": "Utiliser TLS (TCP uniquement)",
+          "tls_ca_file": "Fichier de certificat de l'AC",
+          "tls_client_cert": "Fichier de certificat client",
+          "tls_client_key": "Fichier de clé client",
           "app_name": "Nom de l'application",
           "facility": "Facility syslog",
           "strict_mode": "Mode RFC 5424 strict",
@@ -119,6 +128,9 @@
           "port": "Port du serveur syslog (par défaut : 514).",
           "protocol": "Protocole de transport : UDP (sans confirmation) ou TCP (livraison fiable).",
           "use_tls": "Activer le chiffrement TLS pour les connexions TCP. Ignoré pour UDP.",
+          "tls_ca_file": "Chemin facultatif vers un fichier PEM contenant l'autorité de certification qui a signé le certificat du serveur, pour une AC privée. Laisser vide pour utiliser le magasin de certificats du système.",
+          "tls_client_cert": "Chemin facultatif vers un certificat client PEM, pour les serveurs qui exigent le TLS mutuel.",
+          "tls_client_key": "Chemin facultatif vers la clé privée PEM du certificat client, si elle n'est pas dans le même fichier.",
           "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
           "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : user).",
           "strict_mode": "Envoie une sortie syslog native : noms de paramètres Home Assistant raccourcis selon les limites de RFC 5424, MSGID tronqué à 32 caractères et SD-ID privé homeassistant@PEN. À activer si le récepteur rejette les messages (par exemple Grafana Alloy).",
@@ -169,6 +181,8 @@
       "invalid_headers": "Format invalide. Chaque entrée doit être au format 'Nom: valeur' (ex. stream-name: mon-stream).",
       "invalid_auth": "Authentification échouée. Vérifiez le jeton bearer.",
       "state_changes_exclusive": "Sélectionnez une seule option de changement d'état.",
+      "tls_requires_tcp": "TLS n'est disponible qu'avec TCP. Choisissez TCP ou désactivez TLS.",
+      "invalid_tls_files": "Les fichiers de certificat ou de clé TLS n'ont pas pu être lus. Vérifiez les chemins et qu'il s'agit de fichiers PEM.",
       "unknown": "Une erreur inattendue s'est produite."
     },
     "abort": {
@@ -234,6 +248,12 @@
       "postings": {
         "name": "Envois"
       }
+    }
+  },
+  "issues": {
+    "plaintext_token": {
+      "title": "Jeton d'accès envoyé sans chiffrement",
+      "description": "Le jeton d'accès pour {endpoint} est envoyé en HTTP non chiffré : toute personne sur le chemin réseau peut le lire. Reconfigurez l'entrée pour utiliser TLS (HTTPS), ou ignorez cet avertissement si le collecteur est sur le même hôte ou sur un réseau de confiance."
     }
   },
   "exceptions": {

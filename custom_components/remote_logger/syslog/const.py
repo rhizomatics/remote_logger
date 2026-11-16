@@ -9,6 +9,9 @@ from custom_components.remote_logger.const import (
     CONF_ENTERPRISE_NUMBER,
     CONF_FACILITY,
     CONF_STRICT_MODE,
+    CONF_TLS_CA_FILE,
+    CONF_TLS_CLIENT_CERT,
+    CONF_TLS_CLIENT_KEY,
     CONF_USE_TLS,
     DEFAULT_BATCH_MAX_SIZE,
     DEFAULT_CLIENT_TIMEOUT,
@@ -98,6 +101,10 @@ SYSLOG_DATA_SCHEMA = vol.Schema({
         selector.SelectSelectorConfig(options=[PROTOCOL_UDP, PROTOCOL_TCP]),
     ),
     vol.Optional(CONF_USE_TLS, default=DEFAULT_USE_TLS): bool,
+    # A private certificate authority, and a client certificate for mutual TLS: paths to PEM files
+    vol.Optional(CONF_TLS_CA_FILE): str,
+    vol.Optional(CONF_TLS_CLIENT_CERT): str,
+    vol.Optional(CONF_TLS_CLIENT_KEY): str,
     vol.Optional(CONF_APP_NAME, default=DEFAULT_APP_NAME): str,
     vol.Optional(CONF_FACILITY, default=DEFAULT_FACILITY): selector.SelectSelector(
         selector.SelectSelectorConfig(options=list(SYSLOG_FACILITY_MAP.keys())),

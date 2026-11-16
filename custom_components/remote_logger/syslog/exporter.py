@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import logging
 import os
+import re
 import socket
 import ssl
 import time
@@ -22,6 +23,9 @@ from custom_components.remote_logger.const import (
     CONF_FACILITY,
     CONF_STRICT_MODE,
     CONF_SUPPRESS_SYSTEM_LOG_EVENT_NAME,
+    CONF_TLS_CA_FILE,
+    CONF_TLS_CLIENT_CERT,
+    CONF_TLS_CLIENT_KEY,
     CONF_USE_TLS,
     DEFAULT_CLIENT_TIMEOUT,
 )
@@ -90,7 +94,12 @@ class SyslogExporter(LogExporter):
         self._protocol = opts.get(CONF_PROTOCOL, PROTOCOL_UDP)
         self.destination = (self._host, str(self._port), self._protocol)
         self._use_tls = opts.get(CONF_USE_TLS, False)
-        self._app_name = opts.get(CONF_APP_NAME, DEFAULT_APP_NAME)
+        self._tls_files: tuple[str | None, str | None, str | None] = (
+            opts.get(CONF_TLS_CA_FILE) or None,
+            opts.get(CONF_TLS_CLIENT_CERT) or None,
+            opts.get(CONF_TLS_CLIENT_KEY) or None,
+        )
+        self._app_name = _header_field(opts.get(CONF_APP_NAME, DEFAULT_APP_NAME))
         facility_name = opts.get(CONF_FACILITY, DEFAULT_FACILITY)
         self._facility = SYSLOG_FACILITY_MAP.get(facility_name, 1)
         self._batch_max_size = opts.get(CONF_BATCH_MAX_SIZE, 10)
@@ -117,10 +126,13 @@ class SyslogExporter(LogExporter):
             f"{'+TLS' if self._use_tls and self._protocol != PROTOCOL_UDP else ''})"
         )
         _LOGGER.info(f"remote_logger: syslog configured for {self.endpoint_desc}")
+        if self._use_tls and self._protocol == PROTOCOL_UDP:
+            # the config flow now refuses this, but older entries may have it
+            _LOGGER.warning("remote_logger: TLS is not available for syslog over UDP, logs are sent unencrypted")
 
     async def async_check_connection(self) -> str | None:
         """Check the syslog server can be reached. Returns an error key, or None."""
-        return await validate(self._hass, self._host, self._port, self._protocol, self._use_tls)
+        return await validate(self._hass, self._host, self._port, self._protocol, self._use_tls, *self._tls_files)
 
     def create_log_record(
         self,
@@ -194,7 +206,7 @@ class SyslogExporter(LogExporter):
                         sd_params.append(f'{_strict_param_name(flat_key)}="{_sd_escape(str(flat_val))}"')
                 else:
                     for flat_key, flat_val in flatten_event_data(f"event.data.{k}" if k != "event.data" else k, v, state_only):
-                        sd_params.append(f'{_sd_escape(flat_key)}="{_sd_escape(str(flat_val))}"')
+                        sd_params.append(f'{_sd_name(flat_key)}="{_sd_escape(str(flat_val))}"')
 
         if sd_params:
             sd = f"[{self._sd_id} {' '.join(sd_params)}]"
@@ -202,12 +214,13 @@ class SyslogExporter(LogExporter):
 
         # RFC 5424: <PRI>VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID SP SD [SP MSG]
         # VERSION = 1, PROCID = -
-        syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {msgid} {sd} {msg}"
+        syslog_line = _no_forged_records(f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {msgid} {sd} {msg}")
 
         return SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
 
     def _msgid(self, msgid: str) -> str:
-        """Truncate MSGID to the RFC 5424 limit in strict mode."""
+        """Make a valid MSGID, truncated to the RFC 5424 limit in strict mode."""
+        msgid = _header_field(msgid)
         return msgid[:MSGID_MAX_LENGTH] if self._strict_mode else msgid
 
     def log_direct(self, event_name: str, message: str, level: str, attributes: dict[str, Any] | None = None) -> None:
@@ -217,10 +230,12 @@ class SyslogExporter(LogExporter):
         timestamp = isotimestamp(time.time())
         sd = "-"
         if attributes:
-            param_name = _strict_param_name if self._strict_mode else _sd_escape
+            param_name = _strict_param_name if self._strict_mode else _sd_name
             sd_params = [f'{param_name(k)}="{_sd_escape(str(v))}"' for k, v in attributes.items()]
             sd = f"[{self._sd_id} {' '.join(sd_params)}]"
-        syslog_line = f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {self._msgid(event_name)} {sd} {message}"
+        syslog_line = _no_forged_records(
+            f"<{pri}>1 {timestamp} {self._hostname} {self._app_name} - {self._msgid(event_name)} {sd} {message}"
+        )
         record = SyslogMessage(payload=syslog_line.encode("utf-8", errors="replace"))
         self._buffer.append(record)
         self.on_event()
@@ -234,7 +249,7 @@ class SyslogExporter(LogExporter):
             if not self._in_progress:
                 if not self._buffer:
                     return
-                records = cast("list[SyslogMessage]", self._buffer.copy())
+                records = cast("list[SyslogMessage]", list(self._buffer))
                 self._buffer.clear()
 
         try:
@@ -295,9 +310,7 @@ class SyslogExporter(LogExporter):
 
     async def _connect_tcp(self) -> None:
         """Establish a TCP connection to the syslog server."""
-        # HA's shared client context is built once at startup; ssl.create_default_context() loads
-        # the CA store on every call, which HA reports as blocking I/O in the event loop.
-        ssl_ctx: ssl.SSLContext | None = client_context() if self._use_tls else None
+        ssl_ctx: ssl.SSLContext | None = await _async_ssl_context(self._hass, self._use_tls, *self._tls_files)
 
         self._tcp_reader, self._tcp_writer = await asyncio.wait_for(
             asyncio.open_connection(self._host, self._port, ssl=ssl_ctx),
@@ -330,15 +343,65 @@ def _sd_escape(value: str) -> str:
 _SD_NAME_CHARS = frozenset(chr(c) for c in range(33, 127)) - set('="]')
 
 
+def _sd_name(key: str) -> str:
+    """Make a valid RFC 5424 PARAM-NAME, so a key from event data can't add or alter structured data."""
+    return "".join(c if c in _SD_NAME_CHARS else "_" for c in key)
+
+
 def _strict_param_name(key: str) -> str:
     """Make a valid RFC 5424 PARAM-NAME, shortening common Home Assistant terms in dotted keys."""
     name = ".".join(STRICT_PARAM_ABBREVIATIONS.get(segment, segment) for segment in key.split("."))
-    return "".join(c if c in _SD_NAME_CHARS else "_" for c in name)[:SD_NAME_MAX_LENGTH]
+    return _sd_name(name)[:SD_NAME_MAX_LENGTH]
 
 
-async def validate(hass: Any, host: str, port: int, protocol: str, use_tls: bool) -> str | None:
+def _header_field(value: str) -> str:
+    """Make a valid RFC 5424 APP-NAME or MSGID: printable US-ASCII with no spaces, so it stays one field."""
+    return "".join(c if 33 <= ord(c) <= 126 else "_" for c in value) or "-"
+
+
+def _no_forged_records(line: str) -> str:
+    """Indent any continuation line starting with '<', which a receiver that splits on newlines
+    would read as the PRI of a new record. Multi-line messages and stack traces are otherwise kept."""
+    return re.sub(r"([\r\n])<", r"\1 <", line)
+
+
+def _build_ssl_context(ca_file: str | None, client_cert: str | None, client_key: str | None) -> ssl.SSLContext:
+    """A verifying TLS context for a private certificate authority and/or a client certificate. Reads files."""
+    context = ssl.create_default_context(cafile=ca_file)
+    if client_cert:
+        context.load_cert_chain(client_cert, client_key)
+    return context
+
+
+async def _async_ssl_context(
+    hass: Any, use_tls: bool, ca_file: str | None = None, client_cert: str | None = None, client_key: str | None = None
+) -> ssl.SSLContext | None:
+    if not use_tls:
+        return None
+    if ca_file or client_cert:
+        return cast("ssl.SSLContext", await hass.async_add_executor_job(_build_ssl_context, ca_file, client_cert, client_key))
+    # HA's shared client context is built once at startup; ssl.create_default_context() loads
+    # the CA store on every call, which HA reports as blocking I/O in the event loop.
+    return client_context()
+
+
+async def validate(
+    hass: Any,
+    host: str,
+    port: int,
+    protocol: str,
+    use_tls: bool,
+    ca_file: str | None = None,
+    client_cert: str | None = None,
+    client_key: str | None = None,
+) -> str | None:
     """Test connectivity to a syslog endpoint. Returns error key or None."""
     loop = hass.loop
+    try:
+        ssl_ctx = await _async_ssl_context(hass, use_tls and protocol != PROTOCOL_UDP, ca_file, client_cert, client_key)
+    except OSError as err:  # includes ssl.SSLError
+        _LOGGER.error("remote_logger: Syslog TLS files can't be used: %s", err)
+        return "invalid_tls_files"
     try:
         if protocol == PROTOCOL_UDP:
             # Quick UDP test: just resolve and create a socket
@@ -350,7 +413,6 @@ async def validate(hass: Any, host: str, port: int, protocol: str, use_tls: bool
                 sock.close()
         else:
             # TCP: actually connect
-            ssl_ctx = client_context() if use_tls else None
             _, writer = await asyncio.wait_for(
                 asyncio.open_connection(host, port, ssl=ssl_ctx),
                 timeout=10,

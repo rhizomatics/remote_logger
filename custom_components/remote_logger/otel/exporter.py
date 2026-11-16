@@ -113,14 +113,18 @@ def parse_headers(raw: str) -> dict[str, str]:
 
 
 def _mask_auth_headers(headers: dict[str, str]) -> dict[str, str]:
-    def _mask_credential(v: str) -> str:
+    """Mask every header value but the content type, since any configured header may carry an API key."""
+
+    def _mask_credential(k: str, v: str) -> str:
+        if k.lower() == "content-type":
+            return v
         parts = v.split(" ", 1)
-        if len(parts) == 2:
+        if k.lower() == "authorization" and len(parts) == 2:
             scheme, token = parts
             return f"{scheme} {'*' * len(token)}"
         return "*" * len(v)
 
-    return {k: _mask_credential(v) if k.lower() == "authorization" else v for k, v in headers.items()}
+    return {k: _mask_credential(k, v) for k, v in headers.items()}
 
 
 def append_attr(attrs: list[dict[str, typing.Any]], key: str, value: typing.Any, force_null: bool = False) -> None:
@@ -182,17 +186,19 @@ async def validate(
         async with session.post(
             url,
             timeout=aiohttp.ClientTimeout(total=10),
+            # a redirect would be sent the credential headers, possibly over plain HTTP
+            allow_redirects=False,
             **submission.body(),
         ) as resp:
             if resp.status in (401, 403):
                 errors["base"] = "invalid_auth"
-                _LOGGER.error("remote_logger: authentication failed (%s): %s", resp.status, await resp.text())
-            elif resp.status >= 400 and resp.status < 500:
+                _LOGGER.error("remote_logger: authentication failed (%s): %s", resp.status, (await resp.text())[:200])
+            elif resp.status >= 300 and resp.status < 500:
                 errors["base"] = "cannot_connect"
-                _LOGGER.error("remote_logger: client connect failed (%s): %s", resp.status, await resp.text())
+                _LOGGER.error("remote_logger: client connect failed (%s): %s", resp.status, (await resp.text())[:200])
             if resp.status >= 500:
                 errors["base"] = "cannot_connect"
-                _LOGGER.error("remote_logger: server connect failed (%s): %s", resp.status, await resp.text())
+                _LOGGER.error("remote_logger: server connect failed (%s): %s", resp.status, (await resp.text())[:200])
     except aiohttp.ClientResponseError as e1:
         errors["base"] = "cannot_connect"
         _LOGGER.error("remote_logger: connect client response error: %s", e1)
@@ -437,7 +443,7 @@ class OtlpLogExporter(LogExporter):
         async with self._lock:
             if not self._buffer:
                 return
-            records = typing.cast("list[OtlpMessage]", self._buffer.copy())
+            records = typing.cast("list[OtlpMessage]", list(self._buffer))
             self._buffer.clear()
 
         try:
@@ -450,17 +456,19 @@ class OtlpLogExporter(LogExporter):
                 return
             session: aiohttp.ClientSession = async_get_clientsession(self._hass, verify_ssl=self._use_tls)
             timeout = aiohttp.ClientTimeout(total=self._client_timeout)
-            async with session.post(self.endpoint_url, timeout=timeout, **submission.body()) as resp:
+            # allow_redirects=False: a redirect would be sent the credential headers, possibly over plain HTTP
+            async with session.post(self.endpoint_url, timeout=timeout, allow_redirects=False, **submission.body()) as resp:
                 if resp.status in (401, 403):
                     _LOGGER.warning("remote_logger: OTLP authentication failed (%s), triggering reauth", resp.status)
                     self._entry.async_start_reauth(self._hass)
                     return
-                if resp.status >= 400:
-                    body = await resp.text()
+                if resp.status >= 300:
+                    # only the start of the body: it ends up in a sensor attribute, which is recorded
+                    body = (await resp.text())[:200]
                     _LOGGER.warning(
                         "remote_logger: OTLP endpoint returned HTTP %s: %s",
                         resp.status,
-                        body[:200],
+                        body,
                     )
                     self.on_posting_error(body)
                 if resp.ok or (resp.status >= 400 and resp.status < 500):

@@ -1,7 +1,10 @@
 import datetime as dt
 from typing import Any
 
+from homeassistant.helpers.redact import REDACTED
 from homeassistant.util import dt as dt_util
+
+from custom_components.remote_logger.const import REDACT_KEYS
 
 
 def flatten_event_data(prefix: str, value: Any, state_only: bool) -> list[tuple[str, Any]]:
@@ -9,7 +12,7 @@ def flatten_event_data(prefix: str, value: Any, state_only: bool) -> list[tuple[
 
     If the value has an ``as_dict`` method it is called first.  The resulting
     dict (or any plain dict) is recursively expanded.  Any other value is
-    returned as-is as a single pair.
+    returned as-is as a single pair.  Values of sensitive keys are redacted.
     """
     if hasattr(value, "as_dict"):
         value = value.as_dict()
@@ -19,7 +22,7 @@ def flatten_event_data(prefix: str, value: Any, state_only: bool) -> list[tuple[
         result: list[tuple[str, Any]] = []
         for k, v in value.items():
             if k not in ("attributes", "context") or not state_only:
-                result.extend(flatten_event_data(f"{prefix}.{k}", v, state_only))
+                result.extend(flatten_event_data(f"{prefix}.{k}", REDACTED if k in REDACT_KEYS else v, state_only))
         return result
     return [(prefix, value)]
 

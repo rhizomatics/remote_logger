@@ -1,0 +1,5 @@
+rules:
+  dangerous-triggers:
+    ignore:
+      # Managed by rhizomatics/hq: pull_request_target so fork PRs can be assigned, and it runs no PR code
+      - admin-auto-assign.yml
