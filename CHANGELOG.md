@@ -1,3 +1,40 @@
+# 2.12.0
+
+A security review of the integration and of how it is built and released. See the new
+[Security](https://remote-logger.rhizomatics.org.uk/security/) page for what is exported and how to protect it.
+
+## 🚨 Breaking changes
+- The `last_log` and `flush` actions are now for administrators only. Automations, and scripts they start, are not affected
+  - `last_log` gives back log content, which Home Assistant otherwise shows only to administrators
+- Values of event data and state attributes named `code`, `pin`, `password`, `secret`, `token`, `access_token`, `refresh_token`, `api_key`, `client_secret` or `entity_picture` are now exported as `**REDACTED**`
+  - Alarm and lock codes in action calls, and camera access tokens in state changes, were previously sent to the collector
+- Syslog with TLS selected and UDP as the protocol is now refused in the configuration, since UDP was sent unencrypted regardless
+  - Existing entries set up this way carry on as before, with a warning in the log
+- Syslog `APP-NAME`, `MSGID` and structured data names now have spaces, and other characters RFC 5424 doesn't allow, replaced with `_`
+  - Event names, event data keys and `send_log` could previously add or alter fields, such as a second structured data element
+- An HTTP redirect from an OTLP collector is now an error instead of being followed, since the token and headers would be sent on to the new address. Configure the final address directly
+
+## ✨ Enhancements
+- Syslog over TLS can use a private certificate authority, and a client certificate for mutual TLS
+- A Home Assistant repair issue is raised when an OTLP token is sent over plain HTTP
+- Records added with `send_log` by a user carry that user's id as `user.id`
+- `last_log` masks the value of every configured header, not only `Authorization`
+
+## 🐛 Bug fixes
+- Syslog over TCP kept every record in memory, without limit, while the server couldn't be reached. Waiting records are now capped at 10,000 for both Syslog and OTLP, dropping the oldest
+- A line within a Syslog message or stack trace that started with `<` could be read as a new record by receivers that split on newlines. Such lines are now indented by a space
+- The whole error response of an OTLP collector was kept as a sensor attribute, and so recorded. It is now cut to 200 characters, as it already was in the log
+- A failure to format an event wrote all of the event's data to the Home Assistant log, now only the event type
+
+## 📝 Other changes
+### Internal
+- `SECURITY.md` added, with how to report a vulnerability, what the integration trusts, and known limitations
+- Releases are published by a new *Publish Release* workflow, run on a draft release, which attaches the zip with a SHA-256 checksum and a build provenance attestation before publishing
+- The tests of a pull request run with a read-only token, and pull requests no longer deploy the documentation or badges
+- All GitHub Actions are pinned to a commit, and Bandit and zizmor run in CI
+- The page view script on the documentation site is pinned to a version, with a subresource integrity hash
+- The example Docker Compose files mount the Docker socket read-only and keep the Vector API to the local host
+
 # 2.11.1
 
 ## ✨ Enhancements

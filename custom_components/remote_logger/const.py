@@ -25,6 +25,9 @@ CONF_APP_NAME = "app_name"
 CONF_FACILITY = "facility"
 CONF_STRICT_MODE = "strict_mode"
 CONF_ENTERPRISE_NUMBER = "enterprise_number"
+CONF_TLS_CA_FILE = "tls_ca_file"
+CONF_TLS_CLIENT_CERT = "tls_client_cert"
+CONF_TLS_CLIENT_KEY = "tls_client_key"
 
 
 # Optional HA event subscriptions config keys
@@ -85,6 +88,21 @@ CORE_ACTIVITY_EVENTS: list[str] = [
 ]
 BATCH_FLUSH_INTERVAL_SECONDS = 120
 DEFAULT_BATCH_MAX_SIZE = 20
+# Most records held while the endpoint can't be reached; the oldest are dropped beyond this
+MAX_BUFFERED_RECORDS = 10000
+# Event data and state attribute keys whose values are never exported
+REDACT_KEYS: frozenset[str] = frozenset({
+    "access_token",
+    "api_key",
+    "client_secret",
+    "code",
+    "entity_picture",
+    "password",
+    "pin",
+    "refresh_token",
+    "secret",
+    "token",
+})
 
 DEFAULT_USE_TLS = False
 

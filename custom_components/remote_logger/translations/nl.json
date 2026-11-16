@@ -57,6 +57,9 @@
           "port": "Syslogserver-poort",
           "protocol": "Transportprotocol",
           "use_tls": "TLS gebruiken (alleen TCP)",
+          "tls_ca_file": "CA-certificaatbestand",
+          "tls_client_cert": "Clientcertificaatbestand",
+          "tls_client_key": "Clientsleutelbestand",
           "app_name": "Applicatienaam",
           "facility": "Syslog-facility",
           "strict_mode": "Strikte RFC 5424-modus",
@@ -67,6 +70,9 @@
           "port": "Poort van de syslogserver (standaard: 514).",
           "protocol": "Transportprotocol: UDP (fire-and-forget) of TCP (betrouwbare bezorging).",
           "use_tls": "TLS-versleuteling inschakelen voor TCP-verbindingen. Wordt genegeerd voor UDP.",
+          "tls_ca_file": "Optioneel pad naar een PEM-bestand met de certificaatautoriteit die het servercertificaat heeft ondertekend, voor een eigen CA. Laat leeg om het certificaatarchief van het systeem te gebruiken.",
+          "tls_client_cert": "Optioneel pad naar een PEM-clientcertificaat, voor servers die wederzijdse TLS vereisen.",
+          "tls_client_key": "Optioneel pad naar de PEM-privésleutel van het clientcertificaat, als die niet in hetzelfde bestand staat.",
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
           "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user).",
           "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@PEN. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
@@ -109,6 +115,9 @@
           "port": "Syslogserver-poort",
           "protocol": "Transportprotocol",
           "use_tls": "TLS gebruiken (alleen TCP)",
+          "tls_ca_file": "CA-certificaatbestand",
+          "tls_client_cert": "Clientcertificaatbestand",
+          "tls_client_key": "Clientsleutelbestand",
           "app_name": "Applicatienaam",
           "facility": "Syslog-facility",
           "strict_mode": "Strikte RFC 5424-modus",
@@ -119,6 +128,9 @@
           "port": "Poort van de syslogserver (standaard: 514).",
           "protocol": "Transportprotocol: UDP (fire-and-forget) of TCP (betrouwbare bezorging).",
           "use_tls": "TLS-versleuteling inschakelen voor TCP-verbindingen. Wordt genegeerd voor UDP.",
+          "tls_ca_file": "Optioneel pad naar een PEM-bestand met de certificaatautoriteit die het servercertificaat heeft ondertekend, voor een eigen CA. Laat leeg om het certificaatarchief van het systeem te gebruiken.",
+          "tls_client_cert": "Optioneel pad naar een PEM-clientcertificaat, voor servers die wederzijdse TLS vereisen.",
+          "tls_client_key": "Optioneel pad naar de PEM-privésleutel van het clientcertificaat, als die niet in hetzelfde bestand staat.",
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
           "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: user).",
           "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@PEN. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
@@ -169,6 +181,8 @@
       "invalid_headers": "Ongeldig formaat. Elke invoer moet het formaat 'Naam: waarde' hebben (bijv. stream-name: my-stream).",
       "invalid_auth": "Verificatie mislukt. Controleer het bearer-token.",
       "state_changes_exclusive": "Selecteer slechts één optie voor statuswijzigingen.",
+      "tls_requires_tcp": "TLS is alleen beschikbaar met TCP. Kies TCP of schakel TLS uit.",
+      "invalid_tls_files": "De TLS-certificaat- of sleutelbestanden konden niet worden gelezen. Controleer de paden en of het PEM-bestanden zijn.",
       "unknown": "Er is een onverwachte fout opgetreden."
     },
     "abort": {
@@ -234,6 +248,12 @@
       "postings": {
         "name": "Verzendingen"
       }
+    }
+  },
+  "issues": {
+    "plaintext_token": {
+      "title": "Toegangstoken wordt onversleuteld verzonden",
+      "description": "Het toegangstoken voor {endpoint} wordt via onversleutelde HTTP verzonden, dus iedereen op het netwerkpad kan het lezen. Configureer het item opnieuw om TLS (HTTPS) te gebruiken, of negeer dit als de collector op dezelfde host of in een vertrouwd netwerk staat."
     }
   },
   "exceptions": {

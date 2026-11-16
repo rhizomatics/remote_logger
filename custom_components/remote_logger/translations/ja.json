@@ -57,6 +57,9 @@
           "port": "Syslogサーバーポート",
           "protocol": "トランスポートプロトコル",
           "use_tls": "TLSを使用する（TCPのみ）",
+          "tls_ca_file": "CA 証明書ファイル",
+          "tls_client_cert": "クライアント証明書ファイル",
+          "tls_client_key": "クライアント鍵ファイル",
           "app_name": "アプリケーション名",
           "facility": "Syslogファシリティ",
           "strict_mode": "厳格な RFC 5424 モード",
@@ -67,6 +70,9 @@
           "port": "syslogサーバーのポート（デフォルト: 514）。",
           "protocol": "トランスポートプロトコル: UDP（ファイア・アンド・フォーゲット）またはTCP（信頼性の高い配信）。",
           "use_tls": "TCP接続のTLS暗号化を有効にします。UDPでは無視されます。",
+          "tls_ca_file": "プライベート CA を使う場合に、サーバー証明書に署名した認証局を含む PEM ファイルのパス（任意）。空欄にするとシステムの証明書ストアを使用します。",
+          "tls_client_cert": "相互 TLS を要求するサーバー向けの PEM クライアント証明書のパス（任意）。",
+          "tls_client_key": "クライアント証明書の PEM 秘密鍵が同じファイルにない場合の、そのパス（任意）。",
           "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
           "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。",
           "strict_mode": "syslog ネイティブの出力を送信します。Home Assistant のパラメーター名を RFC 5424 の制限内に短縮し、MSGID を 32 文字に切り詰め、プライベート SD-ID homeassistant@PEN を使用します。受信側がメッセージを拒否する場合（例: Grafana Alloy）に有効にしてください。",
@@ -109,6 +115,9 @@
           "port": "Syslogサーバーポート",
           "protocol": "トランスポートプロトコル",
           "use_tls": "TLSを使用する（TCPのみ）",
+          "tls_ca_file": "CA 証明書ファイル",
+          "tls_client_cert": "クライアント証明書ファイル",
+          "tls_client_key": "クライアント鍵ファイル",
           "app_name": "アプリケーション名",
           "facility": "Syslogファシリティ",
           "strict_mode": "厳格な RFC 5424 モード",
@@ -119,6 +128,9 @@
           "port": "syslogサーバーのポート（デフォルト: 514）。",
           "protocol": "トランスポートプロトコル: UDP（ファイア・アンド・フォーゲット）またはTCP（信頼性の高い配信）。",
           "use_tls": "TCP接続のTLS暗号化を有効にします。UDPでは無視されます。",
+          "tls_ca_file": "プライベート CA を使う場合に、サーバー証明書に署名した認証局を含む PEM ファイルのパス（任意）。空欄にするとシステムの証明書ストアを使用します。",
+          "tls_client_cert": "相互 TLS を要求するサーバー向けの PEM クライアント証明書のパス（任意）。",
+          "tls_client_key": "クライアント証明書の PEM 秘密鍵が同じファイルにない場合の、そのパス（任意）。",
           "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
           "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。",
           "strict_mode": "syslog ネイティブの出力を送信します。Home Assistant のパラメーター名を RFC 5424 の制限内に短縮し、MSGID を 32 文字に切り詰め、プライベート SD-ID homeassistant@PEN を使用します。受信側がメッセージを拒否する場合（例: Grafana Alloy）に有効にしてください。",
@@ -169,6 +181,8 @@
       "invalid_headers": "形式が無効です。各エントリは「名前: 値」形式である必要があります（例: stream-name: my-stream）。",
       "invalid_auth": "認証に失敗しました。Bearerトークンを確認してください。",
       "state_changes_exclusive": "状態変化オプションは1つだけ選択してください。",
+      "tls_requires_tcp": "TLS は TCP でのみ利用できます。TCP を選ぶか、TLS をオフにしてください。",
+      "invalid_tls_files": "TLS の証明書または鍵ファイルを読み込めませんでした。パスと、PEM ファイルであることを確認してください。",
       "unknown": "予期しないエラーが発生しました。"
     },
     "abort": {
@@ -234,6 +248,12 @@
       "postings": {
         "name": "送信数"
       }
+    }
+  },
+  "issues": {
+    "plaintext_token": {
+      "title": "アクセストークンが暗号化されずに送信されています",
+      "description": "{endpoint} のアクセストークンは平文の HTTP で送信されるため、ネットワーク経路上の誰でも読み取れます。エントリーを再設定して TLS (HTTPS) を使うか、コレクターが同じホストまたは信頼できるネットワーク上にある場合は無視してください。"
     }
   },
   "exceptions": {

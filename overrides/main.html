@@ -6,6 +6,9 @@
     <link rel="alternate" type="text/markdown" href="{{ page.meta.markdown_url }}">
   {% endif %}
   {# Page views: GoatCounter, cookieless, so no consent banner (hq policies/project_standards.md) #}
+  {# A fixed version with its hash, so the browser refuses the script if it is ever changed at the host #}
   <script data-goatcounter="https://remote-logger.goatcounter.com/count"
-          async src="//gc.zgo.at/count.js"></script>
+          async src="https://gc.zgo.at/count.v5.js"
+          crossorigin="anonymous"
+          integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
 {% endblock %}
