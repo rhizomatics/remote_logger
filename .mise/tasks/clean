@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Remove build, test and lint caches and recreate an empty venv"
-# Shared copy, kept in step by rhizomatics/.github scripts/sync-admin.sh: change it there, not here.
+# Shared copy, kept in step by rhizomatics/hq admin/sync-admin.sh: change it there, not here.
 # To clean more, define [tasks.clean] in mise.toml instead; sync-admin.sh then leaves this out.
 set -euo pipefail
 
