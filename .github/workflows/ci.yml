@@ -5,6 +5,8 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  # the release workflow runs this on the tag before building
+  workflow_call:
 
 permissions:
   contents: read
