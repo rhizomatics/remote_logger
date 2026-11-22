@@ -1,70 +1,59 @@
-# Releases are immutable once published, so the zip HACS installs from (hacs.json zip_release) has to be attached
-# while the release is still a draft. Write the release as a draft in GitHub as usual, with its notes and whether
-# it's a pre-release, then run this from the Actions tab with its tag, to attach the zip, its checksum and build
-# provenance, and publish it.
+# Releases remote_logger when a version tag (v1.2.3, v1.3.0-beta1) is pushed - see policies/release_workflows.md in
+# rhizomatics/hq. CI runs on the tag, then the zip HACS installs from (hacs.json zip_release) is built with its
+# checksum and build provenance, and attached to the GitHub release, which is published with the version's
+# CHANGELOG.md notes. Releases are immutable, so nothing can be added once one is published.
 
 name: Publish Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag of the draft release, such as v2.12.0"
-        required: true
-        type: string
+  push:
+    tags: ["v*"]
 
-# Nothing by default; the job grants what it needs (OpenSSF Scorecard Token-Permissions).
+# Nothing by default; each job grants only what it needs (OpenSSF Scorecard Token-Permissions).
 permissions: {}
 
 jobs:
-  publish:
+  ci:
+    uses: ./.github/workflows/ci.yml
     permissions:
-      contents: write
+      contents: read
+
+  build:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
       # for the build provenance attestation of the zip
       id-token: write
       attestations: write
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
-      TAG: ${{ inputs.tag }}
     steps:
-    - name: Find the draft release
-      id: draft
-      run: |
-        release=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,targetCommitish)
-        if [ "$(jq -r .isDraft <<<"$release")" != "true" ]; then
-          echo "::error::$TAG is already published, and a published release can't have the zip added. Draft a new release."
-          exit 1
-        fi
-        # a tag chosen as new in the draft isn't made till the release is published, so till then the draft's
-        # target is what's released
-        if git ls-remote --exit-code --tags "https://github.com/$GITHUB_REPOSITORY" "refs/tags/$TAG" >/dev/null; then
-          ref="refs/tags/$TAG"
-        else
-          ref=$(jq -r .targetCommitish <<<"$release")
-        fi
-        echo "Releasing $TAG from $ref"
-        echo "ref=$ref" >> "$GITHUB_OUTPUT"
-
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        ref: ${{ steps.draft.outputs.ref }}
         persist-credentials: false
 
     - name: Package release zip
       run: |
+        mkdir release
         cd custom_components/remote_logger
-        zip -r "$GITHUB_WORKSPACE/remote_logger.zip" . -x "__pycache__/*" "*/__pycache__/*"
-        cd "$GITHUB_WORKSPACE"
+        zip -r "$GITHUB_WORKSPACE/release/remote_logger.zip" . -x "__pycache__/*" "*/__pycache__/*"
+        cd "$GITHUB_WORKSPACE/release"
         sha256sum remote_logger.zip > remote_logger.zip.sha256
 
     - name: Attest build provenance
       uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
       with:
-        subject-path: remote_logger.zip
+        subject-path: release/remote_logger.zip
 
-    - name: Attach zip and checksum to the draft
-      run: gh release upload "$TAG" remote_logger.zip remote_logger.zip.sha256 --clobber --repo "$GITHUB_REPOSITORY"
+    - name: Keep the files for the release
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: release
+        path: release/
 
-    - name: Publish
-      run: gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"
+  github-release:
+    needs: build
+    permissions:
+      contents: write
+    uses: ./.github/workflows/github-release.yml
+    with:
+      artifact: release
