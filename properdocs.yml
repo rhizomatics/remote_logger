@@ -60,6 +60,7 @@ plugins:
       sections:
         Getting started:
           - index.md: Overview, installation, configuration and supported protocols
+          - configuration.md: Every connection and event setting, with defaults, and how logs are batched and sent
         Guides:
           - events.md: Logging Home Assistant events as well as log records
           - aggregators.md: Log aggregators known to work with Syslog and OTLP

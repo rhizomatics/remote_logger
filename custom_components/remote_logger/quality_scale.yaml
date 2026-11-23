@@ -4,7 +4,7 @@
 # Rule set verified against https://contributors.home-assistant.io/core/quality-scale/rules/#checklist
 # (HA 2026.10.3 / 2026.11 beta; formerly developers.home-assistant.io). 54 rules, same set as
 # supernotify's 2026-08-06 verification: no rules added, removed, renamed or moved since.
-# Level: bronze (manifest.json). Silver next: see the todo rules under SILVER TIER.
+# Level: silver (manifest.json). Gold next: see the todo rules under GOLD TIER.
 
 rules:
   # ==================
@@ -130,16 +130,13 @@ rules:
       and flushes. It unloads ["sensor"] rather than PLATFORMS and ignores the result.
 
   docs-configuration-parameters:
-    status: todo
-    comment: |
-      README describes event-based logging and the backends, but not each options field
-      (log level, standard event groups, event body, custom events, suppress event name).
+    status: done
+    comment: docs/configuration.md "Event Settings" describes every options field, with defaults.
 
   docs-installation-parameters:
-    status: todo
+    status: done
     comment: |
-      Setup forms are shown as screenshots only; host/port/TLS/encoding/token
-      type/headers/resource attributes and syslog fields aren't described in text.
+      docs/configuration.md describes every OTLP and Syslog setup and reconfigure field, with defaults.
 
   entity-unavailable:
     status: exempt
@@ -152,15 +149,14 @@ rules:
     comment: codeowners @jeyrb.
 
   log-when-unavailable:
-    status: todo
+    status: done
     comment: |
-      Every failed send logs a warning (otel/exporter.py "failed to send logs",
-      syslog/exporter.py "failed to send syslog via UDP/TCP"), so a down collector logs
-      once per flush. Log once when it becomes unreachable and once when it recovers.
+      LogExporter.on_unreachable / on_reachable (exporter.py): one warning when the OTLP post or
+      syslog UDP/TCP send fails, debug while it stays down, one info message on recovery.
 
   parallel-updates:
-    status: todo
-    comment: sensor.py has no PARALLEL_UPDATES; set PARALLEL_UPDATES = 0 (no I/O on update).
+    status: done
+    comment: sensor.py PARALLEL_UPDATES = 0 (sensors read in-memory counters; no I/O on update).
 
   reauthentication-flow:
     status: done
@@ -170,10 +166,8 @@ rules:
       token) to keep holding.
 
   test-coverage:
-    status: todo
-    comment: |
-      91.7% on 2026-11-01 (pyproject fail-under 90). Silver needs above 95%. Gaps:
-      exporter.py, otel/exporter.py, remote_logger.py event-group branches.
+    status: done
+    comment: Above 95% (96.7% on 2026-11-23); pyproject.toml --cov-fail-under=95.
 
   # ==================
   # GOLD TIER
@@ -269,10 +263,10 @@ rules:
       connection, updates data, the OTLP unique_id and a still-generated title.
 
   repair-issues:
-    status: todo
+    status: done
     comment: |
-      Candidate: a token configured without TLS only logs a warning (config_flow.py);
-      a repair issue would make it visible. Low priority.
+      plaintext_token issue (remote_logger.py) when an OTLP token is sent without TLS; deleted
+      when the entry is fixed or removed. Covered in tests/test_security.py.
 
   stale-devices:
     status: done

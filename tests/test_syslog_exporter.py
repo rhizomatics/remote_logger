@@ -395,6 +395,47 @@ class TestSyslogExporter:
         # Should have called _close_tcp
         assert exporter._tcp_writer is None
 
+    async def test_send_tcp_logs_unavailable_once_and_recovery(
+        self, exporter: SyslogExporter, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+        from unittest.mock import AsyncMock, patch
+
+        caplog.set_level(logging.INFO, logger="custom_components.remote_logger")
+        with patch("asyncio.open_connection", new=AsyncMock(side_effect=OSError("refused"))):
+            for _ in range(3):
+                await exporter._send_tcp([SyslogMessage(b"test")])
+        reachable_while_down = exporter.reachable
+        assert not reachable_while_down
+        warnings = [r for r in caplog.records if r.levelno == logging.WARNING and "unavailable" in r.getMessage()]
+        assert len(warnings) == 1
+
+        mock_writer = MagicMock()
+        mock_writer.is_closing.return_value = False
+        mock_writer.drain = AsyncMock()
+        exporter._tcp_writer = mock_writer
+        await exporter._send_tcp([SyslogMessage(b"test")])
+        await exporter._send_tcp([SyslogMessage(b"test")])
+        assert exporter.reachable
+        recoveries = [r for r in caplog.records if r.levelno == logging.INFO and "available again" in r.getMessage()]
+        assert len(recoveries) == 1
+
+    async def test_send_udp_logs_unavailable_and_recovery(self, exporter: SyslogExporter) -> None:
+        from unittest.mock import AsyncMock, patch
+
+        mock_loop = MagicMock()
+        mock_loop.create_datagram_endpoint = AsyncMock(side_effect=OSError("refused"))
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            await exporter._send_udp([SyslogMessage(b"msg")])
+        reachable_while_down = exporter.reachable
+        assert not reachable_while_down
+
+        mock_transport = MagicMock()
+        mock_transport.is_closing.return_value = False
+        exporter._udp_transport = mock_transport
+        await exporter._send_udp([SyslogMessage(b"msg")])
+        assert exporter.reachable
+
     async def test_connect_tcp_no_tls(self, exporter: SyslogExporter) -> None:
         from unittest.mock import AsyncMock, patch
 

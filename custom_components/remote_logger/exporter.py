@@ -82,6 +82,7 @@ class LogExporter:
         self.posting_error_count: int = 0
         self.last_posting_error_message: str | None = None
         self.last_posting_error: dt.datetime | None = None
+        self.reachable: bool = True
 
         # Bounded, so an endpoint that stays down can't use up memory: the oldest records are dropped
         self._buffer: deque[LogMessage] = deque(maxlen=MAX_BUFFERED_RECORDS)
@@ -255,6 +256,20 @@ class LogExporter:
         self.posting_error_count += 1
         self.last_posting_error_message = message
         self.last_posting_error = dt_util.now()
+
+    def on_unreachable(self, err: object) -> None:
+        """Log once when the endpoint stops accepting connections, rather than on every flush."""
+        if self.reachable:
+            _LOGGER.warning("remote_logger: %s endpoint is unavailable: %s", self.logger_type, err)
+            self.reachable = False
+        else:
+            _LOGGER.debug("remote_logger: %s endpoint still unavailable: %s", self.logger_type, err)
+
+    def on_reachable(self) -> None:
+        """Log once when the endpoint can be reached again."""
+        if not self.reachable:
+            _LOGGER.info("remote_logger: %s endpoint is available again", self.logger_type)
+            self.reachable = True
 
     def on_success(self) -> None:
         self.posting_count += 1

@@ -283,8 +283,9 @@ class SyslogExporter(LogExporter):
             for msg in messages:
                 self._udp_transport.sendto(msg.payload)
                 msg.sent = True
+            self.on_reachable()
         except OSError as err:
-            _LOGGER.warning("remote_logger: failed to send syslog via UDP: %s", err)
+            self.on_unreachable(err)
             self._udp_transport = None
 
     async def _send_tcp(self, messages: list[SyslogMessage]) -> None:
@@ -304,8 +305,9 @@ class SyslogExporter(LogExporter):
             await writer.drain()
             for msg in messages:
                 msg.sent = True
+            self.on_reachable()
         except (OSError, ConnectionError) as err:
-            _LOGGER.warning("remote_logger: failed to send syslog via TCP: %s", err)
+            self.on_unreachable(err)
             await self._close_tcp()
 
     async def _connect_tcp(self) -> None:

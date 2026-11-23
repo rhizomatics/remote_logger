@@ -21,6 +21,9 @@ if TYPE_CHECKING:
     from custom_components.remote_logger.exporter import LogExporter
     from custom_components.remote_logger.remote_logger import RemoteLoggerConfigEntry
 
+# Sensors read in-memory counters, so updates do no I/O and need no limit
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class RemoteLoggerDiagnosticEntityDescription(SensorEntityDescription):

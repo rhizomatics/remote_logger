@@ -421,6 +421,43 @@ class TestOtlpLogExporter:
             await exporter.flush()
         # Should not raise
 
+    async def test_flush_logs_unavailable_once_and_recovery(
+        self, exporter: OtlpLogExporter, mock_event: MagicMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+        from unittest.mock import AsyncMock, patch
+
+        import aiohttp
+
+        failing_session = MagicMock()
+        failing_session.post = MagicMock(side_effect=aiohttp.ClientError("conn failed"))
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=False)
+        ok_session = MagicMock()
+        ok_session.post = MagicMock(return_value=mock_resp)
+
+        caplog.set_level(logging.INFO, logger="custom_components.remote_logger")
+        with patch("custom_components.remote_logger.otel.exporter.async_get_clientsession", return_value=failing_session):
+            for _ in range(3):
+                exporter.handle_event(mock_event)
+                await exporter.flush()
+        reachable_while_down = exporter.reachable
+        assert not reachable_while_down
+        assert exporter.posting_error_count == 3
+        warnings = [r for r in caplog.records if r.levelno == logging.WARNING and "unavailable" in r.getMessage()]
+        assert len(warnings) == 1
+
+        with patch("custom_components.remote_logger.otel.exporter.async_get_clientsession", return_value=ok_session):
+            exporter.handle_event(mock_event)
+            await exporter.flush()
+            exporter.handle_event(mock_event)
+            await exporter.flush()
+        assert exporter.reachable
+        recoveries = [r for r in caplog.records if r.levelno == logging.INFO and "available again" in r.getMessage()]
+        assert len(recoveries) == 1
+
     async def test_flush_protobuf(self, exporter_with_attrs: OtlpLogExporter, mock_event: MagicMock) -> None:
         from unittest.mock import AsyncMock, patch
 
