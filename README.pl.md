@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -31,7 +31,7 @@ Obsługiwany jest wyłącznie serwer Home Assistant wraz z jego niestandardowymi
 
 **Remote Logger** instaluje się z [Home Assistant Marketplace][marketplace]: przejdź do **Ustawienia → Marketplace** i wyszukaj **Remote Logger**. Przed Home Assistant 2026.11 zainstaluj go z [HACS](https://www.hacs.xyz/docs/use/).
 
-Integracja instaluje się ze strony integracji Home Assistant i **nie wymaga konfiguracji YAML**.
+Integracja instaluje się ze strony integracji Home Assistant i **nie wymaga konfiguracji YAML**. Wszystkie ustawienia opisano w sekcji [Konfiguracja](https://remote-logger.rhizomatics.org.uk/configuration/).
 
 ![Wybierz integrację](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -120,7 +120,9 @@ Dobrze działającą kombinacją jest [Vector](https://vector.dev) i [GreptimeDb
 
 ## Encje diagnostyczne
 
-Sensory Home Assistant są tworzone i aktualizowane w celu monitorowania aktywności dzienników oraz wszelkich błędów podczas generowania komunikatów dziennika lub wysyłania ich do zdalnych serwerów.
+Sensory Home Assistant są tworzone i aktualizowane w celu monitorowania aktywności dzienników oraz wszelkich błędów podczas generowania komunikatów dziennika lub wysyłania ich do zdalnych serwerów. Liczniki **Zdarzenia dziennika** i **Wysłania** zmieniają się niemal przy każdej aktualizacji, dlatego są domyślnie wyłączone; w razie potrzeby można je włączyć na urządzeniu Remote Logger.
+
+Jeśli dzienniki nie docierają, pomocna będzie sekcja [Rozwiązywanie problemów](https://remote-logger.rhizomatics.org.uk/troubleshooting/), w której wymieniono też znane ograniczenia.
 
 ![Encje diagnostyczne](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 

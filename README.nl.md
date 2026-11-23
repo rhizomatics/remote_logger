@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -31,7 +31,7 @@ Alleen de Home Assistant-server zelf met zijn aangepaste componenten wordt onder
 
 **Remote Logger** installeer je via de [Home Assistant Marketplace][marketplace]: ga naar **Instellingen → Marketplace** en zoek naar **Remote Logger**. Vóór Home Assistant 2026.11 installeer je het via [HACS](https://www.hacs.xyz/docs/use/).
 
-De integratie wordt geïnstalleerd via de Home Assistant-integratiepagina en heeft **geen YAML-configuratie**.
+De integratie wordt geïnstalleerd via de Home Assistant-integratiepagina en heeft **geen YAML-configuratie**. Alle instellingen worden beschreven in [Configuratie](https://remote-logger.rhizomatics.org.uk/configuration/).
 
 ![Integratie kiezen](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -120,7 +120,9 @@ Een goede combinatie is [Vector](https://vector.dev) en [GreptimeDb](https://gre
 
 ## Diagnostische entiteiten
 
-Home Assistant-sensoren worden aangemaakt en bijgewerkt om logactiviteit te bewaken, plus eventuele fouten bij het genereren van logberichten of het plaatsen ervan op externe servers.
+Home Assistant-sensoren worden aangemaakt en bijgewerkt om logactiviteit te bewaken, plus eventuele fouten bij het genereren van logberichten of het plaatsen ervan op externe servers. De tellers **Loggebeurtenissen** en **Verzendingen** veranderen bij bijna elke update en zijn daarom standaard uitgeschakeld; schakel ze in op het Remote Logger-apparaat als je ze wilt gebruiken.
+
+Komen er geen logs aan, zie dan [Probleemoplossing](https://remote-logger.rhizomatics.org.uk/troubleshooting/), waar ook de bekende beperkingen staan.
 
 ![Diagnostische entiteiten](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 

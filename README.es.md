@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -31,7 +31,7 @@ Solo se admite el servidor de Home Assistant con sus componentes personalizados.
 
 **Remote Logger** se instala desde el [Home Assistant Marketplace][marketplace]: ve a **Ajustes → Marketplace** y busca **Remote Logger**. Antes de Home Assistant 2026.11, instálalo desde [HACS](https://www.hacs.xyz/docs/use/).
 
-La integración se instala desde la página de integraciones de Home Assistant y **no requiere configuración YAML**.
+La integración se instala desde la página de integraciones de Home Assistant y **no requiere configuración YAML**. Todos los ajustes se describen en [Configuración](https://remote-logger.rhizomatics.org.uk/configuration/).
 
 ![Elegir integración](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -120,7 +120,9 @@ Una combinación que funciona bien es [Vector](https://vector.dev) y [GreptimeDb
 
 ## Entidades de diagnóstico
 
-Se crean y actualizan sensores de Home Assistant para monitorizar la actividad de los registros, así como cualquier error al generar mensajes de registro o al enviarlos a servidores remotos.
+Se crean y actualizan sensores de Home Assistant para monitorizar la actividad de los registros, así como cualquier error al generar mensajes de registro o al enviarlos a servidores remotos. Los contadores **Eventos de registro** y **Envíos** cambian en casi cada actualización, por lo que están desactivados por defecto; actívelos en el dispositivo Remote Logger si los necesita.
+
+Si no llegan los registros, consulte [Solución de problemas](https://remote-logger.rhizomatics.org.uk/troubleshooting/), donde también se enumeran las limitaciones conocidas.
 
 ![Entidades de diagnóstico](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 

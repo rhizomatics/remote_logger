@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -29,7 +29,7 @@
 
 **Remote Logger** 可从 [Home Assistant Marketplace][marketplace] 安装：前往 **设置 → Marketplace**，搜索 **Remote Logger**。Home Assistant 2026.11 之前的版本，请改为通过 [HACS](https://www.hacs.xyz/docs/use/) 安装。
 
-该集成通过 Home Assistant 集成页面安装，**无需 YAML 配置**。
+该集成通过 Home Assistant 集成页面安装，**无需 YAML 配置**。所有设置的说明见[配置](https://remote-logger.rhizomatics.org.uk/configuration/)。
 
 ![选择集成](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -112,7 +112,9 @@ OTEL 分类法同时用于 OTEL 和 Syslog，因为在此级别的 Syslog 中没
 
 ## 诊断实体
 
-系统会创建并更新 Home Assistant 传感器，用于监控日志活动，以及生成日志消息或将其发送到远程服务器时出现的任何错误。
+系统会创建并更新 Home Assistant 传感器，用于监控日志活动，以及生成日志消息或将其发送到远程服务器时出现的任何错误。**日志事件** 和 **发送次数** 计数器几乎每次更新都会变化，因此默认禁用；如有需要，请在 Remote Logger 设备上启用。
+
+如果日志没有到达，请参阅[故障排除](https://remote-logger.rhizomatics.org.uk/troubleshooting/)，其中也列出了已知限制。
 
 ![诊断实体](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 

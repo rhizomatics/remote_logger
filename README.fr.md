@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -31,7 +31,7 @@ Seul le serveur Home Assistant lui-même, avec ses composants personnalisés, es
 
 **Remote Logger** s'installe depuis le [Home Assistant Marketplace][marketplace] : allez dans **Paramètres → Marketplace** et cherchez **Remote Logger**. Avant Home Assistant 2026.11, installez-le plutôt depuis [HACS](https://www.hacs.xyz/docs/use/).
 
-L'intégration s'installe depuis la page des intégrations de Home Assistant et **ne nécessite aucune configuration YAML**.
+L'intégration s'installe depuis la page des intégrations de Home Assistant et **ne nécessite aucune configuration YAML**. Tous les paramètres sont décrits dans [Configuration](https://remote-logger.rhizomatics.org.uk/configuration/).
 
 ![Choisir l'intégration](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -120,7 +120,9 @@ Une combinaison qui fonctionne bien est [Vector](https://vector.dev) et [Greptim
 
 ## Entités de diagnostic
 
-Des capteurs Home Assistant sont créés et mis à jour pour surveiller l'activité des journaux, ainsi que les erreurs éventuelles lors de la génération des messages de journal ou de leur envoi aux serveurs distants.
+Des capteurs Home Assistant sont créés et mis à jour pour surveiller l'activité des journaux, ainsi que les erreurs éventuelles lors de la génération des messages de journal ou de leur envoi aux serveurs distants. Les compteurs **Événements de journal** et **Envois** changent à presque chaque mise à jour ; ils sont donc désactivés par défaut. Activez-les sur l'appareil Remote Logger si vous en avez besoin.
+
+Si les journaux n'arrivent pas, consultez [Dépannage](https://remote-logger.rhizomatics.org.uk/troubleshooting/), qui liste aussi les limitations connues.
 
 ![Entités de diagnostic](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 

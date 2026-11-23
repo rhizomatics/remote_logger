@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -31,7 +31,7 @@ Unterstützt wird ausschließlich der Home Assistant-Server selbst mit seinen be
 
 **Remote Logger** wird über den [Home Assistant Marketplace][marketplace] installiert: Gehen Sie zu **Einstellungen → Marketplace** und suchen Sie nach **Remote Logger**. Vor Home Assistant 2026.11 wird es stattdessen über [HACS](https://www.hacs.xyz/docs/use/) installiert.
 
-Die Integration wird über die Home Assistant-Integrationsseite installiert und erfordert **keine YAML-Konfiguration**.
+Die Integration wird über die Home Assistant-Integrationsseite installiert und erfordert **keine YAML-Konfiguration**. Alle Einstellungen sind unter [Konfiguration](https://remote-logger.rhizomatics.org.uk/configuration/) beschrieben.
 
 ![Integration auswählen](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -120,7 +120,9 @@ Eine gut funktionierende Kombination ist [Vector](https://vector.dev) und [Grept
 
 ## Diagnostische Entitäten
 
-Home Assistant-Sensoren werden erstellt und aktualisiert, um die Protokollaktivität sowie etwaige Fehler bei der Erzeugung von Protokollmeldungen oder deren Übertragung an entfernte Server zu überwachen.
+Home Assistant-Sensoren werden erstellt und aktualisiert, um die Protokollaktivität sowie etwaige Fehler bei der Erzeugung von Protokollmeldungen oder deren Übertragung an entfernte Server zu überwachen. Die Zähler **Protokollereignisse** und **Sendungen** ändern sich bei fast jeder Aktualisierung und sind daher standardmäßig deaktiviert; aktivieren Sie sie bei Bedarf am Remote Logger-Gerät.
+
+Wenn keine Protokolle ankommen, siehe [Fehlerbehebung](https://remote-logger.rhizomatics.org.uk/troubleshooting/); dort sind auch die bekannten Einschränkungen aufgeführt.
 
 ![Diagnostische Entitäten](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 

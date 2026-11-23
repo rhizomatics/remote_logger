@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -31,7 +31,7 @@ La struttura dei log viene preservata dall'evento interno di Home Assistant, qui
 
 **Remote Logger** si installa dal [Home Assistant Marketplace][marketplace]: vai in **Impostazioni → Marketplace** e cerca **Remote Logger**. Prima di Home Assistant 2026.11, installalo invece da [HACS](https://www.hacs.xyz/docs/use/).
 
-L'integrazione si installa dalla pagina delle integrazioni di Home Assistant e **non richiede configurazione YAML**.
+L'integrazione si installa dalla pagina delle integrazioni di Home Assistant e **non richiede configurazione YAML**. Tutte le impostazioni sono descritte in [Configurazione](https://remote-logger.rhizomatics.org.uk/configuration/).
 
 ![Scegli integrazione](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -120,7 +120,9 @@ Una combinazione che funziona bene è [Vector](https://vector.dev) e [GreptimeDb
 
 ## Entità diagnostiche
 
-Vengono create e aggiornate delle sensor di Home Assistant per monitorare l'attività dei log, oltre a eventuali errori nella generazione dei messaggi di log o nel loro invio ai server remoti.
+Vengono create e aggiornate delle sensor di Home Assistant per monitorare l'attività dei log, oltre a eventuali errori nella generazione dei messaggi di log o nel loro invio ai server remoti. I contatori **Eventi di log** e **Invii** cambiano quasi a ogni aggiornamento, quindi sono disattivati per impostazione predefinita; si possono attivare sul dispositivo Remote Logger.
+
+Se i log non arrivano, vedere [Risoluzione dei problemi](https://remote-logger.rhizomatics.org.uk/troubleshooting/), che elenca anche le limitazioni note.
 
 ![Entità diagnostiche](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 
