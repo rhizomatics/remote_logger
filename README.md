@@ -32,7 +32,7 @@ Translations are available for Dutch, English, French, German, Hindi, Italian, J
 
 Install **Remote Logger** from the [Home Assistant Marketplace][marketplace]: go to **Settings → Marketplace** and search for **Remote Logger**. Before Home Assistant 2026.11, install it from [HACS](https://www.hacs.xyz/docs/use/) instead.
 
-The integration installs using the Home Assistant integrations page, and has **no YAML configuration**.
+The integration installs using the Home Assistant integrations page, and has **no YAML configuration**. Every setting is described in [Configuration](https://remote-logger.rhizomatics.org.uk/configuration/).
 
 ![Choose Integration](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 

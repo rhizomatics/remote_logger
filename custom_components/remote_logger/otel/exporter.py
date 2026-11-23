@@ -458,6 +458,7 @@ class OtlpLogExporter(LogExporter):
             timeout = aiohttp.ClientTimeout(total=self._client_timeout)
             # allow_redirects=False: a redirect would be sent the credential headers, possibly over plain HTTP
             async with session.post(self.endpoint_url, timeout=timeout, allow_redirects=False, **submission.body()) as resp:
+                self.on_reachable()
                 if resp.status in (401, 403):
                     _LOGGER.warning("remote_logger: OTLP authentication failed (%s), triggering reauth", resp.status)
                     self._entry.async_start_reauth(self._hass)
@@ -478,7 +479,7 @@ class OtlpLogExporter(LogExporter):
                     self.on_success()
 
         except aiohttp.ClientError as err:
-            _LOGGER.warning("remote_logger: failed to send logs: %s", err)
+            self.on_unreachable(err)
             self.on_posting_error(str(err))
         except RuntimeError as err:
             if "Session is closed" in str(err):
