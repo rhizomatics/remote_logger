@@ -38,8 +38,8 @@ collector is back.
 
 1. Wait up to two minutes: records are sent in batches. Calling the **Flush** action (`remote_logger.flush`) sends
    them straight away.
-2. Look at the **Posting Errors** sensor on the Remote Logger device. For OTLP, its `last_error_message` attribute
-   has the collector's reply or the connection error. Syslog connection errors show only in the Home Assistant log.
+2. Look at the **Posting Errors** sensor on the Remote Logger device. Its `last_error_message` attribute has the
+   collector's reply or the connection error.
 3. Enable the **Postings** sensor (it's disabled by default) to see whether batches are being sent at all.
 4. Call the **Last Log** action (`remote_logger.last_log`) to see the last payload that was sent.
 5. With *Use System Log events in place of Python root logger* on, check `fire_event: true` is set under

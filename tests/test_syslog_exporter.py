@@ -308,6 +308,35 @@ class TestSyslogExporter:
         assert len(exporter._buffer) == 0
         mock_transport.sendto.assert_called_once()
 
+    async def test_flush_udp_failure_counts_posting_error(self, exporter: SyslogExporter, mock_event: MagicMock) -> None:
+        """Regression: a failed send was counted as a successful posting, not as a posting error."""
+        from unittest.mock import AsyncMock, patch
+
+        exporter.handle_event(mock_event)
+        mock_loop = MagicMock()
+        mock_loop.create_datagram_endpoint = AsyncMock(side_effect=OSError("network unreachable"))
+
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            await exporter.flush()
+
+        assert exporter.posting_error_count == 1
+        assert exporter.last_posting_error_message == "network unreachable"
+        assert exporter.posting_count == 0
+
+    async def test_flush_tcp_failure_counts_posting_error(self, exporter: SyslogExporter, mock_event: MagicMock) -> None:
+        """Regression: a failed send was counted as a successful posting, not as a posting error."""
+        from unittest.mock import AsyncMock, patch
+
+        exporter._protocol = "tcp"
+        exporter.handle_event(mock_event)
+
+        with patch("asyncio.open_connection", new=AsyncMock(side_effect=OSError("refused"))):
+            await exporter.flush()
+
+        assert exporter.posting_error_count == 1
+        assert exporter.last_posting_error_message == "refused"
+        assert exporter.posting_count == 0
+
     async def test_flush_sends_via_tcp(self, hass: HomeAssistant, mock_event: MagicMock) -> None:
         from unittest.mock import patch
 
