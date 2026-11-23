@@ -1,6 +1,6 @@
 # 2.13.0
 
-Remote Logger now meets the Gold level of the Home Assistant
+Remote Logger now meets Platinum, the highest level of the Home Assistant
 [Integration Quality Scale](https://www.home-assistant.io/docs/quality_scale/) (self-assessed). See
 [quality_scale.yaml](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 for how each rule is met.
