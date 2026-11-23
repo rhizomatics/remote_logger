@@ -12,10 +12,12 @@ for how each rule is met.
 - Icons for the diagnostic sensors and the actions
 - New [Configuration](https://remote-logger.rhizomatics.org.uk/configuration/) page describing every setting with its default, and how logs are batched and sent
 - New [Troubleshooting](https://remote-logger.rhizomatics.org.uk/troubleshooting/) page, including the known limitations
+- The translated READMEs have the same additions as the English one
 
 ## 🐛 Bug fixes
 - Syslog messages that failed to send were counted as successful postings, so the **Posting Errors** sensor never showed Syslog failures
 - The setup and reconfigure forms gave the default batch size as 100 (it is 20) and the default Syslog facility as `user` (it is `local0`)
+- The client timeout field had no label or description on any connection form, nor the batch size field on the Syslog forms
 
 ## 📝 Other changes
 ### Internal
