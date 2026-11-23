@@ -85,3 +85,15 @@ def test_translation_has_no_html(translation_path: Path) -> None:
     """hassfest rejects strings containing HTML, which includes placeholders such as `<number>`."""
     html = [(k, v) for k, v in _all_strings(_load(translation_path)) if re.search(r"<[^<>]*>", v)]
     assert not html, f"{translation_path.name} has HTML in:\n" + "\n".join(f"  {k}: {v}" for k, v in html)
+
+
+def test_icons_cover_sensors_and_actions() -> None:
+    """icons.json has an icon for every sensor translation key and every action."""
+    from homeassistant.util.yaml import load_yaml_dict
+
+    from custom_components.remote_logger.sensor import SENSORS
+
+    icons = _load(_ROOT / "icons.json")
+    assert set(icons["entity"]["sensor"]) == {d.translation_key for d in SENSORS}
+    services = load_yaml_dict(_ROOT / "services.yaml")
+    assert set(icons["services"]) == set(services)

@@ -120,7 +120,9 @@ These suggestions are for options that are open source and free, at least for ho
 
 ## Diagnostic Entities
 
-Home Assistant sensors are created and updated to monitor log activity, plus any errors either generating log messages or posting them to remote servers.
+Home Assistant sensors are created and updated to monitor log activity, plus any errors either generating log messages or posting them to remote servers. The **Log Events** and **Postings** counters change on most updates, so they are disabled by default; enable them on the Remote Logger device if you want them.
+
+If logs don't arrive, see [Troubleshooting](https://remote-logger.rhizomatics.org.uk/troubleshooting/), which also lists the known limitations.
 
 ## Diagnostic Actions
 
