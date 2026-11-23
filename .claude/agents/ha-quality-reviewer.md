@@ -46,7 +46,7 @@ Review all recently changed code, tests, configuration, and documentation agains
 - **Strict Typing**: Full type annotations, mypy-clean
 
 ### Test Quality
-- **Coverage**: Must be above 90% — challenge anything that drops below this
+- **Coverage**: Must be above 95% — challenge anything that drops below this
 - **Config Flow Tests**: Full coverage of config flow including error paths, reauth, options
 - **Regression Tests**: Bug fixes must have regression tests
 - **New Feature Tests**: All new features must have corresponding tests

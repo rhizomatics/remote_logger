@@ -61,7 +61,7 @@ log collector it is configured with.
 - Releases are built and published by GitHub Actions, not from a developer's machine, with a SHA-256 checksum
   and a build provenance attestation for the zip, which can be checked with
   `gh attestation verify remote_logger.zip --repo rhizomatics/remote_logger`.
-- Ruff, mypy and a test suite with over 90% coverage run on every change, with a regression test for each fix.
+- Ruff, mypy and a test suite with over 95% coverage run on every change, with a regression test for each fix.
 
 ## Known limitations
 
