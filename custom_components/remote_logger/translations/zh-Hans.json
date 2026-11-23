@@ -22,7 +22,8 @@
           "token_type": "令牌类型",
           "token": "Authorization 请求头的访问令牌",
           "headers": "附加请求头",
-          "path": "日志端点路径"
+          "path": "日志端点路径",
+          "client_timeout": "客户端超时（秒）"
         },
         "data_description": {
           "host": "OTLP 采集器的主机名或 IP 地址。",
@@ -34,7 +35,8 @@
           "token_type": "认证方案：Bearer 原样发送令牌；Basic 将其 base64 编码为'用户名:密码'。",
           "token": "可选令牌，将在 Authorization 请求头中发送。",
           "headers": "可选的附加 HTTP 请求头，格式为'名称: 值'（例如 stream-name: my-stream）。每条请求头单独填写一项。",
-          "path": "附加到 host:port 的日志端点路径（默认：/v1/logs）。可在前面加上 API 专用路径（例如 /api/otlp/v1/logs）。"
+          "path": "附加到 host:port 的日志端点路径（默认：/v1/logs）。可在前面加上 API 专用路径（例如 /api/otlp/v1/logs）。",
+          "client_timeout": "等待端点响应的秒数（1-300，默认：10）。"
         }
       },
       "reauth_otel": {
@@ -62,6 +64,8 @@
           "tls_client_key": "客户端密钥文件",
           "app_name": "应用名称",
           "facility": "Syslog 设施",
+          "batch_max_size": "批量最大条数",
+          "client_timeout": "客户端超时（秒）",
           "strict_mode": "严格 RFC 5424 模式",
           "enterprise_number": "企业编号（严格模式）"
         },
@@ -75,6 +79,8 @@
           "tls_client_key": "可选：客户端证书的 PEM 私钥路径（如果不在同一文件中）。",
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
           "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：local0）。",
+          "batch_max_size": "刷新前缓冲的最大日志记录条数（1-10000，默认：20）。",
+          "client_timeout": "等待端点响应的秒数（1-300，默认：10）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
           "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 67614，即 Rhizomatics 的 PEN。测试时可改用 32473，即 RFC 5612 的文档用编号。"
         }
@@ -92,7 +98,8 @@
           "token_type": "令牌类型",
           "token": "Authorization 请求头的访问令牌",
           "headers": "附加请求头",
-          "path": "日志端点路径"
+          "path": "日志端点路径",
+          "client_timeout": "客户端超时（秒）"
         },
         "data_description": {
           "host": "OTLP 采集器的主机名或 IP 地址。",
@@ -104,7 +111,8 @@
           "token_type": "认证方案：Bearer 原样发送令牌；Basic 将其 base64 编码为'用户名:密码'。",
           "token": "可选令牌，将在 Authorization 请求头中发送。",
           "headers": "可选的附加 HTTP 请求头，格式为'名称: 值'（例如 stream-name: my-stream）。每条请求头单独填写一项。",
-          "path": "附加到 host:port 的日志端点路径（默认：/v1/logs）。可在前面加上 API 专用路径（例如 /api/otlp/v1/logs）。"
+          "path": "附加到 host:port 的日志端点路径（默认：/v1/logs）。可在前面加上 API 专用路径（例如 /api/otlp/v1/logs）。",
+          "client_timeout": "等待端点响应的秒数（1-300，默认：10）。"
         }
       },
       "reconfigure_syslog": {
@@ -120,6 +128,8 @@
           "tls_client_key": "客户端密钥文件",
           "app_name": "应用名称",
           "facility": "Syslog 设施",
+          "batch_max_size": "批量最大条数",
+          "client_timeout": "客户端超时（秒）",
           "strict_mode": "严格 RFC 5424 模式",
           "enterprise_number": "企业编号（严格模式）"
         },
@@ -133,6 +143,8 @@
           "tls_client_key": "可选：客户端证书的 PEM 私钥路径（如果不在同一文件中）。",
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
           "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：local0）。",
+          "batch_max_size": "刷新前缓冲的最大日志记录条数（1-10000，默认：20）。",
+          "client_timeout": "等待端点响应的秒数（1-300，默认：10）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
           "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 67614，即 Rhizomatics 的 PEN。测试时可改用 32473，即 RFC 5612 的文档用编号。"
         }

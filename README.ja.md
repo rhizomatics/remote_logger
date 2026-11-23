@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -30,7 +30,7 @@ SyslogまたはOpenTelemetry（OTLP）コレクターに送信します。ライ
 
 **Remote Logger** は [Home Assistant Marketplace][marketplace] からインストールします。**設定 → Marketplace** を開き、**Remote Logger** を検索してください。Home Assistant 2026.11 より前は、[HACS](https://www.hacs.xyz/docs/use/) からインストールします。
 
-このインテグレーションはHome Assistantのインテグレーションページからインストールでき、**YAMLの設定は不要**です。
+このインテグレーションはHome Assistantのインテグレーションページからインストールでき、**YAMLの設定は不要**です。すべての設定は[設定](https://remote-logger.rhizomatics.org.uk/configuration/)で説明しています。
 
 ![インテグレーションを選択](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -113,7 +113,9 @@ SyslogのこのレベルではOTELタクソノミーに標準的な対応物が�
 
 ## 診断エンティティ
 
-Home Assistantのセンサーが作成・更新され、ログアクティビティを監視するとともに、ログメッセージの生成やリモートサーバーへの送信中に発生したエラーも追跡します。
+Home Assistantのセンサーが作成・更新され、ログアクティビティを監視するとともに、ログメッセージの生成やリモートサーバーへの送信中に発生したエラーも追跡します。**ログイベント** と **送信数** のカウンターはほぼ毎回の更新で変化するため、デフォルトで無効になっています。必要な場合は Remote Logger デバイスで有効にしてください。
+
+ログが届かない場合は、既知の制限事項も記載している[トラブルシューティング](https://remote-logger.rhizomatics.org.uk/troubleshooting/)を参照してください。
 
 ![診断エンティティ](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 

@@ -22,7 +22,8 @@
           "token_type": "Token-Typ",
           "token": "Zugriffstoken für den Authorization-Header",
           "headers": "Zusätzliche Header",
-          "path": "Endpunkt-Pfad für Protokolle"
+          "path": "Endpunkt-Pfad für Protokolle",
+          "client_timeout": "Client-Timeout (Sekunden)"
         },
         "data_description": {
           "host": "Hostname oder IP-Adresse des OTLP-Collectors.",
@@ -34,7 +35,8 @@
           "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
           "token": "Optionales Token. Wird im Authorization-Header gesendet.",
           "headers": "Optionale zusätzliche HTTP-Header im Format 'Name: Wert' (z. B. stream-name: mein-stream). Einen Header pro Eintrag eingeben.",
-          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs)."
+          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs).",
+          "client_timeout": "Sekunden, die auf eine Antwort des Endpunkts gewartet wird (1–300, Standard: 10)."
         }
       },
       "reauth_otel": {
@@ -62,6 +64,8 @@
           "tls_client_key": "Client-Schlüsseldatei",
           "app_name": "Anwendungsname",
           "facility": "Syslog-Facility",
+          "batch_max_size": "Maximale Batch-Größe",
+          "client_timeout": "Client-Timeout (Sekunden)",
           "strict_mode": "Strikter RFC 5424-Modus",
           "enterprise_number": "Enterprise-Nummer (strikter Modus)"
         },
@@ -75,6 +79,8 @@
           "tls_client_key": "Optionaler Pfad zum privaten PEM-Schlüssel des Client-Zertifikats, falls er nicht in derselben Datei liegt.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
           "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: local0).",
+          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 20).",
+          "client_timeout": "Sekunden, die auf eine Antwort des Endpunkts gewartet wird (1–300, Standard: 10).",
           "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@PEN. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
           "enterprise_number": "Optionale IANA Private Enterprise Number für die SD-ID homeassistant@PEN im strikten Modus. Standard ist 67614, die PEN von Rhizomatics. Zum Testen kann stattdessen 32473, die Dokumentationsnummer aus RFC 5612, verwendet werden."
         }
@@ -92,7 +98,8 @@
           "token_type": "Token-Typ",
           "token": "Zugriffstoken für den Authorization-Header",
           "headers": "Zusätzliche Header",
-          "path": "Endpunkt-Pfad für Protokolle"
+          "path": "Endpunkt-Pfad für Protokolle",
+          "client_timeout": "Client-Timeout (Sekunden)"
         },
         "data_description": {
           "host": "Hostname oder IP-Adresse des OTLP-Collectors.",
@@ -104,7 +111,8 @@
           "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
           "token": "Optionales Token. Wird im Authorization-Header gesendet.",
           "headers": "Optionale zusätzliche HTTP-Header im Format 'Name: Wert' (z. B. stream-name: mein-stream). Einen Header pro Eintrag eingeben.",
-          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs)."
+          "path": "Pfad, der an Host:Port für den Protokoll-Endpunkt angehängt wird (Standard: /v1/logs).",
+          "client_timeout": "Sekunden, die auf eine Antwort des Endpunkts gewartet wird (1–300, Standard: 10)."
         }
       },
       "reconfigure_syslog": {
@@ -120,6 +128,8 @@
           "tls_client_key": "Client-Schlüsseldatei",
           "app_name": "Anwendungsname",
           "facility": "Syslog-Facility",
+          "batch_max_size": "Maximale Batch-Größe",
+          "client_timeout": "Client-Timeout (Sekunden)",
           "strict_mode": "Strikter RFC 5424-Modus",
           "enterprise_number": "Enterprise-Nummer (strikter Modus)"
         },
@@ -133,6 +143,8 @@
           "tls_client_key": "Optionaler Pfad zum privaten PEM-Schlüssel des Client-Zertifikats, falls er nicht in derselben Datei liegt.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
           "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: local0).",
+          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 20).",
+          "client_timeout": "Sekunden, die auf eine Antwort des Endpunkts gewartet wird (1–300, Standard: 10).",
           "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@PEN. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
           "enterprise_number": "Optionale IANA Private Enterprise Number für die SD-ID homeassistant@PEN im strikten Modus. Standard ist 67614, die PEN von Rhizomatics. Zum Testen kann stattdessen 32473, die Dokumentationsnummer aus RFC 5612, verwendet werden."
         }

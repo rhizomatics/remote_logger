@@ -3,7 +3,7 @@
 
 # Home Assistant Remote Logger
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
 ![Coverage](https://raw.githubusercontent.com/rhizomatics/ha_remote_logger/refs/heads/badges/badges/coverage.svg)
@@ -31,7 +31,7 @@ Syslog या OpenTelemetry (OTLP) कलेक्टर को भेजता 
 
 **Remote Logger** को [Home Assistant Marketplace][marketplace] से इंस्टॉल करें: **सेटिंग्स → Marketplace** पर जाएँ और **Remote Logger** खोजें। Home Assistant 2026.11 से पहले, इसे [HACS](https://www.hacs.xyz/docs/use/) से इंस्टॉल करें।
 
-यह इंटीग्रेशन Home Assistant की इंटीग्रेशन पेज से इंस्टॉल होता है और इसमें **कोई YAML कॉन्फ़िगरेशन नहीं** है।
+यह इंटीग्रेशन Home Assistant की इंटीग्रेशन पेज से इंस्टॉल होता है और इसमें **कोई YAML कॉन्फ़िगरेशन नहीं** है। सभी सेटिंग्स का विवरण [कॉन्फ़िगरेशन](https://remote-logger.rhizomatics.org.uk/configuration/) में है।
 
 ![इंटीग्रेशन चुनें](https://remote-logger.rhizomatics.org.uk/assets/images/config_choose.png){width=400}
 
@@ -116,7 +116,9 @@ OTEL टैक्सोनॉमी OTEL और Syslog दोनों के �
 
 ## डायग्नोस्टिक एंटिटी
 
-लॉग गतिविधि और लॉग संदेश उत्पन्न करने या उन्हें दूरस्थ सर्वर पर पोस्ट करने में होने वाली त्रुटियों की निगरानी के लिए Home Assistant सेंसर बनाए और अपडेट किए जाते हैं।
+लॉग गतिविधि और लॉग संदेश उत्पन्न करने या उन्हें दूरस्थ सर्वर पर पोस्ट करने में होने वाली त्रुटियों की निगरानी के लिए Home Assistant सेंसर बनाए और अपडेट किए जाते हैं। **लॉग इवेंट** और **पोस्टिंग** काउंटर लगभग हर अपडेट पर बदलते हैं, इसलिए वे डिफ़ॉल्ट रूप से बंद रहते हैं; ज़रूरत हो तो उन्हें Remote Logger डिवाइस पर चालू करें।
+
+अगर लॉग नहीं पहुँच रहे हैं, तो [समस्या निवारण](https://remote-logger.rhizomatics.org.uk/troubleshooting/) देखें, जिसमें ज्ञात सीमाएँ भी दी गई हैं।
 
 ![डायग्नोस्टिक एंटिटी](https://remote-logger.rhizomatics.org.uk/assets/images/diagnostic_entities.png){width=480}
 
