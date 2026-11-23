@@ -265,7 +265,7 @@ class SyslogExporter(LogExporter):
             sent: list[SyslogMessage] = [m for m in self._in_progress if m.sent]
             if sent:
                 self.last_sent_payload = SyslogSubmission(sent, protocol=self._protocol)
-            self.on_success()
+                self.on_success()
             self._in_progress = [m for m in self._in_progress if not m.sent]
         except Exception as e:
             _LOGGER.exception("remote_logger: unexpected error sending syslog messages")
@@ -286,6 +286,7 @@ class SyslogExporter(LogExporter):
             self.on_reachable()
         except OSError as err:
             self.on_unreachable(err)
+            self.on_posting_error(str(err))
             self._udp_transport = None
 
     async def _send_tcp(self, messages: list[SyslogMessage]) -> None:
@@ -308,6 +309,7 @@ class SyslogExporter(LogExporter):
             self.on_reachable()
         except (OSError, ConnectionError) as err:
             self.on_unreachable(err)
+            self.on_posting_error(str(err))
             await self._close_tcp()
 
     async def _connect_tcp(self) -> None:

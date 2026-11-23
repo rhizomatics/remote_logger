@@ -3,7 +3,7 @@
 
 # Remote Logger for Home Assistant
 
-[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![managed by hq](https://raw.githubusercontent.com/rhizomatics/hq/main/assets/badge-managed-by-hq.svg)](https://hq.rhizomatics.org.uk/) [![Home Assistant Marketplace][marketplacebadge]][marketplace]
+[![Rhizomatics Open Source](https://img.shields.io/badge/rhizomatics%20open%20source-lightseagreen)](https://github.com/rhizomatics) [![managed by hq](https://raw.githubusercontent.com/rhizomatics/hq/main/assets/badge-managed-by-hq.svg)](https://hq.rhizomatics.org.uk/) [![Home Assistant Marketplace][marketplacebadge]][marketplace] [![Quality scale: Platinum (self-assessed)](https://img.shields.io/badge/quality%20scale-platinum%20(self--assessed)-8a9ba8)](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
 
 ![py3.14](https://img.shields.io/badge/Python-3.14-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/rhizomatics/ha_remote_logger)
@@ -120,7 +120,9 @@ These suggestions are for options that are open source and free, at least for ho
 
 ## Diagnostic Entities
 
-Home Assistant sensors are created and updated to monitor log activity, plus any errors either generating log messages or posting them to remote servers.
+Home Assistant sensors are created and updated to monitor log activity, plus any errors either generating log messages or posting them to remote servers. The **Log Events** and **Postings** counters change on most updates, so they are disabled by default; enable them on the Remote Logger device if you want them.
+
+If logs don't arrive, see [Troubleshooting](https://remote-logger.rhizomatics.org.uk/troubleshooting/), which also lists the known limitations.
 
 ## Diagnostic Actions
 

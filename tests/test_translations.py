@@ -85,3 +85,28 @@ def test_translation_has_no_html(translation_path: Path) -> None:
     """hassfest rejects strings containing HTML, which includes placeholders such as `<number>`."""
     html = [(k, v) for k, v in _all_strings(_load(translation_path)) if re.search(r"<[^<>]*>", v)]
     assert not html, f"{translation_path.name} has HTML in:\n" + "\n".join(f"  {k}: {v}" for k, v in html)
+
+
+def test_icons_cover_sensors_and_actions() -> None:
+    """icons.json has an icon for every sensor translation key and every action."""
+    from homeassistant.util.yaml import load_yaml_dict
+
+    from custom_components.remote_logger.sensor import SENSORS
+
+    icons = _load(_ROOT / "icons.json")
+    assert set(icons["entity"]["sensor"]) == {d.translation_key for d in SENSORS}
+    services = load_yaml_dict(_ROOT / "services.yaml")
+    assert set(icons["services"]) == set(services)
+
+
+@pytest.mark.parametrize("path", sorted(_TRANSLATIONS_DIR.glob("*.json")), ids=lambda p: p.stem)
+def test_described_defaults_match_code(path: Path) -> None:
+    """Regression: setup forms said the default batch size was 100 and the default facility user."""
+    from custom_components.remote_logger.const import DEFAULT_BATCH_MAX_SIZE
+    from custom_components.remote_logger.syslog.const import DEFAULT_FACILITY
+
+    steps = _load(path)["config"]["step"]
+    for step in ("otel", "reconfigure_otel"):
+        assert re.search(rf"\b{DEFAULT_BATCH_MAX_SIZE}\b", steps[step]["data_description"]["batch_max_size"]), step
+    for step in ("syslog", "reconfigure_syslog"):
+        assert re.search(rf"\b{DEFAULT_FACILITY}\b", steps[step]["data_description"]["facility"]), step

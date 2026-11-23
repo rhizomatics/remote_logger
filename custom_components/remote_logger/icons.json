@@ -1,0 +1,29 @@
+{
+  "entity": {
+    "sensor": {
+      "format_errors": {
+        "default": "mdi:file-alert-outline"
+      },
+      "posting_errors": {
+        "default": "mdi:cloud-alert-outline"
+      },
+      "events": {
+        "default": "mdi:text-box-multiple-outline"
+      },
+      "postings": {
+        "default": "mdi:cloud-upload-outline"
+      }
+    }
+  },
+  "services": {
+    "send_log": {
+      "service": "mdi:message-plus-outline"
+    },
+    "flush": {
+      "service": "mdi:upload-multiple"
+    },
+    "last_log": {
+      "service": "mdi:history"
+    }
+  }
+}

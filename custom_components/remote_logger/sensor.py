@@ -61,6 +61,8 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
         key="events",
         translation_key="events",
+        # changes on most polls, so off unless wanted
+        entity_registry_enabled_default=False,
         native_unit_of_measurement="event",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -70,6 +72,8 @@ SENSORS: tuple[RemoteLoggerDiagnosticEntityDescription, ...] = (
     RemoteLoggerDiagnosticEntityDescription(
         key="postings",
         translation_key="postings",
+        # changes on most polls, so off unless wanted
+        entity_registry_enabled_default=False,
         native_unit_of_measurement="posting",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.TOTAL_INCREASING,

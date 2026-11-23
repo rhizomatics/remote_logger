@@ -65,6 +65,7 @@ plugins:
           - events.md: Logging Home Assistant events as well as log records
           - aggregators.md: Log aggregators known to work with Syslog and OTLP
           - security.md: What is exported, protecting it in transit, and who can use the actions
+          - troubleshooting.md: Known limitations, and what to check when logs don't arrive
         Examples:
           - examples/vector_openobserve/*.md
           - examples/vector_greptimedb/*.md
