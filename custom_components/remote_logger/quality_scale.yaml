@@ -193,7 +193,8 @@ rules:
 
   docs-data-update:
     status: done
-    comment: docs/configuration.md "Sending Logs": batch size, 120s flush, flush on stop and unload, retries.
+    comment: |
+      docs/configuration.md "Sending Logs": batch size, 120s flush, flush on stop and unload, retries.
 
   docs-examples:
     status: done
@@ -250,7 +251,7 @@ rules:
 
   icon-translations:
     status: done
-    comment: icons.json: an icon for each sensor translation key and each action.
+    comment: icons.json has an icon for each sensor translation key and each action.
 
   reconfiguration-flow:
     status: done

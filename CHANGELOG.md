@@ -1,3 +1,27 @@
+# 2.13.0
+
+Remote Logger now meets the Gold level of the Home Assistant
+[Integration Quality Scale](https://www.home-assistant.io/docs/quality_scale/) (self-assessed). See
+[quality_scale.yaml](https://github.com/rhizomatics/remote_logger/blob/main/custom_components/remote_logger/quality_scale.yaml)
+for how each rule is met.
+
+## ✨ Enhancements
+- Diagnostics can be downloaded from the entry's menu, with the token, headers and client key path redacted
+- When the collector can't be reached, one warning is logged, and one info message when it is back, instead of a warning on every send
+- The **Log Events** and **Postings** sensors are disabled by default for new entries, since they change on most updates. Existing entries keep their sensors as they are
+- Icons for the diagnostic sensors and the actions
+- New [Configuration](https://remote-logger.rhizomatics.org.uk/configuration/) page describing every setting with its default, and how logs are batched and sent
+- New [Troubleshooting](https://remote-logger.rhizomatics.org.uk/troubleshooting/) page, including the known limitations
+
+## 🐛 Bug fixes
+- Syslog messages that failed to send were counted as successful postings, so the **Posting Errors** sensor never showed Syslog failures
+- The setup and reconfigure forms gave the default batch size as 100 (it is 20) and the default Syslog facility as `user` (it is `local0`)
+
+## 📝 Other changes
+### Internal
+- Minimum test coverage raised from 90% to 95%
+- The sensor platform declares `PARALLEL_UPDATES = 0`, since its updates only read counters in memory
+
 # 2.12.0
 
 A security review of the integration and of how it is built and released. See the new
