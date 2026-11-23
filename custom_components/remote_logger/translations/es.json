@@ -22,7 +22,8 @@
           "token_type": "Tipo de token",
           "token": "Token de acceso para el encabezado Authorization",
           "headers": "Encabezados adicionales",
-          "path": "Ruta del endpoint de registros"
+          "path": "Ruta del endpoint de registros",
+          "client_timeout": "Tiempo de espera del cliente (segundos)"
         },
         "data_description": {
           "host": "Nombre de host o dirección IP del colector OTLP.",
@@ -34,7 +35,8 @@
           "token_type": "Esquema de autenticación: Bearer envía el token tal cual; Basic lo codifica en base64 como 'usuario:contraseña'.",
           "token": "Token opcional. Se envía en el encabezado 'Authorization'.",
           "headers": "Encabezados HTTP adicionales opcionales en el formato 'Nombre: valor' (p. ej. stream-name: mi-stream). Introduce un encabezado por entrada.",
-          "path": "Ruta añadida a host:puerto para el endpoint de registros (por defecto: /v1/logs). Añade cualquier ruta específica de la API como prefijo (p. ej. /api/otlp/v1/logs)."
+          "path": "Ruta añadida a host:puerto para el endpoint de registros (por defecto: /v1/logs). Añade cualquier ruta específica de la API como prefijo (p. ej. /api/otlp/v1/logs).",
+          "client_timeout": "Segundos de espera a que responda el endpoint (1-300, por defecto: 10)."
         }
       },
       "reauth_otel": {
@@ -62,6 +64,8 @@
           "tls_client_key": "Archivo de clave de cliente",
           "app_name": "Nombre de la aplicación",
           "facility": "Facility de Syslog",
+          "batch_max_size": "Tamaño máximo del lote",
+          "client_timeout": "Tiempo de espera del cliente (segundos)",
           "strict_mode": "Modo RFC 5424 estricto",
           "enterprise_number": "Número de empresa (modo estricto)"
         },
@@ -75,6 +79,8 @@
           "tls_client_key": "Ruta opcional a la clave privada PEM del certificado de cliente, si no está en el mismo archivo.",
           "app_name": "El campo APP-NAME en los mensajes RFC 5424 (por defecto: homeassistant).",
           "facility": "Código de facility syslog usado para calcular el valor PRI (por defecto: local0).",
+          "batch_max_size": "Número máximo de registros de log en el búfer antes del envío (1-10000, por defecto: 20).",
+          "client_timeout": "Segundos de espera a que responda el endpoint (1-300, por defecto: 10).",
           "strict_mode": "Envía una salida nativa de syslog: nombres de parámetros de Home Assistant acortados a los límites de RFC 5424, MSGID recortado a 32 caracteres y un SD-ID privado homeassistant@PEN. Actívelo si el receptor rechaza mensajes (por ejemplo Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number opcional para el SD-ID homeassistant@PEN del modo estricto. Por defecto 67614, el PEN de Rhizomatics. Para pruebas puede usarse 32473, el número de documentación de RFC 5612."
         }
@@ -92,7 +98,8 @@
           "token_type": "Tipo de token",
           "token": "Token de acceso para el encabezado Authorization",
           "headers": "Encabezados adicionales",
-          "path": "Ruta del endpoint de registros"
+          "path": "Ruta del endpoint de registros",
+          "client_timeout": "Tiempo de espera del cliente (segundos)"
         },
         "data_description": {
           "host": "Nombre de host o dirección IP del colector OTLP.",
@@ -104,7 +111,8 @@
           "token_type": "Esquema de autenticación: Bearer envía el token tal cual; Basic lo codifica en base64 como 'usuario:contraseña'.",
           "token": "Token opcional. Se envía en el encabezado 'Authorization'.",
           "headers": "Encabezados HTTP adicionales opcionales en el formato 'Nombre: valor' (p. ej. stream-name: mi-stream). Introduce un encabezado por entrada.",
-          "path": "Ruta añadida a host:puerto para el endpoint de registros (por defecto: /v1/logs). Añade cualquier ruta específica de la API como prefijo (p. ej. /api/otlp/v1/logs)."
+          "path": "Ruta añadida a host:puerto para el endpoint de registros (por defecto: /v1/logs). Añade cualquier ruta específica de la API como prefijo (p. ej. /api/otlp/v1/logs).",
+          "client_timeout": "Segundos de espera a que responda el endpoint (1-300, por defecto: 10)."
         }
       },
       "reconfigure_syslog": {
@@ -120,6 +128,8 @@
           "tls_client_key": "Archivo de clave de cliente",
           "app_name": "Nombre de la aplicación",
           "facility": "Facility de Syslog",
+          "batch_max_size": "Tamaño máximo del lote",
+          "client_timeout": "Tiempo de espera del cliente (segundos)",
           "strict_mode": "Modo RFC 5424 estricto",
           "enterprise_number": "Número de empresa (modo estricto)"
         },
@@ -133,6 +143,8 @@
           "tls_client_key": "Ruta opcional a la clave privada PEM del certificado de cliente, si no está en el mismo archivo.",
           "app_name": "El campo APP-NAME en los mensajes RFC 5424 (por defecto: homeassistant).",
           "facility": "Código de facility syslog usado para calcular el valor PRI (por defecto: local0).",
+          "batch_max_size": "Número máximo de registros de log en el búfer antes del envío (1-10000, por defecto: 20).",
+          "client_timeout": "Segundos de espera a que responda el endpoint (1-300, por defecto: 10).",
           "strict_mode": "Envía una salida nativa de syslog: nombres de parámetros de Home Assistant acortados a los límites de RFC 5424, MSGID recortado a 32 caracteres y un SD-ID privado homeassistant@PEN. Actívelo si el receptor rechaza mensajes (por ejemplo Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number opcional para el SD-ID homeassistant@PEN del modo estricto. Por defecto 67614, el PEN de Rhizomatics. Para pruebas puede usarse 32473, el número de documentación de RFC 5612."
         }

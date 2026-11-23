@@ -22,7 +22,8 @@
           "token_type": "Tokentype",
           "token": "Toegangstoken voor de Authorization-header",
           "headers": "Aanvullende headers",
-          "path": "Pad van het logboekeindpunt"
+          "path": "Pad van het logboekeindpunt",
+          "client_timeout": "Client-time-out (seconden)"
         },
         "data_description": {
           "host": "Hostnaam of IP-adres van de OTLP-collector.",
@@ -34,7 +35,8 @@
           "token_type": "Verificatieschema: Bearer stuurt het token ongewijzigd; Basic codeert het als 'gebruiker:wachtwoord' in base64.",
           "token": "Optioneel token. Verstuurd in de 'Authorization'-header.",
           "headers": "Optionele extra HTTP-headers in het formaat 'Naam: waarde' (bijv. stream-name: my-stream). Voer één header per invoer in.",
-          "path": "Pad dat wordt toegevoegd aan host:poort voor het logboekeindpunt (standaard: /v1/logs). Voeg een API-specifiek pad toe als voorvoegsel (bijv. /api/otlp/v1/logs)."
+          "path": "Pad dat wordt toegevoegd aan host:poort voor het logboekeindpunt (standaard: /v1/logs). Voeg een API-specifiek pad toe als voorvoegsel (bijv. /api/otlp/v1/logs).",
+          "client_timeout": "Aantal seconden wachten op een antwoord van het eindpunt (1-300, standaard: 10)."
         }
       },
       "reauth_otel": {
@@ -62,6 +64,8 @@
           "tls_client_key": "Clientsleutelbestand",
           "app_name": "Applicatienaam",
           "facility": "Syslog-facility",
+          "batch_max_size": "Maximale batchgrootte",
+          "client_timeout": "Client-time-out (seconden)",
           "strict_mode": "Strikte RFC 5424-modus",
           "enterprise_number": "Enterprise-nummer (strikte modus)"
         },
@@ -75,6 +79,8 @@
           "tls_client_key": "Optioneel pad naar de PEM-privésleutel van het clientcertificaat, als die niet in hetzelfde bestand staat.",
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
           "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: local0).",
+          "batch_max_size": "Maximum aantal logrecords in de buffer voor het doorsturen (1-10000, standaard: 20).",
+          "client_timeout": "Aantal seconden wachten op een antwoord van het eindpunt (1-300, standaard: 10).",
           "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@PEN. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
           "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@PEN in strikte modus. Standaard 67614, het PEN van Rhizomatics. Voor tests kan in plaats daarvan 32473, het documentatienummer uit RFC 5612, worden gebruikt."
         }
@@ -92,7 +98,8 @@
           "token_type": "Tokentype",
           "token": "Toegangstoken voor de Authorization-header",
           "headers": "Aanvullende headers",
-          "path": "Pad van het logboekeindpunt"
+          "path": "Pad van het logboekeindpunt",
+          "client_timeout": "Client-time-out (seconden)"
         },
         "data_description": {
           "host": "Hostnaam of IP-adres van de OTLP-collector.",
@@ -104,7 +111,8 @@
           "token_type": "Verificatieschema: Bearer stuurt het token ongewijzigd; Basic codeert het als 'gebruiker:wachtwoord' in base64.",
           "token": "Optioneel token. Verstuurd in de 'Authorization'-header.",
           "headers": "Optionele extra HTTP-headers in het formaat 'Naam: waarde' (bijv. stream-name: my-stream). Voer één header per invoer in.",
-          "path": "Pad dat wordt toegevoegd aan host:poort voor het logboekeindpunt (standaard: /v1/logs). Voeg een API-specifiek pad toe als voorvoegsel (bijv. /api/otlp/v1/logs)."
+          "path": "Pad dat wordt toegevoegd aan host:poort voor het logboekeindpunt (standaard: /v1/logs). Voeg een API-specifiek pad toe als voorvoegsel (bijv. /api/otlp/v1/logs).",
+          "client_timeout": "Aantal seconden wachten op een antwoord van het eindpunt (1-300, standaard: 10)."
         }
       },
       "reconfigure_syslog": {
@@ -120,6 +128,8 @@
           "tls_client_key": "Clientsleutelbestand",
           "app_name": "Applicatienaam",
           "facility": "Syslog-facility",
+          "batch_max_size": "Maximale batchgrootte",
+          "client_timeout": "Client-time-out (seconden)",
           "strict_mode": "Strikte RFC 5424-modus",
           "enterprise_number": "Enterprise-nummer (strikte modus)"
         },
@@ -133,6 +143,8 @@
           "tls_client_key": "Optioneel pad naar de PEM-privésleutel van het clientcertificaat, als die niet in hetzelfde bestand staat.",
           "app_name": "Het APP-NAME-veld in RFC 5424-berichten (standaard: homeassistant).",
           "facility": "Syslog-facilitycode voor de berekening van de PRI-waarde (standaard: local0).",
+          "batch_max_size": "Maximum aantal logrecords in de buffer voor het doorsturen (1-10000, standaard: 20).",
+          "client_timeout": "Aantal seconden wachten op een antwoord van het eindpunt (1-300, standaard: 10).",
           "strict_mode": "Verstuur syslog-eigen uitvoer: Home Assistant-parameternamen ingekort tot de limieten van RFC 5424, MSGID ingekort tot 32 tekens en een privé SD-ID homeassistant@PEN. Inschakelen als de ontvanger berichten weigert (bijvoorbeeld Grafana Alloy).",
           "enterprise_number": "Optioneel IANA Private Enterprise Number voor de SD-ID homeassistant@PEN in strikte modus. Standaard 67614, het PEN van Rhizomatics. Voor tests kan in plaats daarvan 32473, het documentatienummer uit RFC 5612, worden gebruikt."
         }

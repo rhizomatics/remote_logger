@@ -110,3 +110,33 @@ def test_described_defaults_match_code(path: Path) -> None:
         assert re.search(rf"\b{DEFAULT_BATCH_MAX_SIZE}\b", steps[step]["data_description"]["batch_max_size"]), step
     for step in ("syslog", "reconfigure_syslog"):
         assert re.search(rf"\b{DEFAULT_FACILITY}\b", steps[step]["data_description"]["facility"]), step
+
+
+_FORM_SCHEMAS: dict[str, str] = {
+    "config.otel": "OTEL_DATA_SCHEMA",
+    "config.reconfigure_otel": "OTEL_DATA_SCHEMA",
+    "config.reauth_otel": "REAUTH_OTEL_DATA_SCHEMA",
+    "config.syslog": "SYSLOG_DATA_SCHEMA",
+    "config.reconfigure_syslog": "SYSLOG_DATA_SCHEMA",
+    "config.common": "COMMON_DATA_SCHEMA",
+    "options.events": "COMMON_DATA_SCHEMA",
+}
+
+
+@pytest.mark.parametrize("path", sorted(_TRANSLATIONS_DIR.glob("*.json")), ids=lambda p: p.stem)
+def test_every_form_field_has_label_and_description(path: Path) -> None:
+    """Regression: client_timeout, and batch_max_size on the Syslog forms, had no label or description."""
+    from custom_components.remote_logger import config_flow
+
+    translations = _load(path)
+    missing: list[str] = []
+    for step_path, schema_name in _FORM_SCHEMAS.items():
+        flow, step = step_path.split(".")
+        texts = translations[flow]["step"][step]
+        for key in (str(k) for k in getattr(config_flow, schema_name).schema):
+            if key in texts.get("sections", {}):
+                continue  # a section's own fields are checked by name in the en.json structure test
+            for part in ("data", "data_description"):
+                if key not in texts[part]:
+                    missing.append(f"{step_path}.{part}.{key}")
+    assert missing == []

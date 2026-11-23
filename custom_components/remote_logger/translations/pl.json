@@ -22,7 +22,8 @@
           "token_type": "Typ tokenu",
           "token": "Token dostępu dla nagłówka Authorization",
           "headers": "Dodatkowe nagłówki",
-          "path": "Ścieżka punktu końcowego dzienników"
+          "path": "Ścieżka punktu końcowego dzienników",
+          "client_timeout": "Limit czasu klienta (sekundy)"
         },
         "data_description": {
           "host": "Nazwa hosta lub adres IP kolektora OTLP.",
@@ -34,7 +35,8 @@
           "token_type": "Schemat uwierzytelniania: Bearer wysyła token bez zmian; Basic koduje go w base64 jako 'użytkownik:hasło'.",
           "token": "Opcjonalny token. Wysyłany w nagłówku 'Authorization'.",
           "headers": "Opcjonalne dodatkowe nagłówki HTTP w formacie 'Nazwa: wartość' (np. stream-name: my-stream). Wprowadź jeden nagłówek na wpis.",
-          "path": "Ścieżka dołączana do host:port dla punktu końcowego dzienników (domyślnie: /v1/logs). Poprzedź dowolną ścieżką specyficzną dla API (np. /api/otlp/v1/logs)."
+          "path": "Ścieżka dołączana do host:port dla punktu końcowego dzienników (domyślnie: /v1/logs). Poprzedź dowolną ścieżką specyficzną dla API (np. /api/otlp/v1/logs).",
+          "client_timeout": "Liczba sekund oczekiwania na odpowiedź punktu końcowego (1-300, domyślnie: 10)."
         }
       },
       "reauth_otel": {
@@ -62,6 +64,8 @@
           "tls_client_key": "Plik klucza klienta",
           "app_name": "Nazwa aplikacji",
           "facility": "Obiekt Syslog",
+          "batch_max_size": "Maksymalny rozmiar partii",
+          "client_timeout": "Limit czasu klienta (sekundy)",
           "strict_mode": "Ścisły tryb RFC 5424",
           "enterprise_number": "Numer przedsiębiorstwa (tryb ścisły)"
         },
@@ -75,6 +79,8 @@
           "tls_client_key": "Opcjonalna ścieżka do klucza prywatnego PEM certyfikatu klienta, jeśli nie znajduje się w tym samym pliku.",
           "app_name": "Pole APP-NAME w wiadomościach RFC 5424 (domyślnie: homeassistant).",
           "facility": "Kod obiektu syslog używany do obliczania wartości PRI (domyślnie: local0).",
+          "batch_max_size": "Maksymalna liczba rekordów dziennika w buforze przed wysłaniem (1-10000, domyślnie: 20).",
+          "client_timeout": "Liczba sekund oczekiwania na odpowiedź punktu końcowego (1-300, domyślnie: 10).",
           "strict_mode": "Wysyła natywne dane syslog: nazwy parametrów Home Assistant skrócone do limitów RFC 5424, MSGID skrócony do 32 znaków i prywatny SD-ID homeassistant@PEN. Włącz, jeśli odbiorca odrzuca wiadomości (np. Grafana Alloy).",
           "enterprise_number": "Opcjonalny IANA Private Enterprise Number dla SD-ID homeassistant@PEN w trybie ścisłym. Domyślnie 67614, PEN firmy Rhizomatics. Do testów można zamiast tego użyć 32473, numeru dokumentacyjnego z RFC 5612."
         }
@@ -92,7 +98,8 @@
           "token_type": "Typ tokenu",
           "token": "Token dostępu dla nagłówka Authorization",
           "headers": "Dodatkowe nagłówki",
-          "path": "Ścieżka punktu końcowego dzienników"
+          "path": "Ścieżka punktu końcowego dzienników",
+          "client_timeout": "Limit czasu klienta (sekundy)"
         },
         "data_description": {
           "host": "Nazwa hosta lub adres IP kolektora OTLP.",
@@ -104,7 +111,8 @@
           "token_type": "Schemat uwierzytelniania: Bearer wysyła token bez zmian; Basic koduje go w base64 jako 'użytkownik:hasło'.",
           "token": "Opcjonalny token. Wysyłany w nagłówku 'Authorization'.",
           "headers": "Opcjonalne dodatkowe nagłówki HTTP w formacie 'Nazwa: wartość' (np. stream-name: my-stream). Wprowadź jeden nagłówek na wpis.",
-          "path": "Ścieżka dołączana do host:port dla punktu końcowego dzienników (domyślnie: /v1/logs). Poprzedź dowolną ścieżką specyficzną dla API (np. /api/otlp/v1/logs)."
+          "path": "Ścieżka dołączana do host:port dla punktu końcowego dzienników (domyślnie: /v1/logs). Poprzedź dowolną ścieżką specyficzną dla API (np. /api/otlp/v1/logs).",
+          "client_timeout": "Liczba sekund oczekiwania na odpowiedź punktu końcowego (1-300, domyślnie: 10)."
         }
       },
       "reconfigure_syslog": {
@@ -120,6 +128,8 @@
           "tls_client_key": "Plik klucza klienta",
           "app_name": "Nazwa aplikacji",
           "facility": "Obiekt Syslog",
+          "batch_max_size": "Maksymalny rozmiar partii",
+          "client_timeout": "Limit czasu klienta (sekundy)",
           "strict_mode": "Ścisły tryb RFC 5424",
           "enterprise_number": "Numer przedsiębiorstwa (tryb ścisły)"
         },
@@ -133,6 +143,8 @@
           "tls_client_key": "Opcjonalna ścieżka do klucza prywatnego PEM certyfikatu klienta, jeśli nie znajduje się w tym samym pliku.",
           "app_name": "Pole APP-NAME w wiadomościach RFC 5424 (domyślnie: homeassistant).",
           "facility": "Kod obiektu syslog używany do obliczania wartości PRI (domyślnie: local0).",
+          "batch_max_size": "Maksymalna liczba rekordów dziennika w buforze przed wysłaniem (1-10000, domyślnie: 20).",
+          "client_timeout": "Liczba sekund oczekiwania na odpowiedź punktu końcowego (1-300, domyślnie: 10).",
           "strict_mode": "Wysyła natywne dane syslog: nazwy parametrów Home Assistant skrócone do limitów RFC 5424, MSGID skrócony do 32 znaków i prywatny SD-ID homeassistant@PEN. Włącz, jeśli odbiorca odrzuca wiadomości (np. Grafana Alloy).",
           "enterprise_number": "Opcjonalny IANA Private Enterprise Number dla SD-ID homeassistant@PEN w trybie ścisłym. Domyślnie 67614, PEN firmy Rhizomatics. Do testów można zamiast tego użyć 32473, numeru dokumentacyjnego z RFC 5612."
         }

@@ -22,7 +22,8 @@
           "token_type": "Tipo di token",
           "token": "Token di accesso per l'intestazione Authorization",
           "headers": "Intestazioni aggiuntive",
-          "path": "Percorso dell'endpoint dei log"
+          "path": "Percorso dell'endpoint dei log",
+          "client_timeout": "Timeout del client (secondi)"
         },
         "data_description": {
           "host": "Nome host o indirizzo IP del collector OTLP.",
@@ -34,7 +35,8 @@
           "token_type": "Schema di autenticazione: Bearer invia il token così com'è; Basic lo codifica in base64 come 'utente:password'.",
           "token": "Token opzionale. Inviato nell'intestazione 'Authorization'.",
           "headers": "Intestazioni HTTP aggiuntive opzionali nel formato 'Nome: valore' (es. stream-name: mio-stream). Inserire una intestazione per voce.",
-          "path": "Percorso aggiunto a host:porta per l'endpoint dei log (predefinito: /v1/logs). Prefissare con qualsiasi percorso specifico dell'API (es. /api/otlp/v1/logs)."
+          "path": "Percorso aggiunto a host:porta per l'endpoint dei log (predefinito: /v1/logs). Prefissare con qualsiasi percorso specifico dell'API (es. /api/otlp/v1/logs).",
+          "client_timeout": "Secondi di attesa della risposta dell'endpoint (1-300, predefinito: 10)."
         }
       },
       "reauth_otel": {
@@ -62,6 +64,8 @@
           "tls_client_key": "File della chiave client",
           "app_name": "Nome dell'applicazione",
           "facility": "Facility syslog",
+          "batch_max_size": "Dimensione massima del batch",
+          "client_timeout": "Timeout del client (secondi)",
           "strict_mode": "Modalità RFC 5424 rigorosa",
           "enterprise_number": "Numero enterprise (modalità rigorosa)"
         },
@@ -75,6 +79,8 @@
           "tls_client_key": "Percorso facoltativo della chiave privata PEM del certificato client, se non è nello stesso file.",
           "app_name": "Il campo APP-NAME nei messaggi RFC 5424 (predefinito: homeassistant).",
           "facility": "Codice di facility syslog usato per calcolare il valore PRI (predefinito: local0).",
+          "batch_max_size": "Numero massimo di record di log nel buffer prima dell'invio (1-10000, predefinito: 20).",
+          "client_timeout": "Secondi di attesa della risposta dell'endpoint (1-300, predefinito: 10).",
           "strict_mode": "Invia un output syslog nativo: nomi dei parametri di Home Assistant accorciati ai limiti di RFC 5424, MSGID troncato a 32 caratteri e un SD-ID privato homeassistant@PEN. Abilitare se il ricevitore rifiuta i messaggi (ad esempio Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number opzionale per l'SD-ID homeassistant@PEN della modalità rigorosa. Predefinito 67614, il PEN di Rhizomatics. Per i test si può usare invece 32473, il numero di documentazione di RFC 5612."
         }
@@ -92,7 +98,8 @@
           "token_type": "Tipo di token",
           "token": "Token di accesso per l'intestazione Authorization",
           "headers": "Intestazioni aggiuntive",
-          "path": "Percorso dell'endpoint dei log"
+          "path": "Percorso dell'endpoint dei log",
+          "client_timeout": "Timeout del client (secondi)"
         },
         "data_description": {
           "host": "Nome host o indirizzo IP del collector OTLP.",
@@ -104,7 +111,8 @@
           "token_type": "Schema di autenticazione: Bearer invia il token così com'è; Basic lo codifica in base64 come 'utente:password'.",
           "token": "Token opzionale. Inviato nell'intestazione 'Authorization'.",
           "headers": "Intestazioni HTTP aggiuntive opzionali nel formato 'Nome: valore' (es. stream-name: mio-stream). Inserire una intestazione per voce.",
-          "path": "Percorso aggiunto a host:porta per l'endpoint dei log (predefinito: /v1/logs). Prefissare con qualsiasi percorso specifico dell'API (es. /api/otlp/v1/logs)."
+          "path": "Percorso aggiunto a host:porta per l'endpoint dei log (predefinito: /v1/logs). Prefissare con qualsiasi percorso specifico dell'API (es. /api/otlp/v1/logs).",
+          "client_timeout": "Secondi di attesa della risposta dell'endpoint (1-300, predefinito: 10)."
         }
       },
       "reconfigure_syslog": {
@@ -120,6 +128,8 @@
           "tls_client_key": "File della chiave client",
           "app_name": "Nome dell'applicazione",
           "facility": "Facility syslog",
+          "batch_max_size": "Dimensione massima del batch",
+          "client_timeout": "Timeout del client (secondi)",
           "strict_mode": "Modalità RFC 5424 rigorosa",
           "enterprise_number": "Numero enterprise (modalità rigorosa)"
         },
@@ -133,6 +143,8 @@
           "tls_client_key": "Percorso facoltativo della chiave privata PEM del certificato client, se non è nello stesso file.",
           "app_name": "Il campo APP-NAME nei messaggi RFC 5424 (predefinito: homeassistant).",
           "facility": "Codice di facility syslog usato per calcolare il valore PRI (predefinito: local0).",
+          "batch_max_size": "Numero massimo di record di log nel buffer prima dell'invio (1-10000, predefinito: 20).",
+          "client_timeout": "Secondi di attesa della risposta dell'endpoint (1-300, predefinito: 10).",
           "strict_mode": "Invia un output syslog nativo: nomi dei parametri di Home Assistant accorciati ai limiti di RFC 5424, MSGID troncato a 32 caratteri e un SD-ID privato homeassistant@PEN. Abilitare se il ricevitore rifiuta i messaggi (ad esempio Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number opzionale per l'SD-ID homeassistant@PEN della modalità rigorosa. Predefinito 67614, il PEN di Rhizomatics. Per i test si può usare invece 32473, il numero di documentazione di RFC 5612."
         }

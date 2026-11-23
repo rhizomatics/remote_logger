@@ -22,7 +22,8 @@
           "token_type": "Type de jeton",
           "token": "Jeton d'accès pour l'en-tête Authorization",
           "headers": "En-têtes supplémentaires",
-          "path": "Chemin du point de terminaison des journaux"
+          "path": "Chemin du point de terminaison des journaux",
+          "client_timeout": "Délai d'attente du client (secondes)"
         },
         "data_description": {
           "host": "Nom d'hôte ou adresse IP du collecteur OTLP.",
@@ -34,7 +35,8 @@
           "token_type": "Schéma d'authentification : Bearer envoie le jeton tel quel ; Basic l'encode en base64 comme 'utilisateur:motdepasse'.",
           "token": "Jeton optionnel. Envoyé dans l'en-tête 'Authorization'.",
           "headers": "En-têtes HTTP supplémentaires optionnels au format 'Nom: valeur' (ex. stream-name: mon-stream). Saisir un en-tête par entrée.",
-          "path": "Chemin ajouté à hôte:port pour le point de terminaison des journaux (par défaut : /v1/logs). Préfixer avec tout chemin spécifique à l'API (ex. /api/otlp/v1/logs)."
+          "path": "Chemin ajouté à hôte:port pour le point de terminaison des journaux (par défaut : /v1/logs). Préfixer avec tout chemin spécifique à l'API (ex. /api/otlp/v1/logs).",
+          "client_timeout": "Nombre de secondes d'attente de la réponse du point de terminaison (1-300, par défaut : 10)."
         }
       },
       "reauth_otel": {
@@ -62,6 +64,8 @@
           "tls_client_key": "Fichier de clé client",
           "app_name": "Nom de l'application",
           "facility": "Facility syslog",
+          "batch_max_size": "Taille maximale du lot",
+          "client_timeout": "Délai d'attente du client (secondes)",
           "strict_mode": "Mode RFC 5424 strict",
           "enterprise_number": "Numéro d'entreprise (mode strict)"
         },
@@ -75,6 +79,8 @@
           "tls_client_key": "Chemin facultatif vers la clé privée PEM du certificat client, si elle n'est pas dans le même fichier.",
           "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
           "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : local0).",
+          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 20).",
+          "client_timeout": "Nombre de secondes d'attente de la réponse du point de terminaison (1-300, par défaut : 10).",
           "strict_mode": "Envoie une sortie syslog native : noms de paramètres Home Assistant raccourcis selon les limites de RFC 5424, MSGID tronqué à 32 caractères et SD-ID privé homeassistant@PEN. À activer si le récepteur rejette les messages (par exemple Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number facultatif pour le SD-ID homeassistant@PEN du mode strict. Par défaut 67614, le PEN de Rhizomatics. Pour les tests, 32473, le numéro de documentation de RFC 5612, peut être utilisé à la place."
         }
@@ -92,7 +98,8 @@
           "token_type": "Type de jeton",
           "token": "Jeton d'accès pour l'en-tête Authorization",
           "headers": "En-têtes supplémentaires",
-          "path": "Chemin du point de terminaison des journaux"
+          "path": "Chemin du point de terminaison des journaux",
+          "client_timeout": "Délai d'attente du client (secondes)"
         },
         "data_description": {
           "host": "Nom d'hôte ou adresse IP du collecteur OTLP.",
@@ -104,7 +111,8 @@
           "token_type": "Schéma d'authentification : Bearer envoie le jeton tel quel ; Basic l'encode en base64 comme 'utilisateur:motdepasse'.",
           "token": "Jeton optionnel. Envoyé dans l'en-tête 'Authorization'.",
           "headers": "En-têtes HTTP supplémentaires optionnels au format 'Nom: valeur' (ex. stream-name: mon-stream). Saisir un en-tête par entrée.",
-          "path": "Chemin ajouté à hôte:port pour le point de terminaison des journaux (par défaut : /v1/logs). Préfixer avec tout chemin spécifique à l'API (ex. /api/otlp/v1/logs)."
+          "path": "Chemin ajouté à hôte:port pour le point de terminaison des journaux (par défaut : /v1/logs). Préfixer avec tout chemin spécifique à l'API (ex. /api/otlp/v1/logs).",
+          "client_timeout": "Nombre de secondes d'attente de la réponse du point de terminaison (1-300, par défaut : 10)."
         }
       },
       "reconfigure_syslog": {
@@ -120,6 +128,8 @@
           "tls_client_key": "Fichier de clé client",
           "app_name": "Nom de l'application",
           "facility": "Facility syslog",
+          "batch_max_size": "Taille maximale du lot",
+          "client_timeout": "Délai d'attente du client (secondes)",
           "strict_mode": "Mode RFC 5424 strict",
           "enterprise_number": "Numéro d'entreprise (mode strict)"
         },
@@ -133,6 +143,8 @@
           "tls_client_key": "Chemin facultatif vers la clé privée PEM du certificat client, si elle n'est pas dans le même fichier.",
           "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
           "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : local0).",
+          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 20).",
+          "client_timeout": "Nombre de secondes d'attente de la réponse du point de terminaison (1-300, par défaut : 10).",
           "strict_mode": "Envoie une sortie syslog native : noms de paramètres Home Assistant raccourcis selon les limites de RFC 5424, MSGID tronqué à 32 caractères et SD-ID privé homeassistant@PEN. À activer si le récepteur rejette les messages (par exemple Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number facultatif pour le SD-ID homeassistant@PEN du mode strict. Par défaut 67614, le PEN de Rhizomatics. Pour les tests, 32473, le numéro de documentation de RFC 5612, peut être utilisé à la place."
         }
