@@ -29,7 +29,7 @@
           "port": "OTLP 采集器的 HTTP 端口（默认：4318）。",
           "use_tls": "为与采集器的连接启用 HTTPS。",
           "encoding": "OTLP 载荷的编码格式：json 或 protobuf。",
-          "batch_max_size": "刷新前缓冲的最大日志记录条数（1-10000，默认：100）。",
+          "batch_max_size": "刷新前缓冲的最大日志记录条数（1-10000，默认：20）。",
           "resource_attributes": "以逗号分隔的键=值对，附加到每条日志记录（例如 deployment.environment=production,service.namespace=home）。",
           "token_type": "认证方案：Bearer 原样发送令牌；Basic 将其 base64 编码为'用户名:密码'。",
           "token": "可选令牌，将在 Authorization 请求头中发送。",
@@ -74,7 +74,7 @@
           "tls_client_cert": "可选：PEM 客户端证书的路径，用于要求双向 TLS 的服务器。",
           "tls_client_key": "可选：客户端证书的 PEM 私钥路径（如果不在同一文件中）。",
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
-          "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：user）。",
+          "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：local0）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
           "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 67614，即 Rhizomatics 的 PEN。测试时可改用 32473，即 RFC 5612 的文档用编号。"
         }
@@ -99,7 +99,7 @@
           "port": "OTLP 采集器的 HTTP 端口（默认：4318）。",
           "use_tls": "为与采集器的连接启用 HTTPS。",
           "encoding": "OTLP 载荷的编码格式：json 或 protobuf。",
-          "batch_max_size": "刷新前缓冲的最大日志记录条数（1-10000，默认：100）。",
+          "batch_max_size": "刷新前缓冲的最大日志记录条数（1-10000，默认：20）。",
           "resource_attributes": "以逗号分隔的键=值对，附加到每条日志记录（例如 deployment.environment=production,service.namespace=home）。",
           "token_type": "认证方案：Bearer 原样发送令牌；Basic 将其 base64 编码为'用户名:密码'。",
           "token": "可选令牌，将在 Authorization 请求头中发送。",
@@ -132,7 +132,7 @@
           "tls_client_cert": "可选：PEM 客户端证书的路径，用于要求双向 TLS 的服务器。",
           "tls_client_key": "可选：客户端证书的 PEM 私钥路径（如果不在同一文件中）。",
           "app_name": "RFC 5424 消息中的 APP-NAME 字段（默认：homeassistant）。",
-          "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：user）。",
+          "facility": "用于计算 PRI 值的 Syslog 设施代码（默认：local0）。",
           "strict_mode": "发送 syslog 原生输出：Home Assistant 参数名按 RFC 5424 限制缩短，MSGID 截断为 32 个字符，并使用私有 SD-ID homeassistant@PEN。如果接收端拒绝消息（例如 Grafana Alloy），请启用。",
           "enterprise_number": "严格模式 SD-ID homeassistant@PEN 使用的可选 IANA 私有企业编号。默认为 67614，即 Rhizomatics 的 PEN。测试时可改用 32473，即 RFC 5612 的文档用编号。"
         }

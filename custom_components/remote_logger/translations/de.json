@@ -29,7 +29,7 @@
           "port": "HTTP-Port des OTLP-Collectors (Standard: 4318).",
           "use_tls": "HTTPS für die Verbindung zum Collector aktivieren.",
           "encoding": "Kodierungsformat der OTLP-Nutzlast: json oder protobuf.",
-          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 100).",
+          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 20).",
           "resource_attributes": "Optionale kommagetrennte Schlüssel=Wert-Paare, die jedem Protokolleintrag hinzugefügt werden (z. B. deployment.environment=production,service.namespace=home).",
           "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
           "token": "Optionales Token. Wird im Authorization-Header gesendet.",
@@ -74,7 +74,7 @@
           "tls_client_cert": "Optionaler Pfad zu einem PEM-Client-Zertifikat für Server, die gegenseitiges TLS verlangen.",
           "tls_client_key": "Optionaler Pfad zum privaten PEM-Schlüssel des Client-Zertifikats, falls er nicht in derselben Datei liegt.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
-          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user).",
+          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: local0).",
           "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@PEN. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
           "enterprise_number": "Optionale IANA Private Enterprise Number für die SD-ID homeassistant@PEN im strikten Modus. Standard ist 67614, die PEN von Rhizomatics. Zum Testen kann stattdessen 32473, die Dokumentationsnummer aus RFC 5612, verwendet werden."
         }
@@ -99,7 +99,7 @@
           "port": "HTTP-Port des OTLP-Collectors (Standard: 4318).",
           "use_tls": "HTTPS für die Verbindung zum Collector aktivieren.",
           "encoding": "Kodierungsformat der OTLP-Nutzlast: json oder protobuf.",
-          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 100).",
+          "batch_max_size": "Maximale Anzahl von Protokolleinträgen im Puffer vor dem Senden (1–10000, Standard: 20).",
           "resource_attributes": "Optionale kommagetrennte Schlüssel=Wert-Paare, die jedem Protokolleintrag hinzugefügt werden (z. B. deployment.environment=production,service.namespace=home).",
           "token_type": "Authentifizierungsschema: Bearer sendet das Token unverändert; Basic kodiert es als 'Benutzername:Passwort' in Base64.",
           "token": "Optionales Token. Wird im Authorization-Header gesendet.",
@@ -132,7 +132,7 @@
           "tls_client_cert": "Optionaler Pfad zu einem PEM-Client-Zertifikat für Server, die gegenseitiges TLS verlangen.",
           "tls_client_key": "Optionaler Pfad zum privaten PEM-Schlüssel des Client-Zertifikats, falls er nicht in derselben Datei liegt.",
           "app_name": "Das APP-NAME-Feld in RFC 5424-Nachrichten (Standard: homeassistant).",
-          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: user).",
+          "facility": "Syslog-Facility-Code zur Berechnung des PRI-Werts (Standard: local0).",
           "strict_mode": "Syslog-native Ausgabe senden: Home Assistant-Parameternamen, gekürzt auf die Grenzen von RFC 5424, MSGID auf 32 Zeichen gekürzt und eine private SD-ID homeassistant@PEN. Aktivieren, wenn der Empfänger Nachrichten ablehnt (z. B. Grafana Alloy).",
           "enterprise_number": "Optionale IANA Private Enterprise Number für die SD-ID homeassistant@PEN im strikten Modus. Standard ist 67614, die PEN von Rhizomatics. Zum Testen kann stattdessen 32473, die Dokumentationsnummer aus RFC 5612, verwendet werden."
         }

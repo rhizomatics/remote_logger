@@ -97,3 +97,16 @@ def test_icons_cover_sensors_and_actions() -> None:
     assert set(icons["entity"]["sensor"]) == {d.translation_key for d in SENSORS}
     services = load_yaml_dict(_ROOT / "services.yaml")
     assert set(icons["services"]) == set(services)
+
+
+@pytest.mark.parametrize("path", sorted(_TRANSLATIONS_DIR.glob("*.json")), ids=lambda p: p.stem)
+def test_described_defaults_match_code(path: Path) -> None:
+    """Regression: setup forms said the default batch size was 100 and the default facility user."""
+    from custom_components.remote_logger.const import DEFAULT_BATCH_MAX_SIZE
+    from custom_components.remote_logger.syslog.const import DEFAULT_FACILITY
+
+    steps = _load(path)["config"]["step"]
+    for step in ("otel", "reconfigure_otel"):
+        assert re.search(rf"\b{DEFAULT_BATCH_MAX_SIZE}\b", steps[step]["data_description"]["batch_max_size"]), step
+    for step in ("syslog", "reconfigure_syslog"):
+        assert re.search(rf"\b{DEFAULT_FACILITY}\b", steps[step]["data_description"]["facility"]), step

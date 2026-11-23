@@ -29,7 +29,7 @@
           "port": "Port HTTP du collecteur OTLP (par défaut : 4318).",
           "use_tls": "Activer HTTPS pour la connexion au collecteur.",
           "encoding": "Format d'encodage de la charge utile OTLP : json ou protobuf.",
-          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 100).",
+          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 20).",
           "resource_attributes": "Paires clé=valeur séparées par des virgules ajoutées à chaque entrée de journal (ex. deployment.environment=production,service.namespace=home).",
           "token_type": "Schéma d'authentification : Bearer envoie le jeton tel quel ; Basic l'encode en base64 comme 'utilisateur:motdepasse'.",
           "token": "Jeton optionnel. Envoyé dans l'en-tête 'Authorization'.",
@@ -74,7 +74,7 @@
           "tls_client_cert": "Chemin facultatif vers un certificat client PEM, pour les serveurs qui exigent le TLS mutuel.",
           "tls_client_key": "Chemin facultatif vers la clé privée PEM du certificat client, si elle n'est pas dans le même fichier.",
           "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
-          "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : user).",
+          "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : local0).",
           "strict_mode": "Envoie une sortie syslog native : noms de paramètres Home Assistant raccourcis selon les limites de RFC 5424, MSGID tronqué à 32 caractères et SD-ID privé homeassistant@PEN. À activer si le récepteur rejette les messages (par exemple Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number facultatif pour le SD-ID homeassistant@PEN du mode strict. Par défaut 67614, le PEN de Rhizomatics. Pour les tests, 32473, le numéro de documentation de RFC 5612, peut être utilisé à la place."
         }
@@ -99,7 +99,7 @@
           "port": "Port HTTP du collecteur OTLP (par défaut : 4318).",
           "use_tls": "Activer HTTPS pour la connexion au collecteur.",
           "encoding": "Format d'encodage de la charge utile OTLP : json ou protobuf.",
-          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 100).",
+          "batch_max_size": "Nombre maximum d'entrées de journal à mettre en mémoire tampon avant envoi (1-10000, par défaut : 20).",
           "resource_attributes": "Paires clé=valeur séparées par des virgules ajoutées à chaque entrée de journal (ex. deployment.environment=production,service.namespace=home).",
           "token_type": "Schéma d'authentification : Bearer envoie le jeton tel quel ; Basic l'encode en base64 comme 'utilisateur:motdepasse'.",
           "token": "Jeton optionnel. Envoyé dans l'en-tête 'Authorization'.",
@@ -132,7 +132,7 @@
           "tls_client_cert": "Chemin facultatif vers un certificat client PEM, pour les serveurs qui exigent le TLS mutuel.",
           "tls_client_key": "Chemin facultatif vers la clé privée PEM du certificat client, si elle n'est pas dans le même fichier.",
           "app_name": "Le champ APP-NAME dans les messages RFC 5424 (par défaut : homeassistant).",
-          "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : user).",
+          "facility": "Code de facility syslog utilisé pour calculer la valeur PRI (par défaut : local0).",
           "strict_mode": "Envoie une sortie syslog native : noms de paramètres Home Assistant raccourcis selon les limites de RFC 5424, MSGID tronqué à 32 caractères et SD-ID privé homeassistant@PEN. À activer si le récepteur rejette les messages (par exemple Grafana Alloy).",
           "enterprise_number": "IANA Private Enterprise Number facultatif pour le SD-ID homeassistant@PEN du mode strict. Par défaut 67614, le PEN de Rhizomatics. Pour les tests, 32473, le numéro de documentation de RFC 5612, peut être utilisé à la place."
         }

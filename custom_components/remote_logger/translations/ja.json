@@ -29,7 +29,7 @@
           "port": "OTLPコレクターのHTTPポート（デフォルト: 4318）。",
           "use_tls": "コレクターへの接続にHTTPSを有効化します。",
           "encoding": "OTLPペイロードのエンコーディング形式: json または protobuf。",
-          "batch_max_size": "フラッシュ前にバッファするログレコードの最大数（1〜10000、デフォルト: 100）。",
+          "batch_max_size": "フラッシュ前にバッファするログレコードの最大数（1〜10000、デフォルト: 20）。",
           "resource_attributes": "各ログレコードに追加するカンマ区切りのkey=valueペア（例: deployment.environment=production,service.namespace=home）。",
           "token_type": "認証スキーム: Bearerはトークンをそのまま送信、Basicは「ユーザー名:パスワード」としてbase64エンコードして送信します。",
           "token": "任意のトークン。「Authorization」ヘッダーで送信されます。",
@@ -74,7 +74,7 @@
           "tls_client_cert": "相互 TLS を要求するサーバー向けの PEM クライアント証明書のパス（任意）。",
           "tls_client_key": "クライアント証明書の PEM 秘密鍵が同じファイルにない場合の、そのパス（任意）。",
           "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
-          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。",
+          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: local0）。",
           "strict_mode": "syslog ネイティブの出力を送信します。Home Assistant のパラメーター名を RFC 5424 の制限内に短縮し、MSGID を 32 文字に切り詰め、プライベート SD-ID homeassistant@PEN を使用します。受信側がメッセージを拒否する場合（例: Grafana Alloy）に有効にしてください。",
           "enterprise_number": "厳格モードの SD-ID homeassistant@PEN に使う任意の IANA プライベートエンタープライズ番号。既定値は Rhizomatics の PEN 67614 です。テスト用には、代わりに RFC 5612 のドキュメント用番号 32473 を使用できます。"
         }
@@ -99,7 +99,7 @@
           "port": "OTLPコレクターのHTTPポート（デフォルト: 4318）。",
           "use_tls": "コレクターへの接続にHTTPSを有効化します。",
           "encoding": "OTLPペイロードのエンコーディング形式: json または protobuf。",
-          "batch_max_size": "フラッシュ前にバッファするログレコードの最大数（1〜10000、デフォルト: 100）。",
+          "batch_max_size": "フラッシュ前にバッファするログレコードの最大数（1〜10000、デフォルト: 20）。",
           "resource_attributes": "各ログレコードに追加するカンマ区切りのkey=valueペア（例: deployment.environment=production,service.namespace=home）。",
           "token_type": "認証スキーム: Bearerはトークンをそのまま送信、Basicは「ユーザー名:パスワード」としてbase64エンコードして送信します。",
           "token": "任意のトークン。「Authorization」ヘッダーで送信されます。",
@@ -132,7 +132,7 @@
           "tls_client_cert": "相互 TLS を要求するサーバー向けの PEM クライアント証明書のパス（任意）。",
           "tls_client_key": "クライアント証明書の PEM 秘密鍵が同じファイルにない場合の、そのパス（任意）。",
           "app_name": "RFC 5424メッセージのAPP-NAMEフィールド（デフォルト: homeassistant）。",
-          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: user）。",
+          "facility": "PRI値の計算に使用するSyslogファシリティコード（デフォルト: local0）。",
           "strict_mode": "syslog ネイティブの出力を送信します。Home Assistant のパラメーター名を RFC 5424 の制限内に短縮し、MSGID を 32 文字に切り詰め、プライベート SD-ID homeassistant@PEN を使用します。受信側がメッセージを拒否する場合（例: Grafana Alloy）に有効にしてください。",
           "enterprise_number": "厳格モードの SD-ID homeassistant@PEN に使う任意の IANA プライベートエンタープライズ番号。既定値は Rhizomatics の PEN 67614 です。テスト用には、代わりに RFC 5612 のドキュメント用番号 32473 を使用できます。"
         }
