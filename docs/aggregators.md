@@ -6,6 +6,9 @@ Some aggregators can directly consume remote logs, while others need an ingestio
 
 ## OpenObserve
 
+!!! tip
+    One quick way to get this is to use [OpenObserve app for Home Assistant](https://github.com/Sm0by/ha-addon-openobserve), installed as a custom repo through *Settings* | *Apps*, accessed and backed up via Home Assistant.
+
 This is one of the easiest to use, since it can accept OTLP natively so doesn't need any other components, though it can work with Vector and others, and now needs Vector for Syslog. It also has a Splunk type UI to show the schema and automatically populate known values for each field to make quick filtering easier.
 
 To configure the preferred OTLP logging, a few overrides are needed.
